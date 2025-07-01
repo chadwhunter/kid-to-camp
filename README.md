@@ -1,3 +1,4 @@
+<<<<<<< HEAD
  # Kid To Camp
 
 A modern web platform that connects families with camps and afterschool programs, featuring intelligent search, personalized recommendations, and streamlined booking.
@@ -23,3 +24,7 @@ A modern web platform that connects families with camps and afterschool programs
 ```bash
 git clone https://github.com/yourusername/kid-to-camp.git
 cd kid-to-camp
+=======
+# kid-to-camp
+project to bring kids and camps together
+>>>>>>> 78b85e83e5cadcbaccda3d4d10f4eb2ee6742ec1
