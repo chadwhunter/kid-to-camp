@@ -1,0 +1,22 @@
+{
+    "name": "kid-to-camp",
+    "version": "1.0.0",
+    "description": "A platform connecting families with camps and afterschool programs",
+    "main": "index.html",
+    "scripts": {
+        "dev": "python -m http.server 8000",
+        "build": "echo 'No build step required for static site'",
+        "deploy": "netlify deploy --prod"
+    },
+    "keywords": [
+        "camps",
+        "afterschool",
+        "family",
+        "education"
+    ],
+    "author": "Your Name",
+    "license": "MIT",
+    "devDependencies": {
+        "netlify-cli": "^17.0.0"
+    }
+}

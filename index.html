@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kid To Camp - Enhanced Search</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <header>
+        <nav class="container">
+            <a href="#" class="logo">Kid To Camp</a>
+            <div class="nav-buttons" id="navButtons">
+                <a href="#" class="btn btn-outline" onclick="KidToCamp.ui.openModal('loginModal')">Sign In</a>
+                <a href="#" class="btn btn-primary" onclick="KidToCamp.ui.openModal('signupModal')">Get Started</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>Find Your Perfect Camp Experience</h1>
+                <p>Connecting families with amazing camps and afterschool programs. Discover, book, and manage your
+                    child's adventure.</p>
+
+                <div class="search-widget">
+                    <h3 id="searchTitle">🗓️ Search Camps by Date</h3>
+                    <div class="search-form">
+                        <div class="search-row">
+                            <div class="search-field">
+                                <label>Start Date</label>
+                                <input type="date" id="startDate">
+                            </div>
+                            <div class="search-field">
+                                <label>End Date</label>
+                                <input type="date" id="endDate">
+                            </div>
+                            <div class="search-field">
+                                <label>Location</label>
+                                <select id="location">
+                                    <option value="">Any Location</option>
+                                    <option value="matthews">Matthews, NC</option>
+                                    <option value="charlotte">Charlotte, NC</option>
+                                    <option value="huntersville">Huntersville, NC</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="enhancedFilters" style="display: none;">
+                            <div class="search-row" style="margin-top: 1rem;">
+                                <div class="search-field">
+                                    <label>Child</label>
+                                    <select id="childSelector">
+                                        <option value="">All Children</option>
+                                    </select>
+                                </div>
+                                <div class="search-field">
+                                    <label>Age Range</label>
+                                    <select id="ageRange">
+                                        <option value="">Any Age</option>
+                                        <option value="3-5">3-5 years</option>
+                                        <option value="6-8">6-8 years</option>
+                                        <option value="9-12">9-12 years</option>
+                                        <option value="13-16">13-16 years</option>
+                                    </select>
+                                </div>
+                                <div class="search-field">
+                                    <label>Price Range</label>
+                                    <select id="priceRange">
+                                        <option value="">Any Price</option>
+                                        <option value="0-250">Under $250</option>
+                                        <option value="250-350">$250 - $350</option>
+                                        <option value="350-500">$350 - $500</option>
+                                        <option value="500+">$500+</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="search-row" style="margin-top: 1rem;">
+                                <div class="search-field">
+                                    <label>Interests</label>
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <button type="button" onclick="KidToCamp.ui.toggleAllInterests(true)"
+                                            class="filter-toggle-btn">Select All</button>
+                                        <button type="button" onclick="KidToCamp.ui.toggleAllInterests(false)"
+                                            class="filter-toggle-btn">Deselect All</button>
+                                    </div>
+                                    <div class="checkbox-grid interest-grid">
+                                        <label><input type="checkbox" value="sports"> Sports</label>
+                                        <label><input type="checkbox" value="arts"> Arts</label>
+                                        <label><input type="checkbox" value="stem"> STEM</label>
+                                        <label><input type="checkbox" value="nature"> Nature</label>
+                                        <label><input type="checkbox" value="academic"> Academic</label>
+                                    </div>
+                                </div>
+                                <div class="search-field">
+                                    <label>Required Accommodations</label>
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <button type="button" onclick="KidToCamp.ui.toggleAllAccommodations(true)"
+                                            class="filter-toggle-btn">Select All</button>
+                                        <button type="button" onclick="KidToCamp.ui.toggleAllAccommodations(false)"
+                                            class="filter-toggle-btn">Deselect All</button>
+                                    </div>
+                                    <div class="checkbox-grid accommodation-grid">
+                                        <label><input type="checkbox" value="wheelchair_accessible"> Wheelchair
+                                            accessible</label>
+                                        <label><input type="checkbox" value="nut_free_environment"> Nut-free
+                                            environment</label>
+                                        <label><input type="checkbox" value="adhd_support"> ADHD support</label>
+                                        <label><input type="checkbox" value="autism_support"> Autism support</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="autoFilterButtons" style="margin-top: 1rem; display: none;">
+                                <label style="color: white; font-weight: 600; margin-bottom: 0.5rem; display: block;">🎯
+                                    Quick Filters by Child:</label>
+                                <div id="childFilterButtons" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+                            <button class="btn btn-search" onclick="KidToCamp.search.execute()"
+                                style="flex: 1; min-width: 200px;">
+                                🔍 Search Available Camps
+                            </button>
+                            <button class="btn" onclick="KidToCamp.ui.toggleAdvancedFilters()" id="advancedToggle"
+                                class="btn-toggle-filters">
+                                🎯 Smart Filters
+                            </button>
+                        </div>
+                    </div>
+                    <div id="searchResults" class="search-results"></div>
+                </div>
+
+                <div class="hero-buttons">
+                    <div class="user-card">
+                        <h3>👨‍👩‍👧‍👦 For Parents</h3>
+                        <p>Create child profiles, get personalized recommendations, and book with auto-filled forms</p>
+                        <div class="card-features">
+                            <div class="feature">✅ Multiple child profiles</div>
+                            <div class="feature">✅ Interest-based matching</div>
+                            <div class="feature">✅ Auto-filled registration forms</div>
+                        </div>
+                        <button class="btn" onclick="KidToCamp.ui.openModal('signupModal', 'parent')">Find
+                            Camps</button>
+                    </div>
+
+                    <div class="user-card">
+                        <h3>🏕️ For Camp Owners</h3>
+                        <p>Promote your camp and connect with families in your community</p>
+                        <button class="btn" onclick="KidToCamp.ui.openModal('signupModal', 'admin')">List Your
+                            Camp</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="KidToCamp.ui.closeModal('signupModal')">&times;</span>
+            <h2>Create Your Account</h2>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signupEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>I am a:</label>
+                    <select id="userType" required>
+                        <option value="">Select...</option>
+                        <option value="parent">Parent/Guardian</option>
+                        <option value="admin">Camp Owner/Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="KidToCamp.ui.closeModal('loginModal')">&times;</span>
+            <h2>Sign In</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="profileModal" class="modal">
+        <div class="modal-content wide">
+            <span class="close" onclick="KidToCamp.ui.closeModal('profileModal')">&times;</span>
+            <h2>Complete Your Profile</h2>
+            <form id="profileForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" id="firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" id="lastName" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="phone">
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" id="address">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>City</label>
+                        <input type="text" id="city">
+                    </div>
+                    <div class="form-group">
+                        <label>State</label>
+                        <input type="text" id="state" value="NC">
+                    </div>
+                    <div class="form-group">
+                        <label>ZIP</label>
+                        <input type="text" id="zip">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Profile</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="childProfileModal" class="modal">
+        <div class="modal-content wide">
+            <span class="close" onclick="KidToCamp.ui.closeModal('childProfileModal')">&times;</span>
+            <h2 id="childModalTitle">Add Child Profile</h2>
+            <form id="childProfileForm">
+                <input type="hidden" id="childId" value="">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Child's First Name</label>
+                        <input type="text" id="childFirstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Child's Last Name</label>
+                        <input type="text" id="childLastName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date of Birth</label>
+                        <input type="date" id="childDob" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Interests (Select all that apply)</label>
+                    <div class="checkbox-grid">
+                        <label><input type="checkbox" name="interests" value="sports"> Sports</label>
+                        <label><input type="checkbox" name="interests" value="arts"> Arts & Crafts</label>
+                        <label><input type="checkbox" name="interests" value="stem"> STEM/Science</label>
+                        <label><input type="checkbox" name="interests" value="nature"> Nature/Outdoors</label>
+                        <label><input type="checkbox" name="interests" value="academic"> Academic</label>
+                        <label><input type="checkbox" name="interests" value="music"> Music</label>
+                        <label><input type="checkbox" name="interests" value="theater"> Theater/Drama</label>
+                        <label><input type="checkbox" name="interests" value="cooking"> Cooking</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Required Accommodations</label>
+                    <div class="checkbox-grid">
+                        <label><input type="checkbox" name="accommodations" value="wheelchair_accessible"> Requires
+                            wheelchair accessibility</label>
+                        <label><input type="checkbox" name="accommodations" value="nut_free_environment"> Requires
+                            nut-free environment</label>
+                        <label><input type="checkbox" name="accommodations" value="adhd_support"> ADHD support
+                            needed</label>
+                        <label><input type="checkbox" name="accommodations" value="autism_support"> Autism spectrum
+                            support needed</label>
+                        <label><input type="checkbox" name="accommodations" value="medical_needs"> Other medical
+                            needs</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Medical Notes (Allergies, medications, etc.)</label>
+                    <textarea id="medicalNotes" rows="3"
+                        placeholder="Any important medical information, allergies, or special instructions..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Emergency Contact Name</label>
+                    <input type="text" id="emergencyContactName"
+                        placeholder="Emergency contact (if different from parent)">
+                </div>
+
+                <div class="form-group">
+                    <label>Emergency Contact Phone</label>
+                    <input type="tel" id="emergencyContactPhone">
+                </div>
+
+                <div class="form-buttons">
+                    <button type="button" class="btn btn-outline"
+                        onclick="KidToCamp.ui.closeModal('childProfileModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Child Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>

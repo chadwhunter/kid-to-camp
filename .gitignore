@@ -1,0 +1,26 @@
+# Environment files
+.env
+.env.local
+.env.production
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Netlify
+.netlify/ 

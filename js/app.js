@@ -1,0 +1,609 @@
+// Main application logic
+class KidToCamp {
+    constructor() {
+        this.supabase = null;
+        this.currentUser = null;
+        this.userProfile = null;
+        this.children = [];
+        this.init();
+    }
+
+    async init() {
+        try {
+            // Initialize Supabase
+            const { createClient } = supabase;
+            this.supabase = createClient(CONFIG.supabase.url, CONFIG.supabase.key);
+
+            // Check for existing session
+            const { data: { session } } = await this.supabase.auth.getSession();
+            if (session) {
+                this.currentUser = session.user;
+                await this.loadUserData();
+            }
+
+            // Set up auth listener
+            this.supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN') {
+                    this.currentUser = session.user;
+                    this.loadUserData();
+                } else if (event === 'SIGNED_OUT') {
+                    this.currentUser = null;
+                    this.userProfile = null;
+                    this.children = [];
+                    this.updateUI();
+                }
+            });
+
+            this.setupEventListeners();
+            this.updateUI();
+
+        } catch (error) {
+            console.error('Initialization error:', error);
+        }
+    }
+
+    setupEventListeners() {
+        // Form submissions
+        document.getElementById('signupForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleSignup();
+        });
+
+        document.getElementById('loginForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleLogin();
+        });
+
+        document.getElementById('profileForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleProfileUpdate();
+        });
+
+        document.getElementById('childProfileForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleChildProfile();
+        });
+
+        // Child selector change
+        document.getElementById('childSelector')?.addEventListener('change', (e) => {
+            this.handleChildSelection(e.target.value);
+        });
+
+        // Modal close on outside click
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                this.ui.closeModal(e.target.id);
+            }
+        });
+    }
+
+    async handleSignup() {
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
+        const userType = document.getElementById('userType').value;
+
+        try {
+            const { data, error } = await this.supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: { user_type: userType }
+                }
+            });
+
+            if (error) throw error;
+
+            this.ui.showMessage('Account created! Please check your email to verify.', 'success');
+            this.ui.closeModal('signupModal');
+
+        } catch (error) {
+            this.ui.showMessage(error.message, 'error');
+        }
+    }
+
+    async handleLogin() {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+
+        try {
+            const { data, error } = await this.supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (error) throw error;
+
+            this.ui.closeModal('loginModal');
+
+        } catch (error) {
+            this.ui.showMessage(error.message, 'error');
+        }
+    }
+
+    async handleProfileUpdate() {
+        const profileData = {
+            first_name: document.getElementById('firstName').value,
+            last_name: document.getElementById('lastName').value,
+            phone: document.getElementById('phone').value,
+            address: document.getElementById('address').value,
+            city: document.getElementById('city').value,
+            state: document.getElementById('state').value,
+            zip: document.getElementById('zip').value
+        };
+
+        try {
+            const { error } = await this.supabase
+                .from('user_profiles')
+                .upsert({
+                    id: this.currentUser.id,
+                    ...profileData
+                });
+
+            if (error) throw error;
+
+            this.userProfile = { ...this.userProfile, ...profileData };
+            this.ui.showMessage('Profile updated successfully!', 'success');
+            this.ui.closeModal('profileModal');
+            this.updateUI();
+
+        } catch (error) {
+            this.ui.showMessage(error.message, 'error');
+        }
+    }
+
+    async handleChildProfile() {
+        const childId = document.getElementById('childId').value;
+        const isEditing = childId !== '';
+
+        const childData = {
+            first_name: document.getElementById('childFirstName').value,
+            last_name: document.getElementById('childLastName').value,
+            date_of_birth: document.getElementById('childDob').value,
+            interests: Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(cb => cb.value),
+            accommodations: Array.from(document.querySelectorAll('input[name="accommodations"]:checked')).map(cb => cb.value),
+            medical_notes: document.getElementById('medicalNotes').value,
+            emergency_contact_name: document.getElementById('emergencyContactName').value,
+            emergency_contact_phone: document.getElementById('emergencyContactPhone').value,
+            parent_id: this.currentUser.id
+        };
+
+        try {
+            let result;
+            if (isEditing) {
+                result = await this.supabase
+                    .from('children')
+                    .update(childData)
+                    .eq('id', childId);
+            } else {
+                result = await this.supabase
+                    .from('children')
+                    .insert(childData);
+            }
+
+            if (result.error) throw result.error;
+
+            await this.loadChildren();
+            this.ui.showMessage(`Child profile ${isEditing ? 'updated' : 'created'} successfully!`, 'success');
+            this.ui.closeModal('childProfileModal');
+            this.updateChildSelector();
+            this.updateAutoFilterButtons();
+
+        } catch (error) {
+            this.ui.showMessage(error.message, 'error');
+        }
+    }
+
+    async loadUserData() {
+        try {
+            // Load user profile
+            const { data: profile } = await this.supabase
+                .from('user_profiles')
+                .select('*')
+                .eq('id', this.currentUser.id)
+                .single();
+
+            this.userProfile = profile;
+
+            // Load children if parent
+            if (this.currentUser.user_metadata?.user_type === 'parent') {
+                await this.loadChildren();
+            }
+
+            this.updateUI();
+
+        } catch (error) {
+            console.error('Error loading user data:', error);
+        }
+    }
+
+    async loadChildren() {
+        try {
+            const { data: children } = await this.supabase
+                .from('children')
+                .select('*')
+                .eq('parent_id', this.currentUser.id);
+
+            this.children = children || [];
+            this.updateChildSelector();
+            this.updateAutoFilterButtons();
+
+        } catch (error) {
+            console.error('Error loading children:', error);
+        }
+    }
+
+    updateChildSelector() {
+        const selector = document.getElementById('childSelector');
+        if (!selector) return;
+
+        // Clear existing options except "All Children"
+        selector.innerHTML = '<option value="">All Children</option>';
+
+        this.children.forEach(child => {
+            const option = document.createElement('option');
+            option.value = child.id;
+            option.textContent = `${child.first_name} ${child.last_name}`;
+            selector.appendChild(option);
+        });
+    }
+
+    updateAutoFilterButtons() {
+        const container = document.getElementById('childFilterButtons');
+        const autoFilterDiv = document.getElementById('autoFilterButtons');
+
+        if (!container || !autoFilterDiv) return;
+
+        container.innerHTML = '';
+
+        if (this.children.length > 0) {
+            this.children.forEach(child => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'child-filter-btn';
+                button.textContent = `${child.first_name}'s Preferences`;
+                button.onclick = () => this.applyChildFilters(child);
+                container.appendChild(button);
+            });
+            autoFilterDiv.style.display = 'block';
+        } else {
+            autoFilterDiv.style.display = 'none';
+        }
+    }
+
+    applyChildFilters(child) {
+        // Set age range based on child's age
+        const age = this.calculateAge(child.date_of_birth);
+        const ageSelect = document.getElementById('ageRange');
+        if (age >= 3 && age <= 5) ageSelect.value = '3-5';
+        else if (age >= 6 && age <= 8) ageSelect.value = '6-8';
+        else if (age >= 9 && age <= 12) ageSelect.value = '9-12';
+        else if (age >= 13 && age <= 16) ageSelect.value = '13-16';
+
+        // Set interests
+        document.querySelectorAll('.interest-grid input[type="checkbox"]').forEach(cb => {
+            cb.checked = child.interests?.includes(cb.value) || false;
+        });
+
+        // Set accommodations
+        document.querySelectorAll('.accommodation-grid input[type="checkbox"]').forEach(cb => {
+            cb.checked = child.accommodations?.includes(cb.value) || false;
+        });
+
+        // Select this child
+        document.getElementById('childSelector').value = child.id;
+
+        // Highlight the active button
+        document.querySelectorAll('.child-filter-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        this.ui.showMessage(`Applied ${child.first_name}'s preferences to search filters`, 'success');
+    }
+
+    calculateAge(dateOfBirth) {
+        const today = new Date();
+        const birthDate = new Date(dateOfBirth);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+
+        return age;
+    }
+
+    handleChildSelection(childId) {
+        if (childId) {
+            const child = this.children.find(c => c.id === childId);
+            if (child) {
+                this.applyChildFilters(child);
+            }
+        }
+    }
+
+    updateUI() {
+        const navButtons = document.getElementById('navButtons');
+        const searchTitle = document.getElementById('searchTitle');
+
+        if (this.currentUser) {
+            // Update navigation for logged-in user
+            navButtons.innerHTML = `
+                <span style="color: white; margin-right: 1rem;">Welcome, ${this.userProfile?.first_name || this.currentUser.email}!</span>
+                <button class="btn btn-outline" onclick="KidToCamp.ui.openModal('profileModal')">Profile</button>
+                ${this.currentUser.user_metadata?.user_type === 'parent' ?
+                    '<button class="btn btn-outline" onclick="KidToCamp.ui.openModal(\'childProfileModal\')">Add Child</button>' : ''}
+                <button class="btn btn-primary" onclick="kidToCamp.logout()">Sign Out</button>
+            `;
+
+            // Update search title based on user type
+            if (this.currentUser.user_metadata?.user_type === 'parent') {
+                searchTitle.textContent = '🎯 Find Perfect Camps for Your Children';
+            }
+
+            // Show profile modal if profile incomplete
+            if (!this.userProfile && this.currentUser.user_metadata?.user_type === 'parent') {
+                setTimeout(() => this.ui.openModal('profileModal'), 1000);
+            }
+
+        } else {
+            // Reset to default for non-logged-in users
+            navButtons.innerHTML = `
+                <a href="#" class="btn btn-outline" onclick="KidToCamp.ui.openModal('loginModal')">Sign In</a>
+                <a href="#" class="btn btn-primary" onclick="KidToCamp.ui.openModal('signupModal')">Get Started</a>
+            `;
+            searchTitle.textContent = '🗓️ Search Camps by Date';
+        }
+
+        // Update enhanced filters visibility
+        const enhancedFilters = document.getElementById('enhancedFilters');
+        const advancedToggle = document.getElementById('advancedToggle');
+
+        if (this.currentUser?.user_metadata?.user_type === 'parent') {
+            advancedToggle.textContent = '🎯 Smart Filters';
+            if (this.children.length > 0) {
+                advancedToggle.style.display = 'block';
+            }
+        } else {
+            advancedToggle.textContent = '🎯 Advanced Filters';
+        }
+    }
+
+    async logout() {
+        try {
+            await this.supabase.auth.signOut();
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    }
+}
+
+// UI Helper Methods
+KidToCamp.prototype.ui = {
+    openModal(modalId, userType = null) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+
+        modal.style.display = 'block';
+
+        // Pre-fill user type if provided
+        if (userType && modalId === 'signupModal') {
+            document.getElementById('userType').value = userType;
+        }
+
+        // Pre-fill profile form if editing
+        if (modalId === 'profileModal' && kidToCamp.userProfile) {
+            const profile = kidToCamp.userProfile;
+            document.getElementById('firstName').value = profile.first_name || '';
+            document.getElementById('lastName').value = profile.last_name || '';
+            document.getElementById('phone').value = profile.phone || '';
+            document.getElementById('address').value = profile.address || '';
+            document.getElementById('city').value = profile.city || '';
+            document.getElementById('state').value = profile.state || 'NC';
+            document.getElementById('zip').value = profile.zip || '';
+        }
+
+        // Reset child profile form
+        if (modalId === 'childProfileModal') {
+            document.getElementById('childProfileForm').reset();
+            document.getElementById('childId').value = '';
+            document.getElementById('childModalTitle').textContent = 'Add Child Profile';
+        }
+    },
+
+    closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    },
+
+    showMessage(message, type = 'info') {
+        // Create message element
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `${type}-message`;
+        messageDiv.textContent = message;
+
+        // Insert at top of page
+        document.body.insertBefore(messageDiv, document.body.firstChild);
+
+        // Remove after 5 seconds
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 5000);
+    },
+
+    toggleAdvancedFilters() {
+        const filters = document.getElementById('enhancedFilters');
+        const toggle = document.getElementById('advancedToggle');
+
+        if (filters.style.display === 'none') {
+            filters.style.display = 'block';
+            toggle.textContent = toggle.textContent.includes('Smart') ? '📤 Hide Smart Filters' : '📤 Hide Advanced';
+        } else {
+            filters.style.display = 'none';
+            toggle.textContent = toggle.textContent.includes('Smart') ? '🎯 Smart Filters' : '🎯 Advanced Filters';
+        }
+    },
+
+    toggleAllInterests(selectAll) {
+        document.querySelectorAll('.interest-grid input[type="checkbox"]').forEach(cb => {
+            cb.checked = selectAll;
+        });
+    },
+
+    toggleAllAccommodations(selectAll) {
+        document.querySelectorAll('.accommodation-grid input[type="checkbox"]').forEach(cb => {
+            cb.checked = selectAll;
+        });
+    }
+};
+
+// Search functionality
+KidToCamp.prototype.search = {
+    async execute() {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const location = document.getElementById('location').value;
+        const selectedChild = document.getElementById('childSelector').value;
+        const ageRange = document.getElementById('ageRange').value;
+        const priceRange = document.getElementById('priceRange').value;
+
+        const interests = Array.from(document.querySelectorAll('.interest-grid input:checked')).map(cb => cb.value);
+        const accommodations = Array.from(document.querySelectorAll('.accommodation-grid input:checked')).map(cb => cb.value);
+
+        const resultsContainer = document.getElementById('searchResults');
+        resultsContainer.innerHTML = '<div class="spinner"></div> Searching for camps...';
+        resultsContainer.classList.add('show');
+
+        try {
+            // Build query
+            let query = kidToCamp.supabase.from('camps').select('*');
+
+            // Apply filters
+            if (location) {
+                query = query.eq('location', location);
+            }
+
+            if (ageRange) {
+                const [minAge, maxAge] = ageRange.split('-').map(age => parseInt(age.replace('+', '')));
+                query = query.gte('min_age', minAge);
+                if (maxAge) {
+                    query = query.lte('max_age', maxAge);
+                }
+            }
+
+            if (priceRange && priceRange !== '500+') {
+                const [minPrice, maxPrice] = priceRange.split('-').map(price => parseInt(price));
+                query = query.gte('price', minPrice).lte('price', maxPrice);
+            } else if (priceRange === '500+') {
+                query = query.gte('price', 500);
+            }
+
+            if (interests.length > 0) {
+                query = query.overlaps('interests', interests);
+            }
+
+            if (accommodations.length > 0) {
+                query = query.overlaps('accommodations', accommodations);
+            }
+
+            const { data: camps, error } = await query;
+
+            if (error) throw error;
+
+            this.displayResults(camps, selectedChild);
+
+        } catch (error) {
+            console.error('Search error:', error);
+            resultsContainer.innerHTML = '<div class="error-message">Error searching camps. Please try again.</div>';
+        }
+    },
+
+    displayResults(camps, selectedChildId = null) {
+        const resultsContainer = document.getElementById('searchResults');
+
+        if (!camps || camps.length === 0) {
+            resultsContainer.innerHTML = '<div class="info-message">No camps found matching your criteria. Try adjusting your filters.</div>';
+            return;
+        }
+
+        let selectedChild = null;
+        if (selectedChildId) {
+            selectedChild = kidToCamp.children.find(c => c.id === selectedChildId);
+        }
+
+        const resultsHTML = camps.map(camp => {
+            let matchScore = 0;
+            let matchReasons = [];
+
+            // Calculate match score if child is selected
+            if (selectedChild) {
+                const childAge = kidToCamp.calculateAge(selectedChild.date_of_birth);
+
+                // Age match
+                if (childAge >= camp.min_age && childAge <= camp.max_age) {
+                    matchScore += 30;
+                    matchReasons.push('✅ Perfect age match');
+                }
+
+                // Interest match
+                const interestMatches = selectedChild.interests?.filter(interest =>
+                    camp.interests?.includes(interest)) || [];
+                if (interestMatches.length > 0) {
+                    matchScore += interestMatches.length * 15;
+                    matchReasons.push(`✅ Matches ${interestMatches.length} interest(s)`);
+                }
+
+                // Accommodation match
+                const accommodationMatches = selectedChild.accommodations?.filter(acc =>
+                    camp.accommodations?.includes(acc)) || [];
+                if (accommodationMatches.length > 0) {
+                    matchScore += accommodationMatches.length * 20;
+                    matchReasons.push(`✅ Provides needed accommodations`);
+                }
+            }
+
+            const matchBadge = selectedChild ?
+                `<div style="background: ${matchScore >= 50 ? '#4CAF50' : matchScore >= 30 ? '#FF9800' : '#f44336'}; 
+                     color: white; padding: 0.5rem; border-radius: 8px; margin-bottom: 1rem; font-weight: bold;">
+                    ${matchScore}% Match for ${selectedChild.first_name}
+                    ${matchReasons.length > 0 ? '<br><small>' + matchReasons.join(', ') + '</small>' : ''}
+                 </div>` : '';
+
+            return `
+                <div class="camp-card">
+                    ${matchBadge}
+                    <h4>${camp.name}</h4>
+                    <p>${camp.description}</p>
+                    <div class="camp-details">
+                        <div class="camp-detail">📍 ${camp.location}</div>
+                        <div class="camp-detail">👶 Ages ${camp.min_age}-${camp.max_age}</div>
+                        <div class="camp-detail">💰 ${camp.price}</div>
+                        <div class="camp-detail">📅 ${camp.duration} days</div>
+                    </div>
+                    <div class="camp-tags">
+                        ${camp.interests?.map(interest => `<span class="tag">${interest}</span>`).join('') || ''}
+                        ${camp.accommodations?.map(acc => `<span class="tag accommodation-tag">${acc}</span>`).join('') || ''}
+                    </div>
+                    <button class="btn btn-primary" onclick="alert('Booking functionality coming soon!')">
+                        Book Now
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        resultsContainer.innerHTML = `
+            <h3>Found ${camps.length} camps${selectedChild ? ` for ${selectedChild.first_name}` : ''}</h3>
+            ${resultsHTML}
+        `;
+    }
+};
+
+// Initialize the app
+let kidToCamp;
+document.addEventListener('DOMContentLoaded', () => {
+    kidToCamp = new KidToCamp();
+});
+
+// Make KidToCamp globally available for inline event handlers
+window.KidToCamp = KidToCamp;
