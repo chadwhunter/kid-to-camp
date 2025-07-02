@@ -382,11 +382,73 @@ class KidToCamp {
             // Redirect to home page if we're on profile page
             if (window.location.pathname.includes('profile.html')) {
                 window.location.href = 'index.html';
+            } else {
+                // Clear all search data and reset page
+                this.clearSearchData();
+                this.resetSearchForm();
             }
 
         } catch (error) {
             console.error('Logout error:', error);
         }
+    }
+
+    // Add these methods to KidToCamp class
+
+    clearSearchData() {
+        // Clear search results
+        const resultsContainer = document.getElementById('searchResults');
+        if (resultsContainer) {
+            resultsContainer.innerHTML = '';
+            resultsContainer.classList.remove('show');
+        }
+
+        // Clear child selector
+        const childSelector = document.getElementById('childSelector');
+        if (childSelector) {
+            childSelector.innerHTML = '<option value="">All Children</option>';
+        }
+
+        // Hide enhanced filters
+        const enhancedFilters = document.getElementById('enhancedFilters');
+        if (enhancedFilters) {
+            enhancedFilters.style.display = 'none';
+        }
+
+        // Hide auto filter buttons
+        const autoFilterDiv = document.getElementById('autoFilterButtons');
+        if (autoFilterDiv) {
+            autoFilterDiv.style.display = 'none';
+        }
+    }
+
+    resetSearchForm() {
+        // Reset all form inputs
+        const startDate = document.getElementById('startDate');
+        const endDate = document.getElementById('endDate');
+        const location = document.getElementById('location');
+        const ageRange = document.getElementById('ageRange');
+        const priceRange = document.getElementById('priceRange');
+
+        if (startDate) startDate.value = '';
+        if (endDate) endDate.value = '';
+        if (location) location.value = '';
+        if (ageRange) ageRange.value = '';
+        if (priceRange) priceRange.value = '';
+
+        // Uncheck all interest and accommodation checkboxes
+        document.querySelectorAll('.interest-grid input[type="checkbox"]').forEach(cb => {
+            cb.checked = false;
+        });
+
+        document.querySelectorAll('.accommodation-grid input[type="checkbox"]').forEach(cb => {
+            cb.checked = false;
+        });
+
+        // Remove active state from child filter buttons
+        document.querySelectorAll('.child-filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
     }
 }
 
