@@ -378,6 +378,12 @@ class KidToCamp {
     async logout() {
         try {
             await this.supabase.auth.signOut();
+
+            // Redirect to home page if we're on profile page
+            if (window.location.pathname.includes('profile.html')) {
+                window.location.href = 'index.html';
+            }
+
         } catch (error) {
             console.error('Logout error:', error);
         }
