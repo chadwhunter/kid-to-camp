@@ -6,10 +6,25 @@ class ProfilePage {
     }
 
     async init() {
-        // Security check - redirect if not authenticated
-        if (!kidToCamp.currentUser) {
-            window.location.href = '/index.html';
+        // Wait for authentication to be fully initialized
+        if (!kidToCamp || !kidToCamp.supabase) {
+            // KidToCamp not initialized yet, wait a bit
+            setTimeout(() => this.init(), 100);
             return;
+        }
+
+        // Check for existing session
+        const { data: { session } } = await kidToCamp.supabase.auth.getSession();
+
+        if (!session) {
+            // No session, redirect to home
+            window.location.href = 'index.html';
+            return;
+        }
+
+        // Set current user if not already set
+        if (!kidToCamp.currentUser) {
+            kidToCamp.currentUser = session.user;
         }
 
         // Load and display user data
@@ -293,12 +308,21 @@ class ProfilePage {
 
 // Initialize profile page when DOM is loaded
 let profilePage;
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', async () => {
-        profilePage = new ProfilePage();
-        await profilePage.init();
-    });
-} else {
+
+// Wait for both DOM and KidToCamp to be ready
+const initProfilePage = async () => {
+    // Wait for KidToCamp to be initialized
+    if (!window.kidToCamp) {
+        setTimeout(initProfilePage, 100);
+        return;
+    }
+
     profilePage = new ProfilePage();
-    profilePage.init();
+    await profilePage.init();
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initProfilePage);
+} else {
+    initProfilePage();
 }
