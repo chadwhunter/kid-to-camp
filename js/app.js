@@ -158,11 +158,11 @@ class KidToCamp {
         const childData = {
             first_name: document.getElementById('childFirstName').value,
             last_name: document.getElementById('childLastName').value,
-            date_of_birth: document.getElementById('childDob').value,
+            birthdate: document.getElementById('childDob').value,
             interests: Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(cb => cb.value),
-            accommodations: Array.from(document.querySelectorAll('input[name="accommodations"]:checked')).map(cb => cb.value),
-            medical_notes: document.getElementById('medicalNotes').value,
-            emergency_contact_name: document.getElementById('emergencyContactName').value,
+            special_needs_list: Array.from(document.querySelectorAll('input[name="accommodations"]:checked')).map(cb => cb.value),
+            special_needs: document.getElementById('medicalNotes').value,
+            emergency_contact: document.getElementById('emergencyContactName').value,
             emergency_contact_phone: document.getElementById('emergencyContactPhone').value,
             parent_id: this.currentUser.id
         };
@@ -272,7 +272,7 @@ class KidToCamp {
 
     applyChildFilters(child) {
         // Set age range based on child's age
-        const age = this.calculateAge(child.date_of_birth);
+        const age = this.calculateAge(child.birthdate);
         const ageSelect = document.getElementById('ageRange');
         if (age >= 3 && age <= 5) ageSelect.value = '3-5';
         else if (age >= 6 && age <= 8) ageSelect.value = '6-8';
@@ -286,7 +286,7 @@ class KidToCamp {
 
         // Set accommodations
         document.querySelectorAll('.accommodation-grid input[type="checkbox"]').forEach(cb => {
-            cb.checked = child.accommodations?.includes(cb.value) || false;
+            cb.checked = child.special_needs_list?.includes(cb.value) || false;
         });
 
         // Select this child
@@ -538,7 +538,7 @@ KidToCamp.prototype.search = {
 
             // Calculate match score if child is selected
             if (selectedChild) {
-                const childAge = kidToCamp.calculateAge(selectedChild.date_of_birth);
+                const childAge = kidToCamp.calculateAge(selectedChild.birthdate);
 
                 // Age match
                 if (childAge >= camp.min_age && childAge <= camp.max_age) {
@@ -555,7 +555,7 @@ KidToCamp.prototype.search = {
                 }
 
                 // Accommodation match
-                const accommodationMatches = selectedChild.accommodations?.filter(acc =>
+                const accommodationMatches = selectedChild.special_needs_list?.filter(acc =>
                     camp.accommodations?.includes(acc)) || [];
                 if (accommodationMatches.length > 0) {
                     matchScore += accommodationMatches.length * 20;
