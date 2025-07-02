@@ -55,6 +55,7 @@ class ProfilePage {
         const user = kidToCamp.currentUser;
 
         // Display profile information
+        document.getElementById('currentEmail').textContent = kidToCamp.currentUser?.email || 'Not set';
         document.getElementById('displayName').textContent =
             profile?.first_name && profile?.last_name
                 ? `${profile.first_name} ${profile.last_name}`
@@ -143,7 +144,6 @@ class ProfilePage {
     }
     async handleProfileUpdate() {
         const profileData = {
-            email: kidToCamp.currentUser.email,
             first_name: document.getElementById('firstName').value,
             last_name: document.getElementById('lastName').value,
             phone: document.getElementById('phone').value,
@@ -167,6 +167,37 @@ class ProfilePage {
             kidToCamp.ui.showMessage('Profile updated successfully!', 'success');
             this.displayProfile();
             this.toggleProfileEdit();
+
+        } catch (error) {
+            kidToCamp.ui.showMessage(error.message, 'error');
+        }
+    }
+
+    // Add this method to ProfilePage class
+    async changeEmail() {
+        const newEmailInput = document.getElementById('newEmail');
+        const newEmail = newEmailInput.value.trim();
+        const currentEmail = kidToCamp.currentUser.email;
+
+        if (!newEmail) {
+            kidToCamp.ui.showMessage('Please enter a new email address.', 'error');
+            return;
+        }
+
+        if (newEmail === currentEmail) {
+            kidToCamp.ui.showMessage('This is already your current email address.', 'error');
+            return;
+        }
+
+        try {
+            const { error } = await kidToCamp.supabase.auth.updateUser({
+                email: newEmail
+            });
+
+            if (error) throw error;
+
+            kidToCamp.ui.showMessage('Verification emails sent! Check both email addresses to confirm the change.', 'success');
+            newEmailInput.value = ''; // Clear the input
 
         } catch (error) {
             kidToCamp.ui.showMessage(error.message, 'error');

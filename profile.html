@@ -112,6 +112,37 @@
                     </div>
                 </div>
 
+                <!-- Add this new section between profile and children sections -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h2>📧 Email Settings</h2>
+                    </div>
+
+                    <div class="email-settings">
+                        <div class="profile-item">
+                            <label>Current Email:</label>
+                            <span id="currentEmail">-</span>
+                        </div>
+                        <div class="email-change-form" style="margin-top: 1rem;">
+                            <div class="form-group">
+                                <label>Change Email Address</label>
+                                <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+                                    <div style="flex: 1;">
+                                        <input type="email" id="newEmail" placeholder="Enter new email address">
+                                    </div>
+                                    <button type="button" class="btn btn-primary" onclick="profilePage.changeEmail()">
+                                        Update Email
+                                    </button>
+                                </div>
+                                <small
+                                    style="color: rgba(255,255,255,0.7); font-size: 0.85rem; margin-top: 0.5rem; display: block;">
+                                    You'll receive verification emails at both your current and new email addresses
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Children Section -->
                 <div class="profile-section">
                     <div class="section-header">
