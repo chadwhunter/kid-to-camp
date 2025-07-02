@@ -329,9 +329,9 @@ class KidToCamp {
             // Update navigation for logged-in user
             navButtons.innerHTML = `
                 <span style="color: white; margin-right: 1rem;">Welcome, ${this.userProfile?.first_name || this.currentUser.email}!</span>
-                <button class="btn btn-outline" onclick="KidToCamp.ui.openModal('profileModal')">Profile</button>
+                <button class="btn btn-outline" onclick="kidToCamp.ui.openModal('profileModal')">Profile</button>
                 ${this.currentUser.user_metadata?.user_type === 'parent' ?
-                    '<button class="btn btn-outline" onclick="KidToCamp.ui.openModal(\'childProfileModal\')">Add Child</button>' : ''}
+                    '<button class="btn btn-outline" onclick="kidToCamp.ui.openModal(\'childProfileModal\')">Add Child</button>' : ''}
                 <button class="btn btn-primary" onclick="kidToCamp.logout()">Sign Out</button>
             `;
 
@@ -348,8 +348,8 @@ class KidToCamp {
         } else {
             // Reset to default for non-logged-in users
             navButtons.innerHTML = `
-                <a href="#" class="btn btn-outline" onclick="KidToCamp.ui.openModal('loginModal')">Sign In</a>
-                <a href="#" class="btn btn-primary" onclick="KidToCamp.ui.openModal('signupModal')">Get Started</a>
+                <a href="#" class="btn btn-outline" onclick="kidToCamp.ui.openModal('loginModal')">Sign In</a>
+                <a href="#" class="btn btn-primary" onclick="kidToCamp.ui.openModal('signupModal')">Get Started</a>
             `;
             searchTitle.textContent = '🗓️ Search Camps by Date';
         }
