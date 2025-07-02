@@ -144,6 +144,7 @@ class ProfilePage {
     }
     async handleProfileUpdate() {
         const profileData = {
+            user_type: kidToCamp.currentUser.user_metadata?.user_type || 'parent',
             first_name: document.getElementById('firstName').value,
             last_name: document.getElementById('lastName').value,
             phone: document.getElementById('phone').value,
