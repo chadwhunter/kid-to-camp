@@ -5,6 +5,8 @@ class ProfilePage {
         this.editingChildId = null;
     }
 
+
+
     async init() {
         // Wait for authentication to be fully initialized
         if (!kidToCamp || !kidToCamp.supabase) {
@@ -82,12 +84,12 @@ class ProfilePage {
 
         if (!kidToCamp.children || kidToCamp.children.length === 0) {
             container.innerHTML = `
-                <div class="empty-state">
-                    <h3>No children added yet</h3>
-                    <p>Add your first child to get personalized camp recommendations!</p>
-                    <button class="btn btn-primary" onclick="kidToCamp.ui.showAddChild()">Add Your First Child</button>
-                </div>
-            `;
+            <div class="empty-state">
+                <h3>No children added yet</h3>
+                <p>Add your first child to get personalized camp recommendations!</p>
+                <button class="btn btn-primary" onclick="profilePage.showAddChild()">Add Your First Child</button>
+            </div>
+        `;
             return;
         }
 
@@ -97,50 +99,48 @@ class ProfilePage {
             const accommodations = child.special_needs_list?.join(', ') || 'None needed';
 
             return `
-                <div class="child-card">
-                    <div class="child-header">
-                        <h3>${child.first_name} ${child.last_name}</h3>
-                        <div class="child-actions">
-                            <button class="btn btn-small btn-outline" onclick="profilePage.editChild('${child.id}')">
-                                Edit
-                            </button>
-                            <button class="btn btn-small btn-danger" onclick="profilePage.deleteChild('${child.id}', '${child.first_name}')">
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                    <div class="child-details">
-                        <div class="child-detail">
-                            <strong>Age:</strong> ${age} years old
-                        </div>
-                        <div class="child-detail">
-                            <strong>Birth Date:</strong> ${new Date(child.birthdate).toLocaleDateString()}
-                        </div>
-                        <div class="child-detail">
-                            <strong>Interests:</strong> ${interests}
-                        </div>
-                        <div class="child-detail">
-                            <strong>Accommodations:</strong> ${accommodations}
-                        </div>
-                        ${child.special_needs ? `
-                            <div class="child-detail">
-                                <strong>Medical Notes:</strong> ${child.special_needs}
-                            </div>
-                        ` : ''}
-                        ${child.emergency_contact ? `
-                            <div class="child-detail">
-                                <strong>Emergency Contact:</strong> ${child.emergency_contact}
-                                ${child.emergency_contact_phone ? ` (${child.emergency_contact_phone})` : ''}
-                            </div>
-                        ` : ''}
+            <div class="child-card">
+                <div class="child-header">
+                    <h3>${child.first_name || ''} ${child.last_name || ''}</h3>
+                    <div class="child-actions">
+                        <button class="btn btn-small btn-outline" onclick="profilePage.editChild('${child.id}')">
+                            Edit
+                        </button>
+                        <button class="btn btn-small btn-danger" onclick="profilePage.deleteChild('${child.id}', '${child.first_name || 'this child'}')">
+                            Delete
+                        </button>
                     </div>
                 </div>
-            `;
+                <div class="child-details">
+                    <div class="child-detail">
+                        <strong>Age:</strong> ${age} years old
+                    </div>
+                    <div class="child-detail">
+                        <strong>Birth Date:</strong> ${new Date(child.birthdate).toLocaleDateString()}
+                    </div>
+                    <div class="child-detail">
+                        <strong>Interests:</strong> ${interests}
+                    </div>
+                    <div class="child-detail">
+                        <strong>Accommodations:</strong> ${accommodations}
+                    </div>
+                    ${child.special_needs ? `
+                        <div class="child-detail">
+                            <strong>Medical Notes:</strong> ${child.special_needs}
+                        </div>
+                    ` : ''}
+                    ${child.emergency_contact ? `
+                        <div class="child-detail">
+                            <strong>Emergency Contact:</strong> ${child.emergency_contact}${child.emergency_contact_phone ? ` (${child.emergency_contact_phone})` : ''}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
         }).join('');
 
         container.innerHTML = childrenHTML;
     }
-
     async handleProfileUpdate() {
         const profileData = {
             email: kidToCamp.currentUser.email,
@@ -326,3 +326,13 @@ if (document.readyState === 'loading') {
 } else {
     initProfilePage();
 }
+
+// Make profile UI methods globally available for onclick handlers
+window.kidToCamp = window.kidToCamp || {};
+window.kidToCamp.ui = window.kidToCamp.ui || {};
+
+// Add profile-specific UI methods
+window.kidToCamp.ui.toggleProfileEdit = () => profilePage?.toggleProfileEdit();
+window.kidToCamp.ui.cancelProfileEdit = () => profilePage?.cancelProfileEdit();
+window.kidToCamp.ui.showAddChild = () => profilePage?.showAddChild();
+window.kidToCamp.ui.cancelAddChild = () => profilePage?.cancelAddChild();

@@ -333,6 +333,9 @@ class KidToCamp {
         const navButtons = document.getElementById('navButtons');
         const searchTitle = document.getElementById('searchTitle');
 
+        // Only update if elements exist (we're on the main page)
+        if (!navButtons) return;
+
         if (this.currentUser) {
             // Update navigation for logged-in user
             navButtons.innerHTML = `
@@ -341,8 +344,8 @@ class KidToCamp {
             <button class="btn btn-primary" onclick="kidToCamp.logout()">Sign Out</button>
         `;
 
-            // Update search title based on user type
-            if (this.currentUser.user_metadata?.user_type === 'parent') {
+            // Update search title based on user type (only if it exists)
+            if (searchTitle && this.currentUser.user_metadata?.user_type === 'parent') {
                 searchTitle.textContent = '🎯 Find Perfect Camps for Your Children';
             }
 
@@ -352,19 +355,22 @@ class KidToCamp {
             <a href="#" class="btn btn-outline" onclick="kidToCamp.ui.openModal('loginModal')">Sign In</a>
             <a href="#" class="btn btn-primary" onclick="kidToCamp.ui.openModal('signupModal')">Get Started</a>
         `;
-            searchTitle.textContent = '🗓️ Search Camps by Date';
+
+            if (searchTitle) {
+                searchTitle.textContent = '🗓️ Search Camps by Date';
+            }
         }
 
-        // Update enhanced filters visibility
+        // Update enhanced filters visibility (only if elements exist)
         const enhancedFilters = document.getElementById('enhancedFilters');
         const advancedToggle = document.getElementById('advancedToggle');
 
-        if (this.currentUser?.user_metadata?.user_type === 'parent') {
+        if (advancedToggle && this.currentUser?.user_metadata?.user_type === 'parent') {
             advancedToggle.textContent = '🎯 Smart Filters';
             if (this.children.length > 0) {
                 advancedToggle.style.display = 'block';
             }
-        } else {
+        } else if (advancedToggle) {
             advancedToggle.textContent = '🎯 Advanced Filters';
         }
     }
