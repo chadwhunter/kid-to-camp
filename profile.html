@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Kid To Camp</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <header>
+        <nav class="container">
+            <a href="index.html" class="logo">Kid To Camp</a>
+            <div class="nav-buttons" id="navButtons">
+                <a href="index.html" class="btn btn-outline">← Back to Search</a>
+                <button class="btn btn-primary" onclick="kidToCamp.logout()">Sign Out</button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="profile-page">
+            <div class="container">
+                <h1>My Profile</h1>
+
+                <!-- Parent Profile Section -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h2>👤 Parent Information</h2>
+                        <button class="btn btn-outline" id="editProfileBtn" onclick="kidToCamp.ui.toggleProfileEdit()">
+                            Edit Profile
+                        </button>
+                    </div>
+
+                    <!-- Profile Display -->
+                    <div id="profileDisplay" class="profile-display">
+                        <div class="profile-grid">
+                            <div class="profile-item">
+                                <label>Name:</label>
+                                <span id="displayName">-</span>
+                            </div>
+                            <div class="profile-item">
+                                <label>Email:</label>
+                                <span id="displayEmail">-</span>
+                            </div>
+                            <div class="profile-item">
+                                <label>Phone:</label>
+                                <span id="displayPhone">-</span>
+                            </div>
+                            <div class="profile-item">
+                                <label>Address:</label>
+                                <span id="displayAddress">-</span>
+                            </div>
+                            <div class="profile-item">
+                                <label>City:</label>
+                                <span id="displayCity">-</span>
+                            </div>
+                            <div class="profile-item">
+                                <label>State:</label>
+                                <span id="displayState">-</span>
+                            </div>
+                            <div class="profile-item">
+                                <label>ZIP:</label>
+                                <span id="displayZip">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Edit Form -->
+                    <div id="profileEdit" class="profile-edit" style="display: none;">
+                        <form id="profileForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>First Name</label>
+                                    <input type="text" id="firstName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Last Name</label>
+                                    <input type="text" id="lastName" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone</label>
+                                <input type="tel" id="phone">
+                            </div>
+                            <div class="form-group">
+                                <label>Address</label>
+                                <input type="text" id="address">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>City</label>
+                                    <input type="text" id="city">
+                                </div>
+                                <div class="form-group">
+                                    <label>State</label>
+                                    <input type="text" id="state" value="NC">
+                                </div>
+                                <div class="form-group">
+                                    <label>ZIP</label>
+                                    <input type="text" id="zip">
+                                </div>
+                            </div>
+                            <div class="form-buttons">
+                                <button type="button" class="btn btn-outline"
+                                    onclick="kidToCamp.ui.cancelProfileEdit()">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save Profile</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Children Section -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h2>👨‍👩‍👧‍👦 My Children</h2>
+                        <button class="btn btn-primary" onclick="kidToCamp.ui.showAddChild()">
+                            + Add Child
+                        </button>
+                    </div>
+
+                    <div id="childrenList" class="children-list">
+                        <!-- Children will be loaded here -->
+                    </div>
+
+                    <!-- Add Child Form -->
+                    <div id="addChildForm" class="child-form" style="display: none;">
+                        <h3 id="childFormTitle">Add New Child</h3>
+                        <form id="childProfileForm">
+                            <input type="hidden" id="childId" value="">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Child's First Name</label>
+                                    <input type="text" id="childFirstName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Child's Last Name</label>
+                                    <input type="text" id="childLastName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Date of Birth</label>
+                                    <input type="date" id="childDob" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Interests (Select all that apply)</label>
+                                <div class="checkbox-grid">
+                                    <label><input type="checkbox" name="interests" value="sports"> Sports</label>
+                                    <label><input type="checkbox" name="interests" value="arts"> Arts & Crafts</label>
+                                    <label><input type="checkbox" name="interests" value="stem"> STEM/Science</label>
+                                    <label><input type="checkbox" name="interests" value="nature">
+                                        Nature/Outdoors</label>
+                                    <label><input type="checkbox" name="interests" value="academic"> Academic</label>
+                                    <label><input type="checkbox" name="interests" value="music"> Music</label>
+                                    <label><input type="checkbox" name="interests" value="theater">
+                                        Theater/Drama</label>
+                                    <label><input type="checkbox" name="interests" value="cooking"> Cooking</label>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Required Accommodations</label>
+                                <div class="checkbox-grid">
+                                    <label><input type="checkbox" name="accommodations" value="wheelchair_accessible">
+                                        Requires wheelchair accessibility</label>
+                                    <label><input type="checkbox" name="accommodations" value="nut_free_environment">
+                                        Requires nut-free environment</label>
+                                    <label><input type="checkbox" name="accommodations" value="adhd_support"> ADHD
+                                        support needed</label>
+                                    <label><input type="checkbox" name="accommodations" value="autism_support"> Autism
+                                        spectrum support needed</label>
+                                    <label><input type="checkbox" name="accommodations" value="medical_needs"> Other
+                                        medical needs</label>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Medical Notes (Allergies, medications, etc.)</label>
+                                <textarea id="medicalNotes" rows="3"
+                                    placeholder="Any important medical information, allergies, or special instructions..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Emergency Contact Name</label>
+                                <input type="text" id="emergencyContactName"
+                                    placeholder="Emergency contact (if different from parent)">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Emergency Contact Phone</label>
+                                <input type="tel" id="emergencyContactPhone">
+                            </div>
+
+                            <div class="form-buttons">
+                                <button type="button" class="btn btn-outline"
+                                    onclick="kidToCamp.ui.cancelAddChild()">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save Child Profile</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h2>🎯 Quick Actions</h2>
+                    </div>
+                    <div class="quick-actions">
+                        <a href="index.html" class="action-card">
+                            <h3>🔍 Search Camps</h3>
+                            <p>Find the perfect camps for your children</p>
+                        </a>
+                        <div class="action-card" onclick="kidToCamp.ui.showAddChild()">
+                            <h3>👶 Add Another Child</h3>
+                            <p>Create profiles for all your children</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+
+</html>

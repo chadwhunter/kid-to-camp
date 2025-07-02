@@ -115,6 +115,14 @@ class KidToCamp {
 
             this.ui.closeModal('loginModal');
 
+            // Redirect to profile if no profile exists
+            setTimeout(async () => {
+                await this.loadUserData();
+                if (!this.userProfile) {
+                    window.location.href = 'profile.html';
+                }
+            }, 1000);
+
         } catch (error) {
             this.ui.showMessage(error.message, 'error');
         }
@@ -328,29 +336,22 @@ class KidToCamp {
         if (this.currentUser) {
             // Update navigation for logged-in user
             navButtons.innerHTML = `
-                <span style="color: white; margin-right: 1rem;">Welcome, ${this.userProfile?.first_name || this.currentUser.email}!</span>
-                <button class="btn btn-outline" onclick="kidToCamp.ui.openModal('profileModal')">Profile</button>
-                ${this.currentUser.user_metadata?.user_type === 'parent' ?
-                    '<button class="btn btn-outline" onclick="kidToCamp.ui.openModal(\'childProfileModal\')">Add Child</button>' : ''}
-                <button class="btn btn-primary" onclick="kidToCamp.logout()">Sign Out</button>
-            `;
+            <span style="color: white; margin-right: 1rem;">Welcome, ${this.userProfile?.first_name || this.currentUser.email}!</span>
+            <a href="profile.html" class="btn btn-outline">Profile</a>
+            <button class="btn btn-primary" onclick="kidToCamp.logout()">Sign Out</button>
+        `;
 
             // Update search title based on user type
             if (this.currentUser.user_metadata?.user_type === 'parent') {
                 searchTitle.textContent = '🎯 Find Perfect Camps for Your Children';
             }
 
-            // Show profile modal if profile incomplete
-            if (!this.userProfile && this.currentUser.user_metadata?.user_type === 'parent') {
-                setTimeout(() => this.ui.openModal('profileModal'), 1000);
-            }
-
         } else {
             // Reset to default for non-logged-in users
             navButtons.innerHTML = `
-                <a href="#" class="btn btn-outline" onclick="kidToCamp.ui.openModal('loginModal')">Sign In</a>
-                <a href="#" class="btn btn-primary" onclick="kidToCamp.ui.openModal('signupModal')">Get Started</a>
-            `;
+            <a href="#" class="btn btn-outline" onclick="kidToCamp.ui.openModal('loginModal')">Sign In</a>
+            <a href="#" class="btn btn-primary" onclick="kidToCamp.ui.openModal('signupModal')">Get Started</a>
+        `;
             searchTitle.textContent = '🗓️ Search Camps by Date';
         }
 

@@ -542,3 +542,234 @@
      color: white;
      border-color: #45a049;
  }
+
+ /* Profile Page Styles */
+ .profile-page {
+     padding: 2rem 0;
+     min-height: 80vh;
+ }
+
+ .profile-page h1 {
+     color: white;
+     margin-bottom: 2rem;
+     text-align: center;
+     font-size: 2.5rem;
+ }
+
+ .profile-section {
+     background: rgba(255, 255, 255, 0.1);
+     backdrop-filter: blur(10px);
+     border: 1px solid rgba(255, 255, 255, 0.2);
+     border-radius: 15px;
+     padding: 2rem;
+     margin-bottom: 2rem;
+ }
+
+ .section-header {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     margin-bottom: 1.5rem;
+     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+     padding-bottom: 1rem;
+ }
+
+ .section-header h2 {
+     color: white;
+     margin: 0;
+     font-size: 1.5rem;
+ }
+
+ /* Profile Display */
+ .profile-display {
+     color: white;
+ }
+
+ .profile-grid {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+     gap: 1rem;
+ }
+
+ .profile-item {
+     display: flex;
+     flex-direction: column;
+     gap: 0.25rem;
+ }
+
+ .profile-item label {
+     font-weight: 600;
+     opacity: 0.8;
+     font-size: 0.9rem;
+ }
+
+ .profile-item span {
+     font-size: 1.1rem;
+     padding: 0.5rem 0;
+ }
+
+ /* Profile Edit */
+ .profile-edit {
+     background: rgba(255, 255, 255, 0.05);
+     border-radius: 10px;
+     padding: 1.5rem;
+ }
+
+ /* Children List */
+ .children-list {
+     display: flex;
+     flex-direction: column;
+     gap: 1rem;
+ }
+
+ .empty-state {
+     text-align: center;
+     padding: 3rem 1rem;
+     color: white;
+ }
+
+ .empty-state h3 {
+     margin-bottom: 1rem;
+     opacity: 0.9;
+ }
+
+ .empty-state p {
+     margin-bottom: 2rem;
+     opacity: 0.7;
+ }
+
+ /* Child Cards */
+ .child-card {
+     background: rgba(255, 255, 255, 0.05);
+     border: 1px solid rgba(255, 255, 255, 0.1);
+     border-radius: 12px;
+     padding: 1.5rem;
+     color: white;
+ }
+
+ .child-header {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     margin-bottom: 1rem;
+     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+     padding-bottom: 1rem;
+ }
+
+ .child-header h3 {
+     margin: 0;
+     font-size: 1.3rem;
+ }
+
+ .child-actions {
+     display: flex;
+     gap: 0.5rem;
+ }
+
+ .child-details {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+     gap: 1rem;
+ }
+
+ .child-detail {
+     font-size: 0.95rem;
+     line-height: 1.4;
+ }
+
+ .child-detail strong {
+     display: inline-block;
+     min-width: 120px;
+     opacity: 0.8;
+ }
+
+ /* Child Form */
+ .child-form {
+     background: rgba(255, 255, 255, 0.05);
+     border-radius: 10px;
+     padding: 1.5rem;
+     margin-top: 1rem;
+ }
+
+ .child-form h3 {
+     color: white;
+     margin-bottom: 1.5rem;
+     text-align: center;
+ }
+
+ /* Quick Actions */
+ .quick-actions {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+     gap: 1rem;
+ }
+
+ .action-card {
+     background: rgba(255, 255, 255, 0.05);
+     border: 1px solid rgba(255, 255, 255, 0.1);
+     border-radius: 12px;
+     padding: 1.5rem;
+     text-decoration: none;
+     color: white;
+     cursor: pointer;
+     transition: all 0.3s ease;
+ }
+
+ .action-card:hover {
+     background: rgba(255, 255, 255, 0.1);
+     transform: translateY(-2px);
+ }
+
+ .action-card h3 {
+     margin: 0 0 0.5rem 0;
+     font-size: 1.2rem;
+ }
+
+ .action-card p {
+     margin: 0;
+     opacity: 0.8;
+     font-size: 0.95rem;
+ }
+
+ /* Button Variants */
+ .btn-small {
+     padding: 0.4rem 0.8rem;
+     font-size: 0.85rem;
+ }
+
+ .btn-danger {
+     background: #dc3545;
+     color: white;
+ }
+
+ .btn-danger:hover {
+     background: #c82333;
+ }
+
+ /* Responsive */
+ @media (max-width: 768px) {
+     .section-header {
+         flex-direction: column;
+         gap: 1rem;
+         align-items: stretch;
+     }
+
+     .child-header {
+         flex-direction: column;
+         gap: 1rem;
+         align-items: stretch;
+     }
+
+     .child-actions {
+         justify-content: center;
+     }
+
+     .profile-grid,
+     .child-details {
+         grid-template-columns: 1fr;
+     }
+
+     .quick-actions {
+         grid-template-columns: 1fr;
+     }
+ }
