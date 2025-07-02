@@ -133,7 +133,7 @@ class KidToCamp {
 
         try {
             const { error } = await this.supabase
-                .from('user_profiles')
+                .from('profiles')
                 .upsert({
                     id: this.currentUser.id,
                     ...profileData
@@ -171,12 +171,12 @@ class KidToCamp {
             let result;
             if (isEditing) {
                 result = await this.supabase
-                    .from('children')
+                    .from('child_profiles')
                     .update(childData)
                     .eq('id', childId);
             } else {
                 result = await this.supabase
-                    .from('children')
+                    .from('child_profiles')
                     .insert(childData);
             }
 
@@ -197,7 +197,7 @@ class KidToCamp {
         try {
             // Load user profile
             const { data: profile } = await this.supabase
-                .from('user_profiles')
+                .from('profiles')
                 .select('*')
                 .eq('id', this.currentUser.id)
                 .single();
@@ -219,7 +219,7 @@ class KidToCamp {
     async loadChildren() {
         try {
             const { data: children } = await this.supabase
-                .from('children')
+                .from('child_profiles')
                 .select('*')
                 .eq('parent_id', this.currentUser.id);
 
