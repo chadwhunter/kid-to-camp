@@ -431,18 +431,41 @@ KidToCamp.prototype.ui = {
     },
 
     showMessage(message, type = 'info') {
+        // Create or get message container
+        let container = document.getElementById('messageContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'messageContainer';
+            container.className = 'message-container';
+            document.body.appendChild(container);
+        }
+
         // Create message element
         const messageDiv = document.createElement('div');
         messageDiv.className = `${type}-message`;
         messageDiv.textContent = message;
 
-        // Insert at top of page
-        document.body.insertBefore(messageDiv, document.body.firstChild);
+        // Add to container (newest at top)
+        container.insertBefore(messageDiv, container.firstChild);
 
-        // Remove after 5 seconds
+        // Auto-remove after 4 seconds with animation
         setTimeout(() => {
-            messageDiv.remove();
-        }, 5000);
+            messageDiv.classList.add('message-exit');
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+                // Remove container if empty
+                if (container.children.length === 0) {
+                    container.remove();
+                }
+            }, 300); // Wait for animation
+        }, 4000);
+
+        // Limit to max 3 messages at once
+        while (container.children.length > 3) {
+            container.lastChild.remove();
+        }
     },
 
     toggleAdvancedFilters() {

@@ -773,3 +773,84 @@
          grid-template-columns: 1fr;
      }
  }
+
+ /* Better Message Notifications */
+ .message-container {
+     position: fixed;
+     top: 20px;
+     right: 20px;
+     z-index: 9999;
+     max-width: 400px;
+     pointer-events: none;
+ }
+
+ .success-message,
+ .error-message,
+ .info-message {
+     position: relative;
+     margin-bottom: 10px;
+     padding: 12px 16px;
+     border-radius: 8px;
+     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+     backdrop-filter: blur(10px);
+     border-left: 4px solid;
+     animation: slideInRight 0.3s ease-out;
+     pointer-events: auto;
+     max-width: 100%;
+     word-wrap: break-word;
+ }
+
+ .success-message {
+     background: rgba(76, 175, 80, 0.9);
+     color: white;
+     border-left-color: #4CAF50;
+ }
+
+ .error-message {
+     background: rgba(244, 67, 54, 0.9);
+     color: white;
+     border-left-color: #f44336;
+ }
+
+ .info-message {
+     background: rgba(33, 150, 243, 0.9);
+     color: white;
+     border-left-color: #2196F3;
+ }
+
+ @keyframes slideInRight {
+     from {
+         transform: translateX(100%);
+         opacity: 0;
+     }
+
+     to {
+         transform: translateX(0);
+         opacity: 1;
+     }
+ }
+
+ .message-exit {
+     animation: slideOutRight 0.3s ease-in;
+ }
+
+ @keyframes slideOutRight {
+     from {
+         transform: translateX(0);
+         opacity: 1;
+     }
+
+     to {
+         transform: translateX(100%);
+         opacity: 0;
+     }
+ }
+
+ /* Mobile responsive */
+ @media (max-width: 768px) {
+     .message-container {
+         right: 10px;
+         left: 10px;
+         max-width: none;
+     }
+ }
