@@ -410,7 +410,11 @@ class FamilyCalendar {
     }
 
     getBookingsForDate(date) {
-        const dateStr = date.toISOString().split('T')[0];
+        // Fix timezone issue - use local date string instead of ISO string
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
 
         const matchingBookings = this.bookings.filter(booking => {
             if (!booking.camp_schedules) {
@@ -422,15 +426,15 @@ class FamilyCalendar {
             const startDate = schedule.start_date;
             const endDate = schedule.end_date;
 
-            // Debug logging
-            if (dateStr === '2025-07-07' || dateStr === '2025-07-08' || dateStr === '2025-07-09') {
-                console.log(`Checking date ${dateStr} against booking:`, {
+            // Debug logging for the first few days of July
+            if (dateStr >= '2025-07-06' && dateStr <= '2025-07-12') {
+                console.log(`🔍 Checking ${dateStr} against booking:`, {
                     bookingId: booking.id,
-                    childId: booking.child_id,
+                    child: booking.child_profiles?.first_name,
+                    camp: booking.camps?.name,
                     startDate,
                     endDate,
-                    dateInRange: dateStr >= startDate && dateStr <= endDate,
-                    daysOfWeek: schedule.days_of_week
+                    dateInRange: dateStr >= startDate && dateStr <= endDate
                 });
             }
 
@@ -439,7 +443,9 @@ class FamilyCalendar {
                 // TEMPORARY: Disable days_of_week check to show bookings
                 // TODO: Fix the days_of_week array comparison
 
-                console.log(`✅ MATCH FOUND for ${dateStr}: Booking ${booking.id} (${booking.child_profiles?.first_name})`);
+                if (dateStr >= '2025-07-06' && dateStr <= '2025-07-12') {
+                    console.log(`✅ MATCH FOUND for ${dateStr}: ${booking.child_profiles?.first_name} at ${booking.camps?.name}`);
+                }
                 return true;
 
                 /* ORIGINAL CODE - COMMENTED OUT FOR NOW
