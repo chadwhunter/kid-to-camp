@@ -708,23 +708,38 @@ document.addEventListener('DOMContentLoaded', () => {
 // Make KidToCamp globally available for inline event handlers
 window.KidToCamp = KidToCamp;
 
-// Replace the debug code at the end of your app.js with this:
+// Debug and fix for both calendar and main pages
 console.log('🔧 app.js finished executing');
 console.log('🔧 kidToCamp created:', !!window.kidToCamp);
 console.log('🔧 CONFIG available:', !!window.CONFIG);
 
-// Force create kidToCamp immediately for calendar page
-if (window.location.pathname.includes('calendar.html')) {
-    console.log('🔧 Calendar page detected, creating kidToCamp immediately...');
-    kidToCamp = new KidToCamp();
-    window.kidToCamp = kidToCamp;
-    console.log('🔧 kidToCamp created for calendar:', !!window.kidToCamp);
-} else {
-    // Ensure kidToCamp is available globally on other pages too
-    if (typeof kidToCamp !== 'undefined') {
+// Create CONFIG if it doesn't exist (for non-calendar pages)
+if (!window.CONFIG) {
+    console.log('🔧 CONFIG missing, creating it...');
+    window.CONFIG = {
+        supabase: {
+            url: 'https://jjrvkntowkmdfbejlnwk.supabase.co',
+            key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqcnZrbnRvd2ttZGZiZWpsbndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNjc5OTgsImV4cCI6MjA2NTc0Mzk5OH0.Ng0lYJAki_FeJK2_fAR5w95SZJ-7-BHzpkMbNm4uKuM'
+        },
+        app: {
+            name: 'Kid To Camp',
+            version: '1.0.0'
+        }
+    };
+    console.log('🔧 CONFIG created');
+}
+
+// Force create kidToCamp if it doesn't exist
+if (typeof kidToCamp === 'undefined' || !kidToCamp) {
+    console.log('🔧 Creating kidToCamp...');
+    try {
+        kidToCamp = new KidToCamp();
         window.kidToCamp = kidToCamp;
-        console.log('🔧 kidToCamp assigned to window');
-    } else {
-        console.error('🔧 kidToCamp variable not found in app.js');
+        console.log('🔧 kidToCamp created successfully:', !!window.kidToCamp);
+    } catch (error) {
+        console.error('🔧 Error creating kidToCamp:', error);
     }
+} else {
+    window.kidToCamp = kidToCamp;
+    console.log('🔧 kidToCamp already exists, assigned to window');
 }
