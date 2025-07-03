@@ -1,6 +1,7 @@
 // Family Calendar functionality
 class FamilyCalendar {
     constructor() {
+        // Default to current date
         this.currentDate = new Date();
         this.currentView = 'month';
         this.bookings = [];
@@ -13,21 +14,32 @@ class FamilyCalendar {
             '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
             '#DDA0DD', '#FFB6C1', '#87CEEB', '#F0E68C', '#FFA07A'
         ];
+
+        console.log('FamilyCalendar constructor - Current date set to:', this.currentDate);
     }
 
     async init() {
+        console.log('Calendar init started...');
+
         // Wait for KidToCamp to be initialized
         if (!window.kidToCamp || !kidToCamp.supabase) {
+            console.log('KidToCamp not ready, waiting...');
             setTimeout(() => this.init(), 100);
             return;
         }
 
-        // Check authentication
+        console.log('KidToCamp is ready, checking session...');
+
+        // Check for existing session
         const { data: { session } } = await kidToCamp.supabase.auth.getSession();
+
         if (!session) {
+            console.log('No session found, redirecting to home');
             window.location.href = 'index.html';
             return;
         }
+
+        console.log('Session found, user:', session.user.email);
 
         // Set current user if not already set
         if (!kidToCamp.currentUser) {
@@ -35,28 +47,44 @@ class FamilyCalendar {
         }
 
         // Load data
+        console.log('Loading calendar data...');
         await this.loadData();
+
+        console.log('Assigning child colors...');
         this.assignChildColors();
+
+        console.log('Rendering calendar...');
         this.render();
+
+        console.log('Setting up event listeners...');
         this.setupEventListeners();
+
+        console.log('Calendar initialization complete!');
     }
 
     async loadData() {
         try {
+            console.log('Loading user data...');
             // Load user data if not already loaded
             if (!kidToCamp.children || kidToCamp.children.length === 0) {
                 await kidToCamp.loadUserData();
             }
+            console.log('Children loaded:', kidToCamp.children?.length || 0);
 
-            // Load bookings
+            // Load bookings (don't fail if none exist)
+            console.log('Loading bookings...');
             await this.loadBookings();
+            console.log('Bookings loaded:', this.bookings.length);
 
-            // Load camps
+            // Load camps (don't fail if none exist)
+            console.log('Loading camps...');
             await this.loadCamps();
+            console.log('Camps loaded:', this.camps.length);
 
         } catch (error) {
             console.error('Error loading calendar data:', error);
-            kidToCamp.ui.showMessage('Error loading calendar data', 'error');
+            // Don't show error for empty data - calendar should still work
+            console.log('Calendar will display with available data');
         }
     }
 
@@ -72,11 +100,16 @@ class FamilyCalendar {
                 `)
                 .eq('parent_id', kidToCamp.currentUser.id);
 
-            if (error) throw error;
+            if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+                throw error;
+            }
+
             this.bookings = bookings || [];
+            console.log('Bookings loaded successfully:', this.bookings.length);
 
         } catch (error) {
             console.error('Error loading bookings:', error);
+            this.bookings = []; // Ensure it's always an array
         }
     }
 
@@ -90,20 +123,28 @@ class FamilyCalendar {
                 `)
                 .order('name');
 
-            if (error) throw error;
+            if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+                throw error;
+            }
+
             this.camps = camps || [];
+            console.log('Camps loaded successfully:', this.camps.length);
 
         } catch (error) {
             console.error('Error loading camps:', error);
+            this.camps = []; // Ensure it's always an array
         }
     }
 
     assignChildColors() {
-        kidToCamp.children.forEach((child, index) => {
-            if (!this.childColors[child.id]) {
-                this.childColors[child.id] = this.CHILD_COLORS[index % this.CHILD_COLORS.length];
-            }
-        });
+        // Only assign colors if there are children
+        if (kidToCamp.children && kidToCamp.children.length > 0) {
+            kidToCamp.children.forEach((child, index) => {
+                if (!this.childColors[child.id]) {
+                    this.childColors[child.id] = this.CHILD_COLORS[index % this.CHILD_COLORS.length];
+                }
+            });
+        }
     }
 
     setupEventListeners() {
@@ -157,7 +198,7 @@ class FamilyCalendar {
         if (!kidToCamp.children || kidToCamp.children.length === 0) {
             legendContainer.innerHTML = `
                 <div class="empty-legend">
-                    <p>No children added yet. <a href="profile.html">Add children to your profile</a> to start booking camps!</p>
+                    <p>📝 No children added yet. <a href="profile.html">Add children to your profile</a> to start booking camps!</p>
                 </div>
             `;
             return;
@@ -165,10 +206,12 @@ class FamilyCalendar {
 
         const legendHTML = kidToCamp.children.map(child => {
             const color = this.childColors[child.id];
+            const bookingCount = this.bookings.filter(b => b.child_id === child.id).length;
             return `
                 <div class="child-legend-item">
                     <div class="color-indicator" style="background-color: ${color}"></div>
                     <span>${child.first_name} ${child.last_name}</span>
+                    <small style="opacity: 0.7; margin-left: 0.5rem;">(${bookingCount} booking${bookingCount !== 1 ? 's' : ''})</small>
                 </div>
             `;
         }).join('');
@@ -268,33 +311,41 @@ class FamilyCalendar {
     }
 
     renderDayBookings(bookings) {
+        if (!bookings || bookings.length === 0) {
+            return '';
+        }
+
         return bookings.map(booking => {
-            const child = kidToCamp.children.find(c => c.id === booking.child_id);
-            const color = this.childColors[booking.child_id];
+            const child = kidToCamp.children?.find(c => c.id === booking.child_id);
+            const color = this.childColors[booking.child_id] || '#ccc';
 
             return `
                 <div class="booking-item" 
                      style="background-color: ${color}; color: white;"
                      onclick="event.stopPropagation(); familyCalendar.showBookingDetails('${booking.id}')"
-                     title="${child?.first_name} - ${booking.camps?.name}">
-                    ${child?.first_name}
+                     title="${child?.first_name || 'Child'} - ${booking.camps?.name || 'Camp'}">
+                    ${child?.first_name || 'Booking'}
                 </div>
             `;
         }).join('');
     }
 
     renderWeekDayBookings(bookings) {
+        if (!bookings || bookings.length === 0) {
+            return '';
+        }
+
         return bookings.map(booking => {
-            const child = kidToCamp.children.find(c => c.id === booking.child_id);
-            const color = this.childColors[booking.child_id];
+            const child = kidToCamp.children?.find(c => c.id === booking.child_id);
+            const color = this.childColors[booking.child_id] || '#ccc';
 
             return `
                 <div class="week-booking-item" 
                      style="background-color: ${color}; color: white;"
                      onclick="event.stopPropagation(); familyCalendar.showBookingDetails('${booking.id}')"
-                     title="${child?.first_name} - ${booking.camps?.name}">
-                    <div class="booking-child">${child?.first_name}</div>
-                    <div class="booking-camp">${booking.camps?.name}</div>
+                     title="${child?.first_name || 'Child'} - ${booking.camps?.name || 'Camp'}">
+                    <div class="booking-child">${child?.first_name || 'Child'}</div>
+                    <div class="booking-camp">${booking.camps?.name || 'Camp'}</div>
                 </div>
             `;
         }).join('');
@@ -378,34 +429,59 @@ class FamilyCalendar {
     }
 
     showAddBooking() {
+        // Check if we have children first
+        if (!kidToCamp.children || kidToCamp.children.length === 0) {
+            kidToCamp.ui?.showMessage('Please add children to your profile first before booking camps.', 'error');
+            setTimeout(() => {
+                window.location.href = 'profile.html';
+            }, 2000);
+            return;
+        }
+
+        // Check if we have camps
+        if (!this.camps || this.camps.length === 0) {
+            kidToCamp.ui?.showMessage('No camps are currently available for booking.', 'error');
+            return;
+        }
+
         // Populate children dropdown
         const childSelect = document.getElementById('bookingChild');
-        childSelect.innerHTML = '<option value="">Select a child...</option>';
+        if (childSelect) {
+            childSelect.innerHTML = '<option value="">Select a child...</option>';
 
-        kidToCamp.children.forEach(child => {
-            const option = document.createElement('option');
-            option.value = child.id;
-            option.textContent = `${child.first_name} ${child.last_name}`;
-            childSelect.appendChild(option);
-        });
+            kidToCamp.children.forEach(child => {
+                const option = document.createElement('option');
+                option.value = child.id;
+                option.textContent = `${child.first_name} ${child.last_name}`;
+                childSelect.appendChild(option);
+            });
+        }
 
         // Populate camp schedules dropdown
         const campSelect = document.getElementById('bookingCamp');
-        campSelect.innerHTML = '<option value="">Select a camp session...</option>';
+        if (campSelect) {
+            campSelect.innerHTML = '<option value="">Select a camp session...</option>';
 
-        this.camps.forEach(camp => {
-            if (camp.camp_schedules && camp.camp_schedules.length > 0) {
-                camp.camp_schedules.forEach(schedule => {
-                    const option = document.createElement('option');
-                    option.value = schedule.id;
-                    const startDate = new Date(schedule.start_date).toLocaleDateString();
-                    const endDate = new Date(schedule.end_date).toLocaleDateString();
-                    const timeInfo = schedule.start_time ? ` (${schedule.start_time} - ${schedule.end_time})` : '';
-                    option.textContent = `${camp.name} - ${startDate} to ${endDate}${timeInfo} (${schedule.available_spots} spots)`;
-                    campSelect.appendChild(option);
-                });
+            this.camps.forEach(camp => {
+                if (camp.camp_schedules && camp.camp_schedules.length > 0) {
+                    camp.camp_schedules.forEach(schedule => {
+                        const option = document.createElement('option');
+                        option.value = schedule.id;
+                        const startDate = new Date(schedule.start_date).toLocaleDateString();
+                        const endDate = new Date(schedule.end_date).toLocaleDateString();
+                        const timeInfo = schedule.start_time ? ` (${schedule.start_time} - ${schedule.end_time})` : '';
+                        const spotsInfo = schedule.available_spots ? ` (${schedule.available_spots} spots)` : '';
+                        option.textContent = `${camp.name} - ${startDate} to ${endDate}${timeInfo}${spotsInfo}`;
+                        campSelect.appendChild(option);
+                    });
+                }
+            });
+
+            // Show message if no camp sessions available
+            if (campSelect.children.length === 1) {
+                campSelect.innerHTML = '<option value="">No camp sessions currently available</option>';
             }
-        });
+        }
 
         this.ui.openModal('addBookingModal');
     }
@@ -568,18 +644,38 @@ FamilyCalendar.prototype.ui = {
 let familyCalendar;
 
 const initFamilyCalendar = async () => {
+    console.log('Initializing family calendar...');
+
     // Wait for KidToCamp to be initialized
     if (!window.kidToCamp) {
+        console.log('Waiting for kidToCamp...');
         setTimeout(initFamilyCalendar, 100);
         return;
     }
 
-    familyCalendar = new FamilyCalendar();
-    await familyCalendar.init();
+    try {
+        familyCalendar = new FamilyCalendar();
+        window.familyCalendar = familyCalendar; // Make it globally accessible
+        console.log('FamilyCalendar created:', familyCalendar);
+
+        await familyCalendar.init();
+        console.log('FamilyCalendar initialized successfully');
+    } catch (error) {
+        console.error('Error initializing calendar:', error);
+    }
 };
 
+// Ensure DOM is loaded first
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initFamilyCalendar);
 } else {
     initFamilyCalendar();
 }
+
+// Backup - try again after a short delay
+setTimeout(() => {
+    if (!window.familyCalendar) {
+        console.log('Calendar not initialized, retrying...');
+        initFamilyCalendar();
+    }
+}, 1000);
