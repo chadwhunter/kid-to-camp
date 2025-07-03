@@ -436,26 +436,44 @@ class FamilyCalendar {
 
             // Check if date falls within the schedule range
             if (dateStr >= startDate && dateStr <= endDate) {
+                // TEMPORARY: Disable days_of_week check to show bookings
+                // TODO: Fix the days_of_week array comparison
+
+                console.log(`✅ MATCH FOUND for ${dateStr}: Booking ${booking.id} (${booking.child_profiles?.first_name})`);
+                return true;
+
+                /* ORIGINAL CODE - COMMENTED OUT FOR NOW
                 // If days_of_week is specified, check if current day matches
                 if (schedule.days_of_week && schedule.days_of_week.length > 0) {
                     const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
-
+                    
                     // Handle case where days_of_week might be a string instead of array
                     let daysArray = schedule.days_of_week;
                     if (typeof daysArray === 'string') {
                         daysArray = daysArray.split(',').map(d => parseInt(d.trim()));
                     }
-
+                    
                     const dayMatches = daysArray.includes(dayOfWeek);
-
+                    
                     if (dateStr === '2025-07-07' || dateStr === '2025-07-08' || dateStr === '2025-07-09') {
-                        console.log(`Day check for ${dateStr}: dayOfWeek=${dayOfWeek}, daysOfWeek=${daysArray}, type=${typeof daysArray}, matches=${dayMatches}`);
+                        console.log(`Day check for ${dateStr}:`, {
+                            dayOfWeek,
+                            daysArray,
+                            arrayType: typeof daysArray,
+                            arrayIsArray: Array.isArray(daysArray),
+                            arrayContents: JSON.stringify(daysArray),
+                            firstElement: daysArray[0],
+                            firstElementType: typeof daysArray[0],
+                            includes: daysArray.includes(dayOfWeek),
+                            indexOfDay: daysArray.indexOf(dayOfWeek)
+                        });
                     }
-
+                    
                     return dayMatches;
                 }
                 // If no days_of_week specified, assume all days in range
                 return true;
+                */
             }
             return false;
         });
