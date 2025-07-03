@@ -90,31 +90,22 @@ class FamilyCalendar {
 
     async loadBookings() {
         try {
-            // First, try with the full join
-            let { data: bookings, error } = await kidToCamp.supabase
+            // Simple query first - no joins since foreign keys aren't set up
+            const { data: bookings, error } = await kidToCamp.supabase
                 .from('bookings')
-                .select(`
-                    *,
-                    child_profiles!bookings_child_id_fkey(first_name, last_name),
-                    camps!bookings_camp_id_fkey(name, location),
-                    camp_schedules!bookings_schedule_id_fkey(start_date, end_date, start_time, end_time, days_of_week)
-                `)
+                .select('*')
                 .eq('parent_id', kidToCamp.currentUser.id);
 
-            // If that fails, try a simpler query
             if (error) {
-                console.log('Full join failed, trying simple query...', error);
-                const result = await kidToCamp.supabase
-                    .from('bookings')
-                    .select('*')
-                    .eq('parent_id', kidToCamp.currentUser.id);
+                throw error;
+            }
 
-                bookings = result.data;
-                error = result.error;
+            this.bookings = bookings || [];
 
-                if (!error && bookings && bookings.length > 0) {
-                    // Manually fetch related data for each booking
-                    for (let booking of bookings) {
+            // If we have bookings, manually fetch related data
+            if (this.bookings.length > 0) {
+                for (let booking of this.bookings) {
+                    try {
                         // Get child info
                         const { data: child } = await kidToCamp.supabase
                             .from('child_profiles')
@@ -138,15 +129,12 @@ class FamilyCalendar {
                             .eq('id', booking.schedule_id)
                             .single();
                         booking.camp_schedules = schedule;
+                    } catch (relatedError) {
+                        console.warn('Error loading related data for booking:', booking.id, relatedError);
                     }
                 }
             }
 
-            if (error && error.code !== 'PGRST116') {
-                throw error;
-            }
-
-            this.bookings = bookings || [];
             console.log('Bookings loaded successfully:', this.bookings.length);
 
         } catch (error) {
@@ -157,43 +145,34 @@ class FamilyCalendar {
 
     async loadCamps() {
         try {
-            // First try with join
-            let { data: camps, error } = await kidToCamp.supabase
+            // Simple query without the 'price' column since it doesn't exist
+            const { data: camps, error } = await kidToCamp.supabase
                 .from('camps')
-                .select(`
-                    id, name, location, price,
-                    camp_schedules!camp_schedules_camp_id_fkey(id, start_date, end_date, start_time, end_time, available_spots)
-                `)
+                .select('id, name, location')
                 .order('name');
 
-            // If join fails, try simple query
             if (error) {
-                console.log('Camp join failed, trying simple query...', error);
-                const result = await kidToCamp.supabase
-                    .from('camps')
-                    .select('id, name, location, price')
-                    .order('name');
+                throw error;
+            }
 
-                camps = result.data;
-                error = result.error;
+            this.camps = camps || [];
 
-                if (!error && camps && camps.length > 0) {
-                    // Manually fetch schedules for each camp
-                    for (let camp of camps) {
+            // If we have camps, manually fetch their schedules
+            if (this.camps.length > 0) {
+                for (let camp of this.camps) {
+                    try {
                         const { data: schedules } = await kidToCamp.supabase
                             .from('camp_schedules')
                             .select('id, start_date, end_date, start_time, end_time, available_spots')
                             .eq('camp_id', camp.id);
                         camp.camp_schedules = schedules || [];
+                    } catch (scheduleError) {
+                        console.warn('Error loading schedules for camp:', camp.id, scheduleError);
+                        camp.camp_schedules = [];
                     }
                 }
             }
 
-            if (error && error.code !== 'PGRST116') {
-                throw error;
-            }
-
-            this.camps = camps || [];
             console.log('Camps loaded successfully:', this.camps.length);
 
         } catch (error) {
