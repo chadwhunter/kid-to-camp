@@ -137,6 +137,19 @@ class FamilyCalendar {
 
             console.log('Bookings loaded successfully:', this.bookings.length);
 
+            // Debug: Log first booking to see structure
+            if (this.bookings.length > 0) {
+                console.log('Sample booking structure:', this.bookings[0]);
+                console.log('All booking dates:', this.bookings.map(b => ({
+                    id: b.id,
+                    child: b.child_profiles?.first_name,
+                    camp: b.camps?.name,
+                    startDate: b.camp_schedules?.start_date,
+                    endDate: b.camp_schedules?.end_date,
+                    daysOfWeek: b.camp_schedules?.days_of_week
+                })));
+            }
+
         } catch (error) {
             console.error('Error loading bookings:', error);
             this.bookings = [];
@@ -398,25 +411,53 @@ class FamilyCalendar {
 
     getBookingsForDate(date) {
         const dateStr = date.toISOString().split('T')[0];
-        return this.bookings.filter(booking => {
-            if (!booking.camp_schedules) return false;
+
+        const matchingBookings = this.bookings.filter(booking => {
+            if (!booking.camp_schedules) {
+                console.log('Booking missing schedule:', booking.id);
+                return false;
+            }
 
             const schedule = booking.camp_schedules;
             const startDate = schedule.start_date;
             const endDate = schedule.end_date;
+
+            // Debug logging
+            if (dateStr === '2025-07-07' || dateStr === '2025-07-08' || dateStr === '2025-07-09') {
+                console.log(`Checking date ${dateStr} against booking:`, {
+                    bookingId: booking.id,
+                    childId: booking.child_id,
+                    startDate,
+                    endDate,
+                    dateInRange: dateStr >= startDate && dateStr <= endDate,
+                    daysOfWeek: schedule.days_of_week
+                });
+            }
 
             // Check if date falls within the schedule range
             if (dateStr >= startDate && dateStr <= endDate) {
                 // If days_of_week is specified, check if current day matches
                 if (schedule.days_of_week && schedule.days_of_week.length > 0) {
                     const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
-                    return schedule.days_of_week.includes(dayOfWeek);
+                    const dayMatches = schedule.days_of_week.includes(dayOfWeek);
+
+                    if (dateStr === '2025-07-07' || dateStr === '2025-07-08' || dateStr === '2025-07-09') {
+                        console.log(`Day check for ${dateStr}: dayOfWeek=${dayOfWeek}, daysOfWeek=${schedule.days_of_week}, matches=${dayMatches}`);
+                    }
+
+                    return dayMatches;
                 }
                 // If no days_of_week specified, assume all days in range
                 return true;
             }
             return false;
         });
+
+        if (matchingBookings.length > 0 && (dateStr === '2025-07-07' || dateStr === '2025-07-08' || dateStr === '2025-07-09')) {
+            console.log(`Found ${matchingBookings.length} bookings for ${dateStr}:`, matchingBookings);
+        }
+
+        return matchingBookings;
     }
 
     isToday(date) {
