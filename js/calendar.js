@@ -1,0 +1,585 @@
+// Family Calendar functionality
+class FamilyCalendar {
+    constructor() {
+        this.currentDate = new Date();
+        this.currentView = 'month';
+        this.bookings = [];
+        this.camps = [];
+        this.childColors = {};
+        this.currentBooking = null;
+
+        // Predefined colors for children
+        this.CHILD_COLORS = [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+            '#DDA0DD', '#FFB6C1', '#87CEEB', '#F0E68C', '#FFA07A'
+        ];
+    }
+
+    async init() {
+        // Wait for KidToCamp to be initialized
+        if (!window.kidToCamp || !kidToCamp.supabase) {
+            setTimeout(() => this.init(), 100);
+            return;
+        }
+
+        // Check authentication
+        const { data: { session } } = await kidToCamp.supabase.auth.getSession();
+        if (!session) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        // Set current user if not already set
+        if (!kidToCamp.currentUser) {
+            kidToCamp.currentUser = session.user;
+        }
+
+        // Load data
+        await this.loadData();
+        this.assignChildColors();
+        this.render();
+        this.setupEventListeners();
+    }
+
+    async loadData() {
+        try {
+            // Load user data if not already loaded
+            if (!kidToCamp.children || kidToCamp.children.length === 0) {
+                await kidToCamp.loadUserData();
+            }
+
+            // Load bookings
+            await this.loadBookings();
+
+            // Load camps
+            await this.loadCamps();
+
+        } catch (error) {
+            console.error('Error loading calendar data:', error);
+            kidToCamp.ui.showMessage('Error loading calendar data', 'error');
+        }
+    }
+
+    async loadBookings() {
+        try {
+            const { data: bookings, error } = await kidToCamp.supabase
+                .from('bookings')
+                .select(`
+                    *,
+                    child_profiles(first_name, last_name),
+                    camps(name, location),
+                    camp_schedules(start_date, end_date, start_time, end_time, days_of_week)
+                `)
+                .eq('parent_id', kidToCamp.currentUser.id);
+
+            if (error) throw error;
+            this.bookings = bookings || [];
+
+        } catch (error) {
+            console.error('Error loading bookings:', error);
+        }
+    }
+
+    async loadCamps() {
+        try {
+            const { data: camps, error } = await kidToCamp.supabase
+                .from('camps')
+                .select(`
+                    id, name, location, price,
+                    camp_schedules(id, start_date, end_date, start_time, end_time, available_spots)
+                `)
+                .order('name');
+
+            if (error) throw error;
+            this.camps = camps || [];
+
+        } catch (error) {
+            console.error('Error loading camps:', error);
+        }
+    }
+
+    assignChildColors() {
+        kidToCamp.children.forEach((child, index) => {
+            if (!this.childColors[child.id]) {
+                this.childColors[child.id] = this.CHILD_COLORS[index % this.CHILD_COLORS.length];
+            }
+        });
+    }
+
+    setupEventListeners() {
+        // Booking form submission
+        document.getElementById('bookingForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleAddBooking();
+        });
+
+        // Modal close on outside click
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                this.ui.closeModal(e.target.id);
+            }
+        });
+    }
+
+    render() {
+        this.updatePeriodDisplay();
+        this.renderChildrenLegend();
+
+        if (this.currentView === 'month') {
+            this.renderMonthView();
+        } else {
+            this.renderWeekView();
+        }
+    }
+
+    updatePeriodDisplay() {
+        const periodElement = document.getElementById('currentPeriod');
+
+        if (this.currentView === 'month') {
+            const monthYear = this.currentDate.toLocaleDateString('en-US', {
+                month: 'long',
+                year: 'numeric'
+            });
+            periodElement.textContent = monthYear;
+        } else {
+            const startOfWeek = this.getStartOfWeek(this.currentDate);
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(endOfWeek.getDate() + 6);
+
+            const weekRange = `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+            periodElement.textContent = weekRange;
+        }
+    }
+
+    renderChildrenLegend() {
+        const legendContainer = document.getElementById('childrenLegend');
+
+        if (!kidToCamp.children || kidToCamp.children.length === 0) {
+            legendContainer.innerHTML = `
+                <div class="empty-legend">
+                    <p>No children added yet. <a href="profile.html">Add children to your profile</a> to start booking camps!</p>
+                </div>
+            `;
+            return;
+        }
+
+        const legendHTML = kidToCamp.children.map(child => {
+            const color = this.childColors[child.id];
+            return `
+                <div class="child-legend-item">
+                    <div class="color-indicator" style="background-color: ${color}"></div>
+                    <span>${child.first_name} ${child.last_name}</span>
+                </div>
+            `;
+        }).join('');
+
+        legendContainer.innerHTML = legendHTML;
+    }
+
+    renderMonthView() {
+        const headerContainer = document.getElementById('calendarHeader');
+        const gridContainer = document.getElementById('calendarGrid');
+
+        // Render day headers
+        const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        headerContainer.innerHTML = dayHeaders.map(day =>
+            `<div class="day-header">${day}</div>`
+        ).join('');
+
+        // Get month data
+        const year = this.currentDate.getFullYear();
+        const month = this.currentDate.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startDate = new Date(firstDay);
+        startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+        // Render calendar grid
+        let gridHTML = '';
+        let currentDate = new Date(startDate);
+
+        for (let week = 0; week < 6; week++) {
+            for (let day = 0; day < 7; day++) {
+                const isCurrentMonth = currentDate.getMonth() === month;
+                const isToday = this.isToday(currentDate);
+                const dayBookings = this.getBookingsForDate(currentDate);
+
+                gridHTML += `
+                    <div class="calendar-day ${isCurrentMonth ? 'current-month' : 'other-month'} ${isToday ? 'today' : ''}"
+                         onclick="familyCalendar.handleDayClick('${currentDate.toISOString().split('T')[0]}')">
+                        <div class="day-number">${currentDate.getDate()}</div>
+                        <div class="day-bookings">
+                            ${this.renderDayBookings(dayBookings)}
+                        </div>
+                    </div>
+                `;
+
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+        }
+
+        gridContainer.innerHTML = gridHTML;
+    }
+
+    renderWeekView() {
+        const headerContainer = document.getElementById('calendarHeader');
+        const gridContainer = document.getElementById('calendarGrid');
+
+        const startOfWeek = this.getStartOfWeek(this.currentDate);
+        const dayHeaders = [];
+        const currentDate = new Date(startOfWeek);
+
+        // Create day headers for week view
+        for (let i = 0; i < 7; i++) {
+            const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'short' });
+            const dayNumber = currentDate.getDate();
+            dayHeaders.push(`
+                <div class="day-header week-header">
+                    <div>${dayName}</div>
+                    <div class="day-number">${dayNumber}</div>
+                </div>
+            `);
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        headerContainer.innerHTML = dayHeaders.join('');
+
+        // Render week grid
+        currentDate.setTime(startOfWeek.getTime());
+        let gridHTML = '';
+
+        for (let i = 0; i < 7; i++) {
+            const isToday = this.isToday(currentDate);
+            const dayBookings = this.getBookingsForDate(currentDate);
+
+            gridHTML += `
+                <div class="calendar-day week-day ${isToday ? 'today' : ''}"
+                     onclick="familyCalendar.handleDayClick('${currentDate.toISOString().split('T')[0]}')">
+                    <div class="week-day-bookings">
+                        ${this.renderWeekDayBookings(dayBookings)}
+                    </div>
+                </div>
+            `;
+
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        gridContainer.innerHTML = gridHTML;
+    }
+
+    renderDayBookings(bookings) {
+        return bookings.map(booking => {
+            const child = kidToCamp.children.find(c => c.id === booking.child_id);
+            const color = this.childColors[booking.child_id];
+
+            return `
+                <div class="booking-item" 
+                     style="background-color: ${color}; color: white;"
+                     onclick="event.stopPropagation(); familyCalendar.showBookingDetails('${booking.id}')"
+                     title="${child?.first_name} - ${booking.camps?.name}">
+                    ${child?.first_name}
+                </div>
+            `;
+        }).join('');
+    }
+
+    renderWeekDayBookings(bookings) {
+        return bookings.map(booking => {
+            const child = kidToCamp.children.find(c => c.id === booking.child_id);
+            const color = this.childColors[booking.child_id];
+
+            return `
+                <div class="week-booking-item" 
+                     style="background-color: ${color}; color: white;"
+                     onclick="event.stopPropagation(); familyCalendar.showBookingDetails('${booking.id}')"
+                     title="${child?.first_name} - ${booking.camps?.name}">
+                    <div class="booking-child">${child?.first_name}</div>
+                    <div class="booking-camp">${booking.camps?.name}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    getBookingsForDate(date) {
+        const dateStr = date.toISOString().split('T')[0];
+        return this.bookings.filter(booking => {
+            if (!booking.camp_schedules) return false;
+
+            const schedule = booking.camp_schedules;
+            const startDate = schedule.start_date;
+            const endDate = schedule.end_date;
+
+            // Check if date falls within the schedule range
+            if (dateStr >= startDate && dateStr <= endDate) {
+                // If days_of_week is specified, check if current day matches
+                if (schedule.days_of_week && schedule.days_of_week.length > 0) {
+                    const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+                    return schedule.days_of_week.includes(dayOfWeek);
+                }
+                // If no days_of_week specified, assume all days in range
+                return true;
+            }
+            return false;
+        });
+    }
+
+    isToday(date) {
+        const today = new Date();
+        return date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear();
+    }
+
+    getStartOfWeek(date) {
+        const result = new Date(date);
+        result.setDate(result.getDate() - result.getDay());
+        return result;
+    }
+
+    // Navigation methods
+    setView(view) {
+        this.currentView = view;
+
+        // Update button states
+        document.getElementById('monthViewBtn').classList.toggle('active', view === 'month');
+        document.getElementById('weekViewBtn').classList.toggle('active', view === 'week');
+
+        this.render();
+    }
+
+    previousPeriod() {
+        if (this.currentView === 'month') {
+            this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+        } else {
+            this.currentDate.setDate(this.currentDate.getDate() - 7);
+        }
+        this.render();
+    }
+
+    nextPeriod() {
+        if (this.currentView === 'month') {
+            this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+        } else {
+            this.currentDate.setDate(this.currentDate.getDate() + 7);
+        }
+        this.render();
+    }
+
+    goToToday() {
+        this.currentDate = new Date();
+        this.render();
+    }
+
+    // Event handlers
+    handleDayClick(dateStr) {
+        document.getElementById('bookingStartDate').value = dateStr;
+        document.getElementById('bookingEndDate').value = dateStr;
+        this.showAddBooking();
+    }
+
+    showAddBooking() {
+        // Populate children dropdown
+        const childSelect = document.getElementById('bookingChild');
+        childSelect.innerHTML = '<option value="">Select a child...</option>';
+
+        kidToCamp.children.forEach(child => {
+            const option = document.createElement('option');
+            option.value = child.id;
+            option.textContent = `${child.first_name} ${child.last_name}`;
+            childSelect.appendChild(option);
+        });
+
+        // Populate camp schedules dropdown
+        const campSelect = document.getElementById('bookingCamp');
+        campSelect.innerHTML = '<option value="">Select a camp session...</option>';
+
+        this.camps.forEach(camp => {
+            if (camp.camp_schedules && camp.camp_schedules.length > 0) {
+                camp.camp_schedules.forEach(schedule => {
+                    const option = document.createElement('option');
+                    option.value = schedule.id;
+                    const startDate = new Date(schedule.start_date).toLocaleDateString();
+                    const endDate = new Date(schedule.end_date).toLocaleDateString();
+                    const timeInfo = schedule.start_time ? ` (${schedule.start_time} - ${schedule.end_time})` : '';
+                    option.textContent = `${camp.name} - ${startDate} to ${endDate}${timeInfo} (${schedule.available_spots} spots)`;
+                    campSelect.appendChild(option);
+                });
+            }
+        });
+
+        this.ui.openModal('addBookingModal');
+    }
+
+    async handleAddBooking() {
+        const scheduleId = document.getElementById('bookingCamp').value;
+
+        // Find the selected camp and schedule for camp_id
+        let selectedCampId = null;
+        for (const camp of this.camps) {
+            if (camp.camp_schedules) {
+                const schedule = camp.camp_schedules.find(s => s.id === scheduleId);
+                if (schedule) {
+                    selectedCampId = camp.id;
+                    break;
+                }
+            }
+        }
+
+        if (!selectedCampId) {
+            kidToCamp.ui.showMessage('Invalid camp selection', 'error');
+            return;
+        }
+
+        const bookingData = {
+            parent_id: kidToCamp.currentUser.id,
+            child_id: document.getElementById('bookingChild').value,
+            camp_id: selectedCampId,
+            schedule_id: scheduleId,
+            status: 'confirmed'
+        };
+
+        try {
+            const { error } = await kidToCamp.supabase
+                .from('bookings')
+                .insert(bookingData);
+
+            if (error) throw error;
+
+            kidToCamp.ui.showMessage('Booking added successfully!', 'success');
+            this.ui.closeModal('addBookingModal');
+            await this.loadBookings();
+            this.render();
+
+        } catch (error) {
+            console.error('Error adding booking:', error);
+            kidToCamp.ui.showMessage(error.message, 'error');
+        }
+    }
+
+    showBookingDetails(bookingId) {
+        const booking = this.bookings.find(b => b.id === bookingId);
+        if (!booking) return;
+
+        this.currentBooking = booking;
+        const child = kidToCamp.children.find(c => c.id === booking.child_id);
+        const color = this.childColors[booking.child_id];
+        const schedule = booking.camp_schedules;
+
+        const timeInfo = schedule.start_time && schedule.end_time
+            ? `${schedule.start_time} - ${schedule.end_time}`
+            : 'All day';
+
+        const daysInfo = schedule.days_of_week && schedule.days_of_week.length > 0
+            ? this.formatDaysOfWeek(schedule.days_of_week)
+            : 'Every day';
+
+        const detailsHTML = `
+            <div class="booking-details">
+                <div class="booking-header" style="background-color: ${color}; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <h3>${child?.first_name} ${child?.last_name}</h3>
+                    <p>${booking.camps?.name}</p>
+                </div>
+                
+                <div class="booking-info">
+                    <div class="info-item">
+                        <strong>Camp:</strong> ${booking.camps?.name}
+                    </div>
+                    <div class="info-item">
+                        <strong>Location:</strong> ${booking.camps?.location}
+                    </div>
+                    <div class="info-item">
+                        <strong>Start Date:</strong> ${new Date(schedule.start_date).toLocaleDateString()}
+                    </div>
+                    <div class="info-item">
+                        <strong>End Date:</strong> ${new Date(schedule.end_date).toLocaleDateString()}
+                    </div>
+                    <div class="info-item">
+                        <strong>Time:</strong> ${timeInfo}
+                    </div>
+                    <div class="info-item">
+                        <strong>Schedule:</strong> ${daysInfo}
+                    </div>
+                    <div class="info-item">
+                        <strong>Status:</strong> <span class="status-badge ${booking.status}">${booking.status}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('bookingDetailsContent').innerHTML = detailsHTML;
+        this.ui.openModal('bookingDetailsModal');
+    }
+
+    formatDaysOfWeek(daysArray) {
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        return daysArray.map(day => dayNames[day]).join(', ');
+    }
+
+    async deleteCurrentBooking() {
+        if (!this.currentBooking) return;
+
+        if (!confirm('Are you sure you want to delete this booking? This cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const { error } = await kidToCamp.supabase
+                .from('bookings')
+                .delete()
+                .eq('id', this.currentBooking.id);
+
+            if (error) throw error;
+
+            kidToCamp.ui.showMessage('Booking deleted successfully', 'success');
+            this.ui.closeModal('bookingDetailsModal');
+            await this.loadBookings();
+            this.render();
+
+        } catch (error) {
+            console.error('Error deleting booking:', error);
+            kidToCamp.ui.showMessage(error.message, 'error');
+        }
+    }
+}
+
+// UI Helper Methods
+FamilyCalendar.prototype.ui = {
+    openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'block';
+        }
+    },
+
+    closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+        }
+
+        // Reset forms when closing
+        if (modalId === 'addBookingModal') {
+            document.getElementById('bookingForm').reset();
+        }
+    }
+};
+
+// Initialize calendar
+let familyCalendar;
+
+const initFamilyCalendar = async () => {
+    // Wait for KidToCamp to be initialized
+    if (!window.kidToCamp) {
+        setTimeout(initFamilyCalendar, 100);
+        return;
+    }
+
+    familyCalendar = new FamilyCalendar();
+    await familyCalendar.init();
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFamilyCalendar);
+} else {
+    initFamilyCalendar();
+}

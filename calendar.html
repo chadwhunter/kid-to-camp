@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Calendar - Kid To Camp</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <header>
+        <nav class="container">
+            <a href="index.html" class="logo">Kid To Camp</a>
+            <div class="nav-buttons" id="navButtons">
+                <a href="index.html" class="btn btn-outline">🔍 Search</a>
+                <a href="profile.html" class="btn btn-outline">👤 Profile</a>
+                <button class="btn btn-primary" onclick="kidToCamp.logout()">Sign Out</button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="calendar-page">
+            <div class="container">
+                <h1>📅 Family Calendar</h1>
+
+                <!-- Calendar Controls -->
+                <div class="calendar-controls">
+                    <div class="view-controls">
+                        <button class="btn btn-outline active" id="monthViewBtn"
+                            onclick="familyCalendar.setView('month')">
+                            Month View
+                        </button>
+                        <button class="btn btn-outline" id="weekViewBtn" onclick="familyCalendar.setView('week')">
+                            Week View
+                        </button>
+                    </div>
+
+                    <div class="month-navigation">
+                        <button class="nav-btn" onclick="familyCalendar.previousPeriod()">
+                            ← Previous
+                        </button>
+                        <h2 id="currentPeriod">January 2025</h2>
+                        <button class="nav-btn" onclick="familyCalendar.nextPeriod()">
+                            Next →
+                        </button>
+                        <button class="btn btn-outline" onclick="familyCalendar.goToToday()">
+                            Today
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Children Legend -->
+                <div class="children-legend" id="childrenLegend">
+                    <!-- Children color legend will be populated here -->
+                </div>
+
+                <!-- Calendar Grid -->
+                <div class="calendar-container">
+                    <div class="calendar-header" id="calendarHeader">
+                        <!-- Day headers will be populated here -->
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- Calendar days will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="calendar-actions">
+                    <button class="btn btn-primary" onclick="familyCalendar.showAddBooking()">
+                        + Add New Booking
+                    </button>
+                    <a href="index.html" class="btn btn-outline">
+                        🔍 Search More Camps
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Add Booking Modal -->
+    <div id="addBookingModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="familyCalendar.ui.closeModal('addBookingModal')">&times;</span>
+            <h2>Add Camp Booking</h2>
+            <form id="bookingForm">
+                <div class="form-group">
+                    <label>Child</label>
+                    <select id="bookingChild" required>
+                        <option value="">Select a child...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Camp Session</label>
+                    <select id="bookingCamp" required>
+                        <option value="">Select a camp session...</option>
+                    </select>
+                    <small style="color: #666; font-size: 0.85rem; margin-top: 0.5rem; display: block;">
+                        Choose from available camp sessions with their dates and times
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes (Optional)</label>
+                    <textarea id="bookingNotes" rows="3" placeholder="Any special notes or instructions..."></textarea>
+                </div>
+
+                <div class="form-buttons">
+                    <button type="button" class="btn btn-outline"
+                        onclick="familyCalendar.ui.closeModal('addBookingModal')">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Add Booking
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Booking Details Modal -->
+    <div id="bookingDetailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="familyCalendar.ui.closeModal('bookingDetailsModal')">&times;</span>
+            <h2>Booking Details</h2>
+            <div id="bookingDetailsContent">
+                <!-- Booking details will be populated here -->
+            </div>
+            <div class="form-buttons">
+                <button type="button" class="btn btn-outline"
+                    onclick="familyCalendar.ui.closeModal('bookingDetailsModal')">
+                    Close
+                </button>
+                <button type="button" class="btn btn-danger" id="deleteBookingBtn"
+                    onclick="familyCalendar.deleteCurrentBooking()">
+                    Delete Booking
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/calendar.js"></script>
+</body>
+
+</html>

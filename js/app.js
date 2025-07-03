@@ -338,9 +338,11 @@ class KidToCamp {
 
         if (this.currentUser) {
             // Update navigation for logged-in user
+            // Updated navigation for logged-in user
             navButtons.innerHTML = `
             <span style="color: white; margin-right: 1rem;">Welcome, ${this.userProfile?.first_name || this.currentUser.email}!</span>
-            <a href="profile.html" class="btn btn-outline">Profile</a>
+            <a href="calendar.html" class="btn btn-outline">📅 Calendar</a>
+            <a href="profile.html" class="btn btn-outline">👤 Profile</a>
             <button class="btn btn-primary" onclick="kidToCamp.logout()">Sign Out</button>
         `;
 
