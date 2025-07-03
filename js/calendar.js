@@ -468,8 +468,8 @@ class FamilyCalendar {
 
     // Event handlers
     handleDayClick(dateStr) {
-        document.getElementById('bookingStartDate').value = dateStr;
-        document.getElementById('bookingEndDate').value = dateStr;
+        // Store the selected date for when the modal opens
+        this.selectedDate = dateStr;
         this.showAddBooking();
     }
 
@@ -528,7 +528,19 @@ class FamilyCalendar {
             }
         }
 
+        // Open the modal
         this.ui.openModal('addBookingModal');
+
+        // Set the selected date if we have one (from day click)
+        if (this.selectedDate) {
+            const startDateInput = document.getElementById('bookingStartDate');
+            const endDateInput = document.getElementById('bookingEndDate');
+
+            // Note: These inputs don't exist in the current form since we removed them
+            // This is for future use if you want to add date inputs back
+            if (startDateInput) startDateInput.value = this.selectedDate;
+            if (endDateInput) endDateInput.value = this.selectedDate;
+        }
     }
 
     async handleAddBooking() {
