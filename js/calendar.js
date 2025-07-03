@@ -137,17 +137,14 @@ class FamilyCalendar {
 
             console.log('Bookings loaded successfully:', this.bookings.length);
 
-            // Debug: Log first booking to see structure
+            // Debug: First let's see what the first booking actually contains
             if (this.bookings.length > 0) {
-                console.log('Sample booking structure:', this.bookings[0]);
-                console.log('All booking dates:', this.bookings.map(b => ({
-                    id: b.id,
-                    child: b.child_profiles?.first_name,
-                    camp: b.camps?.name,
-                    startDate: b.camp_schedules?.start_date,
-                    endDate: b.camp_schedules?.end_date,
-                    daysOfWeek: b.camp_schedules?.days_of_week
-                })));
+                console.log('🔍 FIRST BOOKING DEBUG:', {
+                    booking: this.bookings[0],
+                    schedule: this.bookings[0].camp_schedules,
+                    startDate: this.bookings[0].camp_schedules?.start_date,
+                    endDate: this.bookings[0].camp_schedules?.end_date
+                });
             }
 
         } catch (error) {
@@ -439,12 +436,13 @@ class FamilyCalendar {
 
             // Debug logging for the first few days of July
             if (dateStr >= '2025-07-06' && dateStr <= '2025-07-12') {
-                console.log(`🔍 Checking ${dateStr} against booking:`, {
+                console.log(`🔍 Checking ${dateStr} (${date.toDateString()}) against booking:`, {
                     bookingId: booking.id,
                     child: booking.child_profiles?.first_name,
                     camp: booking.camps?.name,
                     startDate,
                     endDate,
+                    dateStrComparison: `${dateStr} >= ${startDate} && ${dateStr} <= ${endDate}`,
                     dateInRange: dateStr >= startDate && dateStr <= endDate
                 });
             }
@@ -689,6 +687,22 @@ class FamilyCalendar {
             ? this.formatDaysOfWeek(schedule.days_of_week)
             : 'Every day';
 
+        // Fix timezone issue in date display - use the raw date strings from database
+        const startDate = schedule.start_date; // Keep as YYYY-MM-DD string
+        const endDate = schedule.end_date; // Keep as YYYY-MM-DD string
+
+        // Convert to readable format without timezone conversion
+        const startDateFormatted = new Date(startDate + 'T00:00:00').toLocaleDateString();
+        const endDateFormatted = new Date(endDate + 'T00:00:00').toLocaleDateString();
+
+        console.log('🔍 Booking details debug:', {
+            bookingId,
+            rawStartDate: startDate,
+            rawEndDate: endDate,
+            formattedStart: startDateFormatted,
+            formattedEnd: endDateFormatted
+        });
+
         const detailsHTML = `
             <div class="booking-details">
                 <div class="booking-header" style="background-color: ${color}; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
@@ -704,10 +718,10 @@ class FamilyCalendar {
                         <strong>Location:</strong> ${booking.camps?.location}
                     </div>
                     <div class="info-item">
-                        <strong>Start Date:</strong> ${new Date(schedule.start_date).toLocaleDateString()}
+                        <strong>Start Date:</strong> ${startDateFormatted}
                     </div>
                     <div class="info-item">
-                        <strong>End Date:</strong> ${new Date(schedule.end_date).toLocaleDateString()}
+                        <strong>End Date:</strong> ${endDateFormatted}
                     </div>
                     <div class="info-item">
                         <strong>Time:</strong> ${timeInfo}
