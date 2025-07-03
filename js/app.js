@@ -708,15 +708,23 @@ document.addEventListener('DOMContentLoaded', () => {
 // Make KidToCamp globally available for inline event handlers
 window.KidToCamp = KidToCamp;
 
-// Debug: Add this to the end of your app.js file
+// Replace the debug code at the end of your app.js with this:
 console.log('🔧 app.js finished executing');
 console.log('🔧 kidToCamp created:', !!window.kidToCamp);
 console.log('🔧 CONFIG available:', !!window.CONFIG);
 
-// Ensure kidToCamp is available globally
-if (typeof kidToCamp !== 'undefined') {
+// Force create kidToCamp immediately for calendar page
+if (window.location.pathname.includes('calendar.html')) {
+    console.log('🔧 Calendar page detected, creating kidToCamp immediately...');
+    kidToCamp = new KidToCamp();
     window.kidToCamp = kidToCamp;
-    console.log('🔧 kidToCamp assigned to window');
+    console.log('🔧 kidToCamp created for calendar:', !!window.kidToCamp);
 } else {
-    console.error('🔧 kidToCamp variable not found in app.js');
+    // Ensure kidToCamp is available globally on other pages too
+    if (typeof kidToCamp !== 'undefined') {
+        window.kidToCamp = kidToCamp;
+        console.log('🔧 kidToCamp assigned to window');
+    } else {
+        console.error('🔧 kidToCamp variable not found in app.js');
+    }
 }
