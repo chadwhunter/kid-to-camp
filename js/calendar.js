@@ -746,28 +746,43 @@ class FamilyCalendar {
     }
 
     async deleteCurrentBooking() {
-        if (!this.currentBooking) return;
+        if (!this.currentBooking) {
+            console.error('No current booking to delete');
+            return;
+        }
 
         if (!confirm('Are you sure you want to delete this booking? This cannot be undone.')) {
             return;
         }
 
+        console.log('🗑️ Attempting to delete booking:', this.currentBooking.id);
+
         try {
-            const { error } = await kidToCamp.supabase
+            const { data, error } = await kidToCamp.supabase
                 .from('bookings')
                 .delete()
                 .eq('id', this.currentBooking.id);
 
-            if (error) throw error;
+            console.log('🗑️ Delete result:', { data, error });
+
+            if (error) {
+                console.error('Delete error details:', error);
+                throw error;
+            }
 
             kidToCamp.ui.showMessage('Booking deleted successfully', 'success');
             this.ui.closeModal('bookingDetailsModal');
+
+            // Reload bookings and re-render calendar
+            console.log('🔄 Reloading bookings and re-rendering...');
             await this.loadBookings();
             this.render();
 
+            console.log('✅ Calendar updated after deletion');
+
         } catch (error) {
             console.error('Error deleting booking:', error);
-            kidToCamp.ui.showMessage(error.message, 'error');
+            kidToCamp.ui.showMessage(`Error deleting booking: ${error.message}`, 'error');
         }
     }
 }
