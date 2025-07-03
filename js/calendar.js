@@ -642,40 +642,92 @@ FamilyCalendar.prototype.ui = {
 
 // Initialize calendar
 let familyCalendar;
+let initAttempts = 0;
+let initTimer = null;
+const MAX_INIT_ATTEMPTS = 20; // Reduced to 2 seconds max
 
-const initFamilyCalendar = async () => {
-    console.log('Initializing family calendar...');
+const initFamilyCalendar = () => {
+    // Clear any existing timer
+    if (initTimer) {
+        clearTimeout(initTimer);
+        initTimer = null;
+    }
 
-    // Wait for KidToCamp to be initialized
-    if (!window.kidToCamp) {
-        console.log('Waiting for kidToCamp...');
-        setTimeout(initFamilyCalendar, 100);
+    initAttempts++;
+
+    // Stop the infinite loop after max attempts
+    if (initAttempts > MAX_INIT_ATTEMPTS) {
+        console.error('STOPPING: Failed to initialize calendar after 20 attempts');
+        console.log('Debug info:');
+        console.log('- window.kidToCamp exists:', !!window.kidToCamp);
+        console.log('- CONFIG exists:', !!window.CONFIG);
+        console.log('- Current URL:', window.location.href);
+
+        // Show error message on page
+        const container = document.querySelector('.container');
+        if (container) {
+            container.innerHTML = `
+                <div style="background: rgba(255,255,255,0.9); padding: 2rem; border-radius: 10px; margin-top: 2rem;">
+                    <h2 style="color: #dc3545;">Calendar Loading Failed</h2>
+                    <p>Unable to initialize the calendar. This might be because:</p>
+                    <ul style="text-align: left; margin: 1rem 0;">
+                        <li>You're not logged in</li>
+                        <li>There's a script loading issue</li>
+                        <li>Network connectivity problem</li>
+                    </ul>
+                    <p>
+                        <a href="index.html" class="btn btn-primary">← Return to Home</a>
+                        <button onclick="window.location.reload()" class="btn btn-outline">🔄 Reload Page</button>
+                    </p>
+                </div>
+            `;
+        }
         return;
     }
 
-    try {
-        familyCalendar = new FamilyCalendar();
-        window.familyCalendar = familyCalendar; // Make it globally accessible
-        console.log('FamilyCalendar created:', familyCalendar);
+    // Check for basic requirements
+    if (!window.CONFIG) {
+        console.log(`Attempt ${initAttempts}: CONFIG not loaded yet...`);
+        initTimer = setTimeout(initFamilyCalendar, 200);
+        return;
+    }
 
-        await familyCalendar.init();
-        console.log('FamilyCalendar initialized successfully');
+    if (!window.kidToCamp) {
+        console.log(`Attempt ${initAttempts}: kidToCamp not created yet...`);
+        initTimer = setTimeout(initFamilyCalendar, 200);
+        return;
+    }
+
+    if (!window.kidToCamp.supabase) {
+        console.log(`Attempt ${initAttempts}: kidToCamp.supabase not ready...`);
+        initTimer = setTimeout(initFamilyCalendar, 200);
+        return;
+    }
+
+    // Everything looks good, try to initialize
+    try {
+        console.log('✅ All requirements met, creating calendar...');
+        familyCalendar = new FamilyCalendar();
+        window.familyCalendar = familyCalendar;
+
+        // Initialize asynchronously
+        familyCalendar.init().then(() => {
+            console.log('✅ Calendar initialized successfully!');
+        }).catch(error => {
+            console.error('❌ Calendar initialization failed:', error);
+        });
+
     } catch (error) {
-        console.error('Error initializing calendar:', error);
+        console.error('❌ Error creating calendar:', error);
+        initTimer = setTimeout(initFamilyCalendar, 500);
     }
 };
 
-// Ensure DOM is loaded first
+// Start initialization when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initFamilyCalendar);
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(initFamilyCalendar, 100);
+    });
 } else {
-    initFamilyCalendar();
+    setTimeout(initFamilyCalendar, 100);
 }
-
-// Backup - try again after a short delay
-setTimeout(() => {
-    if (!window.familyCalendar) {
-        console.log('Calendar not initialized, retrying...');
-        initFamilyCalendar();
-    }
-}, 1000);
