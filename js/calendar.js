@@ -305,9 +305,20 @@ class FamilyCalendar {
                 const isToday = this.isToday(currentDate);
                 const dayBookings = this.getBookingsForDate(currentDate);
 
+                // Create a proper date string for the onclick handler (fixing timezone issue here too)
+                const year = currentDate.getFullYear();
+                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                const day = String(currentDate.getDate()).padStart(2, '0');
+                const dateStr = `${year}-${month}-${day}`;
+
+                // Debug logging for first week of July
+                if (currentDate.getFullYear() === 2025 && currentDate.getMonth() === 6 && currentDate.getDate() <= 12) {
+                    console.log(`📅 Rendering calendar day ${currentDate.getDate()}: dateStr=${dateStr}, bookings=${dayBookings.length}`);
+                }
+
                 gridHTML += `
                     <div class="calendar-day ${isCurrentMonth ? 'current-month' : 'other-month'} ${isToday ? 'today' : ''}"
-                         onclick="familyCalendar.handleDayClick('${currentDate.toISOString().split('T')[0]}')">
+                         onclick="familyCalendar.handleDayClick('${dateStr}')">
                         <div class="day-number">${currentDate.getDate()}</div>
                         <div class="day-bookings">
                             ${this.renderDayBookings(dayBookings)}
