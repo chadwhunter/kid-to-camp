@@ -707,3 +707,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Make KidToCamp globally available for inline event handlers
 window.KidToCamp = KidToCamp;
+
+// Debug: Add this to the end of your app.js file
+console.log('🔧 app.js finished executing');
+console.log('🔧 kidToCamp created:', !!window.kidToCamp);
+console.log('🔧 CONFIG available:', !!window.CONFIG);
+
+// Ensure kidToCamp is available globally
+if (typeof kidToCamp !== 'undefined') {
+    window.kidToCamp = kidToCamp;
+    console.log('🔧 kidToCamp assigned to window');
+} else {
+    console.error('🔧 kidToCamp variable not found in app.js');
+}

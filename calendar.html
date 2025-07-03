@@ -142,43 +142,56 @@
         </div>
     </div>
 
-    <!-- Load scripts in correct order with error handling -->
+    <!-- Inline the config and use direct script tags -->
     <script>
-        // Debug script loading
-        console.log('Starting script loading...');
-
-        // Load config.js first
-        const configScript = document.createElement('script');
-        configScript.src = 'js/config.js';
-        configScript.onload = () => {
-            console.log('✅ config.js loaded, CONFIG exists:', !!window.CONFIG);
-
-            // Load app.js after config
-            const appScript = document.createElement('script');
-            appScript.src = 'js/app.js';
-            appScript.onload = () => {
-                console.log('✅ app.js loaded, kidToCamp exists:', !!window.kidToCamp);
-
-                // Load calendar.js after app
-                const calendarScript = document.createElement('script');
-                calendarScript.src = 'js/calendar.js';
-                calendarScript.onload = () => {
-                    console.log('✅ calendar.js loaded');
-                };
-                calendarScript.onerror = (e) => {
-                    console.error('❌ Failed to load calendar.js:', e);
-                };
-                document.head.appendChild(calendarScript);
-            };
-            appScript.onerror = (e) => {
-                console.error('❌ Failed to load app.js:', e);
-            };
-            document.head.appendChild(appScript);
+        // Inline CONFIG to ensure it's available
+        const CONFIG = {
+            supabase: {
+                url: 'https://jjrvkntowkmdfbejlnwk.supabase.co',
+                key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqcnZrbnRvd2ttZGZiZWpsbndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNjc5OTgsImV4cCI6MjA2NTc0Mzk5OH0.Ng0lYJAki_FeJK2_fAR5w95SZJ-7-BHzpkMbNm4uKuM'
+            },
+            app: {
+                name: 'Kid To Camp',
+                version: '1.0.0'
+            }
         };
-        configScript.onerror = (e) => {
-            console.error('❌ Failed to load config.js:', e);
+        window.CONFIG = CONFIG;
+        console.log('✅ CONFIG created inline:', !!window.CONFIG);
+    </script>
+    <script src="js/app.js"></script>
+    <script>
+        // Wait for app.js to create kidToCamp
+        let waitAttempts = 0;
+        const waitForKidToCamp = () => {
+            waitAttempts++;
+            if (window.kidToCamp) {
+                console.log('✅ kidToCamp found, loading calendar...');
+                const script = document.createElement('script');
+                script.src = 'js/calendar.js';
+                document.head.appendChild(script);
+            } else if (waitAttempts < 50) {
+                console.log(`Waiting for kidToCamp... (${waitAttempts})`);
+                setTimeout(waitForKidToCamp, 100);
+            } else {
+                console.error('❌ kidToCamp never created');
+                // Show error on page
+                document.querySelector('.container').innerHTML = `
+                    <div style="background: rgba(255,255,255,0.9); padding: 2rem; border-radius: 10px; margin-top: 2rem; text-align: center;">
+                        <h2 style="color: #dc3545;">Calendar Loading Failed</h2>
+                        <p>app.js failed to create kidToCamp object.</p>
+                        <p>
+                            <a href="index.html" class="btn btn-primary">← Return to Home</a>
+                            <button onclick="window.location.reload()" class="btn btn-outline">🔄 Reload Page</button>
+                        </p>
+                    </div>
+                `;
+            }
         };
-        document.head.appendChild(configScript);
+
+        // Start waiting after DOM loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(waitForKidToCamp, 100);
+        });
     </script>
 </body>
 
