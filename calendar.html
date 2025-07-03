@@ -142,9 +142,44 @@
         </div>
     </div>
 
-    <script src="js/config.js"></script>
-    <script src="js/app.js"></script>
-    <script src="js/calendar.js"></script>
+    <!-- Load scripts in correct order with error handling -->
+    <script>
+        // Debug script loading
+        console.log('Starting script loading...');
+
+        // Load config.js first
+        const configScript = document.createElement('script');
+        configScript.src = 'js/config.js';
+        configScript.onload = () => {
+            console.log('✅ config.js loaded, CONFIG exists:', !!window.CONFIG);
+
+            // Load app.js after config
+            const appScript = document.createElement('script');
+            appScript.src = 'js/app.js';
+            appScript.onload = () => {
+                console.log('✅ app.js loaded, kidToCamp exists:', !!window.kidToCamp);
+
+                // Load calendar.js after app
+                const calendarScript = document.createElement('script');
+                calendarScript.src = 'js/calendar.js';
+                calendarScript.onload = () => {
+                    console.log('✅ calendar.js loaded');
+                };
+                calendarScript.onerror = (e) => {
+                    console.error('❌ Failed to load calendar.js:', e);
+                };
+                document.head.appendChild(calendarScript);
+            };
+            appScript.onerror = (e) => {
+                console.error('❌ Failed to load app.js:', e);
+            };
+            document.head.appendChild(appScript);
+        };
+        configScript.onerror = (e) => {
+            console.error('❌ Failed to load config.js:', e);
+        };
+        document.head.appendChild(configScript);
+    </script>
 </body>
 
 </html>
