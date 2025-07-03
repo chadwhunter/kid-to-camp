@@ -626,6 +626,25 @@ class FamilyCalendar {
 
     async handleAddBooking() {
         const scheduleId = document.getElementById('bookingCamp').value;
+        const childId = document.getElementById('bookingChild').value;
+
+        // Check for duplicate booking (same child + same schedule)
+        const existingBooking = this.bookings.find(booking =>
+            booking.child_id === childId && booking.schedule_id === scheduleId
+        );
+
+        if (existingBooking) {
+            const child = kidToCamp.children.find(c => c.id === childId);
+            const camp = this.camps.find(c =>
+                c.camp_schedules && c.camp_schedules.some(s => s.id === scheduleId)
+            );
+
+            kidToCamp.ui.showMessage(
+                `${child?.first_name} is already booked for this camp session: ${camp?.name}`,
+                'error'
+            );
+            return;
+        }
 
         // Find the selected camp and schedule for camp_id
         let selectedCampId = null;
@@ -646,7 +665,7 @@ class FamilyCalendar {
 
         const bookingData = {
             parent_id: kidToCamp.currentUser.id,
-            child_id: document.getElementById('bookingChild').value,
+            child_id: childId,
             camp_id: selectedCampId,
             schedule_id: scheduleId,
             status: 'confirmed'
@@ -758,16 +777,22 @@ class FamilyCalendar {
         console.log('🗑️ Attempting to delete booking:', this.currentBooking.id);
 
         try {
-            const { data, error } = await kidToCamp.supabase
+            const { data, error, count } = await kidToCamp.supabase
                 .from('bookings')
                 .delete()
-                .eq('id', this.currentBooking.id);
+                .eq('id', this.currentBooking.id)
+                .select(); // Add select() to get the deleted record back
 
-            console.log('🗑️ Delete result:', { data, error });
+            console.log('🗑️ Delete result:', { data, error, count });
 
             if (error) {
                 console.error('Delete error details:', error);
                 throw error;
+            }
+
+            // Check if anything was actually deleted
+            if (!data || data.length === 0) {
+                throw new Error('No booking was deleted - booking may not exist or you may not have permission');
             }
 
             kidToCamp.ui.showMessage('Booking deleted successfully', 'success');
@@ -775,7 +800,22 @@ class FamilyCalendar {
 
             // Reload bookings and re-render calendar
             console.log('🔄 Reloading bookings and re-rendering...');
+            console.log('📊 Bookings before reload:', this.bookings.length);
+
             await this.loadBookings();
+
+            console.log('📊 Bookings after reload:', this.bookings.length);
+            console.log('📊 Remaining booking IDs:', this.bookings.map(b => b.id));
+            console.log('📊 July 6-10 bookings:', this.bookings.filter(b =>
+                b.camp_schedules?.start_date <= '2025-07-10' &&
+                b.camp_schedules?.end_date >= '2025-07-06'
+            ).map(b => ({
+                id: b.id,
+                child: b.child_profiles?.first_name,
+                camp: b.camps?.name,
+                dates: `${b.camp_schedules?.start_date} to ${b.camp_schedules?.end_date}`
+            })));
+
             this.render();
 
             console.log('✅ Calendar updated after deletion');
