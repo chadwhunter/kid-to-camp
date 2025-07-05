@@ -2338,3 +2338,1017 @@
          transform: translateY(0);
      }
  }
+
+ /* ============================================
+   FAMILY CALENDAR STYLES
+   Add these styles to the end of your styles.css file
+   ============================================ */
+
+ /* Calendar Page Layout */
+ .calendar-page {
+     padding: 2rem 0;
+     min-height: 80vh;
+ }
+
+ .calendar-page h1 {
+     color: white;
+     margin-bottom: 2rem;
+     text-align: center;
+     font-size: 2.5rem;
+ }
+
+ /* Calendar Controls */
+ .calendar-controls {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     background: rgba(255, 255, 255, 0.1);
+     backdrop-filter: blur(10px);
+     border-radius: 15px;
+     padding: 1.5rem;
+     margin-bottom: 2rem;
+     border: 1px solid rgba(255, 255, 255, 0.2);
+ }
+
+ .view-controls {
+     display: flex;
+     gap: 0.5rem;
+ }
+
+ .view-controls .btn {
+     padding: 0.5rem 1rem;
+     font-size: 0.9rem;
+ }
+
+ .view-controls .btn.active {
+     background: #4CAF50;
+     color: white;
+     border-color: #45a049;
+ }
+
+ .month-navigation {
+     display: flex;
+     align-items: center;
+     gap: 1rem;
+ }
+
+ .month-navigation h2 {
+     color: white;
+     margin: 0;
+     font-size: 1.3rem;
+     min-width: 200px;
+     text-align: center;
+ }
+
+ .nav-btn {
+     background: rgba(255, 255, 255, 0.2);
+     color: white;
+     border: 1px solid rgba(255, 255, 255, 0.3);
+     padding: 0.5rem 1rem;
+     border-radius: 8px;
+     cursor: pointer;
+     transition: all 0.3s ease;
+ }
+
+ .nav-btn:hover {
+     background: rgba(255, 255, 255, 0.3);
+     transform: translateY(-1px);
+ }
+
+ /* Children Legend */
+ .children-legend {
+     display: flex;
+     flex-wrap: wrap;
+     gap: 1rem;
+     margin-bottom: 2rem;
+     padding: 1rem;
+     background: rgba(255, 255, 255, 0.1);
+     border-radius: 10px;
+     border: 1px solid rgba(255, 255, 255, 0.2);
+ }
+
+ .child-legend-item {
+     display: flex;
+     align-items: center;
+     gap: 0.5rem;
+     color: white;
+     font-weight: 500;
+ }
+
+ .color-indicator {
+     width: 16px;
+     height: 16px;
+     border-radius: 50%;
+     border: 2px solid white;
+ }
+
+ .empty-legend {
+     color: white;
+     text-align: center;
+     opacity: 0.8;
+ }
+
+ .empty-legend a {
+     color: #4CAF50;
+     text-decoration: underline;
+ }
+
+ /* Calendar Container */
+ .calendar-container {
+     background: rgba(255, 255, 255, 0.95);
+     border-radius: 15px;
+     padding: 1rem;
+     margin-bottom: 2rem;
+     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+     position: relative;
+     /* Important for absolute positioned booking spans */
+ }
+
+ /* Calendar Headers */
+ .calendar-header {
+     display: grid;
+     grid-template-columns: repeat(7, 1fr);
+     gap: 1px;
+     margin-bottom: 1px;
+ }
+
+ .day-header {
+     background: #f8f9fa;
+     color: #495057;
+     padding: 1rem;
+     text-align: center;
+     font-weight: 600;
+     font-size: 0.9rem;
+     border-radius: 8px 8px 0 0;
+ }
+
+ .week-header {
+     display: flex;
+     flex-direction: column;
+     gap: 0.25rem;
+     padding: 0.75rem;
+ }
+
+ .week-header .day-number {
+     font-size: 1.1rem;
+     font-weight: 700;
+     color: #333;
+ }
+
+ /* Calendar Grid */
+ .calendar-grid {
+     display: grid;
+     grid-template-columns: repeat(7, 1fr);
+     gap: 1px;
+     background: #e9ecef;
+     border-radius: 0 0 8px 8px;
+     position: relative;
+     /* Important for absolute positioned booking spans */
+     min-height: 400px;
+     /* Ensure enough height for booking spans */
+ }
+
+ /* Booking Spans - New Multi-Day Display */
+ .booking-span {
+     transition: all 0.2s ease;
+     border: 1px solid rgba(255, 255, 255, 0.3);
+     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+     /* Improve text readability */
+ }
+
+ .booking-span:hover {
+     transform: translateY(-1px);
+     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+     z-index: 20 !important;
+     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+     /* Stronger text shadow on hover */
+ }
+
+ .booking-span.single-week {
+     /* Styling handled in JavaScript for positioning */
+ }
+
+ /* Calendar Days - Updated for Span System */
+ .calendar-day {
+     background: white;
+     min-height: 120px;
+     padding: 0.5rem;
+     cursor: pointer;
+     transition: all 0.2s ease;
+     display: flex;
+     flex-direction: column;
+     position: relative;
+ }
+
+ .calendar-day:hover {
+     background: #f8f9fa;
+     transform: scale(1.02);
+     z-index: 5;
+     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+ }
+
+ .calendar-day .day-bookings {
+     /* Remove individual booking items styling since we use spans now */
+     flex: 1;
+     pointer-events: none;
+     /* Let clicks pass through to day */
+ }
+
+ .calendar-day.other-month {
+     background: #f8f9fa;
+     opacity: 0.5;
+ }
+
+ .calendar-day.today {
+     background: #e3f2fd;
+     border: 2px solid #2196F3;
+ }
+
+ .calendar-day.today .day-number {
+     color: #1976D2;
+     font-weight: 700;
+ }
+
+ .day-number {
+     font-weight: 600;
+     color: #333;
+     margin-bottom: 0.5rem;
+     font-size: 0.9rem;
+ }
+
+ .current-month .day-number {
+     color: #333;
+ }
+
+ .other-month .day-number {
+     color: #999;
+ }
+
+ /* Week View Specific */
+ .week-day {
+     min-height: 200px;
+     padding: 1rem;
+ }
+
+ .week-day-bookings {
+     display: flex;
+     flex-direction: column;
+     gap: 0.5rem;
+     height: 100%;
+ }
+
+ /* Booking Items */
+ .day-bookings {
+     display: flex;
+     flex-direction: column;
+     gap: 0.25rem;
+     flex: 1;
+ }
+
+ .booking-item {
+     padding: 0.25rem 0.5rem;
+     border-radius: 4px;
+     font-size: 0.75rem;
+     font-weight: 500;
+     cursor: pointer;
+     transition: all 0.2s ease;
+     text-overflow: ellipsis;
+     overflow: hidden;
+     white-space: nowrap;
+ }
+
+ .booking-item:hover {
+     transform: scale(1.05);
+     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+ }
+
+ .week-booking-item {
+     padding: 0.75rem;
+     border-radius: 8px;
+     cursor: pointer;
+     transition: all 0.2s ease;
+     margin-bottom: 0.5rem;
+ }
+
+ .week-booking-item:hover {
+     transform: translateY(-1px);
+     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+ }
+
+ .booking-child {
+     font-weight: 600;
+     font-size: 0.9rem;
+     margin-bottom: 0.25rem;
+ }
+
+ .booking-camp {
+     font-size: 0.8rem;
+     opacity: 0.9;
+     text-overflow: ellipsis;
+     overflow: hidden;
+     white-space: nowrap;
+ }
+
+ /* Calendar Actions */
+ .calendar-actions {
+     display: flex;
+     gap: 1rem;
+     justify-content: center;
+     flex-wrap: wrap;
+ }
+
+ /* Booking Details Modal */
+ .booking-details {
+     color: #333;
+ }
+
+ .booking-header {
+     text-align: center;
+     margin-bottom: 1.5rem;
+ }
+
+ .booking-header h3 {
+     margin: 0 0 0.5rem 0;
+     font-size: 1.3rem;
+ }
+
+ .booking-header p {
+     margin: 0;
+     opacity: 0.9;
+ }
+
+ .booking-info {
+     display: flex;
+     flex-direction: column;
+     gap: 1rem;
+ }
+
+ .info-item {
+     display: flex;
+     align-items: center;
+     gap: 0.5rem;
+     padding: 0.5rem 0;
+     border-bottom: 1px solid #eee;
+ }
+
+ .info-item:last-child {
+     border-bottom: none;
+ }
+
+ .info-item strong {
+     min-width: 100px;
+     color: #555;
+ }
+
+ .status-badge {
+     padding: 0.25rem 0.75rem;
+     border-radius: 12px;
+     font-size: 0.8rem;
+     font-weight: 600;
+     text-transform: capitalize;
+ }
+
+ .status-badge.confirmed {
+     background: #d4edda;
+     color: #155724;
+ }
+
+ .status-badge.pending {
+     background: #fff3cd;
+     color: #856404;
+ }
+
+ .status-badge.cancelled {
+     background: #f8d7da;
+     color: #721c24;
+ }
+
+ /* Responsive Design */
+ @media (max-width: 1024px) {
+     .calendar-controls {
+         flex-direction: column;
+         gap: 1rem;
+         text-align: center;
+     }
+
+     .month-navigation {
+         justify-content: center;
+     }
+
+     .children-legend {
+         justify-content: center;
+     }
+ }
+
+ @media (max-width: 768px) {
+     .calendar-page h1 {
+         font-size: 2rem;
+     }
+
+     .calendar-controls {
+         padding: 1rem;
+     }
+
+     .month-navigation {
+         flex-wrap: wrap;
+         gap: 0.5rem;
+     }
+
+     .month-navigation h2 {
+         font-size: 1.1rem;
+         min-width: auto;
+     }
+
+     .calendar-day {
+         min-height: 80px;
+         padding: 0.25rem;
+     }
+
+     .week-day {
+         min-height: 150px;
+         padding: 0.5rem;
+     }
+
+     .day-number {
+         font-size: 0.8rem;
+     }
+
+     .booking-item {
+         font-size: 0.7rem;
+         padding: 0.2rem 0.4rem;
+     }
+
+     .calendar-actions {
+         flex-direction: column;
+         align-items: center;
+     }
+
+     .calendar-actions .btn {
+         width: 100%;
+         max-width: 300px;
+     }
+ }
+
+ @media (max-width: 480px) {
+     .calendar-container {
+         padding: 0.5rem;
+     }
+
+     .day-header {
+         padding: 0.5rem 0.25rem;
+         font-size: 0.8rem;
+     }
+
+     .calendar-day {
+         min-height: 60px;
+         padding: 0.2rem;
+     }
+
+     .day-number {
+         font-size: 0.75rem;
+         margin-bottom: 0.25rem;
+     }
+
+     .booking-item {
+         font-size: 0.65rem;
+         padding: 0.1rem 0.3rem;
+     }
+
+     .children-legend {
+         gap: 0.5rem;
+         padding: 0.75rem;
+     }
+
+     .child-legend-item {
+         font-size: 0.85rem;
+     }
+
+     .color-indicator {
+         width: 12px;
+         height: 12px;
+     }
+ }
+
+ /* Calendar Grid Animation */
+ .calendar-grid {
+     animation: fadeIn 0.3s ease-out;
+ }
+
+ @keyframes fadeIn {
+     from {
+         opacity: 0;
+         transform: translateY(10px);
+     }
+
+     to {
+         opacity: 1;
+         transform: translateY(0);
+     }
+ }
+
+ /* ============================================
+   FAMILY CALENDAR STYLES
+   Add these styles to the end of your styles.css file
+   ============================================ */
+
+ /* Calendar Page Layout */
+ .calendar-page {
+     padding: 2rem 0;
+     min-height: 80vh;
+ }
+
+ .calendar-page h1 {
+     color: white;
+     margin-bottom: 2rem;
+     text-align: center;
+     font-size: 2.5rem;
+ }
+
+ /* Calendar Controls */
+ .calendar-controls {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     background: rgba(255, 255, 255, 0.1);
+     backdrop-filter: blur(10px);
+     border-radius: 15px;
+     padding: 1.5rem;
+     margin-bottom: 2rem;
+     border: 1px solid rgba(255, 255, 255, 0.2);
+ }
+
+ .view-controls {
+     display: flex;
+     gap: 0.5rem;
+ }
+
+ .view-controls .btn {
+     padding: 0.5rem 1rem;
+     font-size: 0.9rem;
+ }
+
+ .view-controls .btn.active {
+     background: #4CAF50;
+     color: white;
+     border-color: #45a049;
+ }
+
+ .month-navigation {
+     display: flex;
+     align-items: center;
+     gap: 1rem;
+ }
+
+ .month-navigation h2 {
+     color: white;
+     margin: 0;
+     font-size: 1.3rem;
+     min-width: 200px;
+     text-align: center;
+ }
+
+ .nav-btn {
+     background: rgba(255, 255, 255, 0.2);
+     color: white;
+     border: 1px solid rgba(255, 255, 255, 0.3);
+     padding: 0.5rem 1rem;
+     border-radius: 8px;
+     cursor: pointer;
+     transition: all 0.3s ease;
+ }
+
+ .nav-btn:hover {
+     background: rgba(255, 255, 255, 0.3);
+     transform: translateY(-1px);
+ }
+
+ /* Children Legend */
+ .children-legend {
+     display: flex;
+     flex-wrap: wrap;
+     gap: 1rem;
+     margin-bottom: 2rem;
+     padding: 1rem;
+     background: rgba(255, 255, 255, 0.1);
+     border-radius: 10px;
+     border: 1px solid rgba(255, 255, 255, 0.2);
+ }
+
+ .child-legend-item {
+     display: flex;
+     align-items: center;
+     gap: 0.5rem;
+     color: white;
+     font-weight: 500;
+ }
+
+ .color-indicator {
+     width: 16px;
+     height: 16px;
+     border-radius: 50%;
+     border: 2px solid white;
+ }
+
+ .empty-legend {
+     color: white;
+     text-align: center;
+     opacity: 0.8;
+ }
+
+ .empty-legend a {
+     color: #4CAF50;
+     text-decoration: underline;
+ }
+
+ /* Calendar Container */
+ .calendar-container {
+     background: rgba(255, 255, 255, 0.95);
+     border-radius: 15px;
+     padding: 1rem;
+     margin-bottom: 2rem;
+     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+     position: relative;
+     /* Important for absolute positioned booking spans */
+ }
+
+ /* Calendar Headers */
+ .calendar-header {
+     display: grid;
+     grid-template-columns: repeat(7, 1fr);
+     gap: 1px;
+     margin-bottom: 1px;
+ }
+
+ .day-header {
+     background: #f8f9fa;
+     color: #495057;
+     padding: 1rem;
+     text-align: center;
+     font-weight: 600;
+     font-size: 0.9rem;
+     border-radius: 8px 8px 0 0;
+ }
+
+ .week-header {
+     display: flex;
+     flex-direction: column;
+     gap: 0.25rem;
+     padding: 0.75rem;
+ }
+
+ .week-header .day-number {
+     font-size: 1.1rem;
+     font-weight: 700;
+     color: #333;
+ }
+
+ /* Calendar Grid */
+ .calendar-grid {
+     display: grid;
+     grid-template-columns: repeat(7, 1fr);
+     gap: 1px;
+     background: #e9ecef;
+     border-radius: 0 0 8px 8px;
+     position: relative;
+     /* Important for absolute positioned booking spans */
+     min-height: 400px;
+     /* Ensure enough height for booking spans */
+ }
+
+ /* Booking Spans - New Multi-Day Display */
+ .booking-span {
+     transition: all 0.2s ease;
+     border: 1px solid rgba(255, 255, 255, 0.3);
+     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+     /* Improve text readability */
+ }
+
+ .booking-span:hover {
+     transform: translateY(-1px);
+     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+     z-index: 20 !important;
+     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+     /* Stronger text shadow on hover */
+ }
+
+ .booking-span.single-week {
+     /* Styling handled in JavaScript for positioning */
+ }
+
+ /* Calendar Days - Updated for Span System */
+ .calendar-day {
+     background: white;
+     min-height: 120px;
+     padding: 0.5rem;
+     cursor: pointer;
+     transition: all 0.2s ease;
+     display: flex;
+     flex-direction: column;
+     position: relative;
+ }
+
+ .calendar-day:hover {
+     background: #f8f9fa;
+     transform: scale(1.02);
+     z-index: 5;
+     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+ }
+
+ .calendar-day .day-bookings {
+     /* Remove individual booking items styling since we use spans now */
+     flex: 1;
+     pointer-events: none;
+     /* Let clicks pass through to day */
+ }
+
+ .calendar-day.other-month {
+     background: #f8f9fa;
+     opacity: 0.5;
+ }
+
+ .calendar-day.today {
+     background: #e3f2fd;
+     border: 2px solid #2196F3;
+ }
+
+ .calendar-day.today .day-number {
+     color: #1976D2;
+     font-weight: 700;
+ }
+
+ .day-number {
+     font-weight: 600;
+     color: #333;
+     margin-bottom: 0.5rem;
+     font-size: 0.9rem;
+ }
+
+ .current-month .day-number {
+     color: #333;
+ }
+
+ .other-month .day-number {
+     color: #999;
+ }
+
+ /* Week View Specific */
+ .week-day {
+     min-height: 200px;
+     padding: 1rem;
+ }
+
+ .week-day-bookings {
+     display: flex;
+     flex-direction: column;
+     gap: 0.5rem;
+     height: 100%;
+ }
+
+ /* Booking Items */
+ .day-bookings {
+     display: flex;
+     flex-direction: column;
+     gap: 0.25rem;
+     flex: 1;
+ }
+
+ .booking-item {
+     padding: 0.25rem 0.5rem;
+     border-radius: 4px;
+     font-size: 0.75rem;
+     font-weight: 500;
+     cursor: pointer;
+     transition: all 0.2s ease;
+     text-overflow: ellipsis;
+     overflow: hidden;
+     white-space: nowrap;
+ }
+
+ .booking-item:hover {
+     transform: scale(1.05);
+     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+ }
+
+ .week-booking-item {
+     padding: 0.75rem;
+     border-radius: 8px;
+     cursor: pointer;
+     transition: all 0.2s ease;
+     margin-bottom: 0.5rem;
+ }
+
+ .week-booking-item:hover {
+     transform: translateY(-1px);
+     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+ }
+
+ .booking-child {
+     font-weight: 600;
+     font-size: 0.9rem;
+     margin-bottom: 0.25rem;
+ }
+
+ .booking-camp {
+     font-size: 0.8rem;
+     opacity: 0.9;
+     text-overflow: ellipsis;
+     overflow: hidden;
+     white-space: nowrap;
+ }
+
+ /* Calendar Actions */
+ .calendar-actions {
+     display: flex;
+     gap: 1rem;
+     justify-content: center;
+     flex-wrap: wrap;
+ }
+
+ /* Booking Details Modal */
+ .booking-details {
+     color: #333;
+ }
+
+ .booking-header {
+     text-align: center;
+     margin-bottom: 1.5rem;
+ }
+
+ .booking-header h3 {
+     margin: 0 0 0.5rem 0;
+     font-size: 1.3rem;
+ }
+
+ .booking-header p {
+     margin: 0;
+     opacity: 0.9;
+ }
+
+ .booking-info {
+     display: flex;
+     flex-direction: column;
+     gap: 1rem;
+ }
+
+ .info-item {
+     display: flex;
+     align-items: center;
+     gap: 0.5rem;
+     padding: 0.5rem 0;
+     border-bottom: 1px solid #eee;
+ }
+
+ .info-item:last-child {
+     border-bottom: none;
+ }
+
+ .info-item strong {
+     min-width: 100px;
+     color: #555;
+ }
+
+ .status-badge {
+     padding: 0.25rem 0.75rem;
+     border-radius: 12px;
+     font-size: 0.8rem;
+     font-weight: 600;
+     text-transform: capitalize;
+ }
+
+ .status-badge.confirmed {
+     background: #d4edda;
+     color: #155724;
+ }
+
+ .status-badge.pending {
+     background: #fff3cd;
+     color: #856404;
+ }
+
+ .status-badge.cancelled {
+     background: #f8d7da;
+     color: #721c24;
+ }
+
+ /* Responsive Design */
+ @media (max-width: 1024px) {
+     .calendar-controls {
+         flex-direction: column;
+         gap: 1rem;
+         text-align: center;
+     }
+
+     .month-navigation {
+         justify-content: center;
+     }
+
+     .children-legend {
+         justify-content: center;
+     }
+ }
+
+ @media (max-width: 768px) {
+     .calendar-page h1 {
+         font-size: 2rem;
+     }
+
+     .calendar-controls {
+         padding: 1rem;
+     }
+
+     .month-navigation {
+         flex-wrap: wrap;
+         gap: 0.5rem;
+     }
+
+     .month-navigation h2 {
+         font-size: 1.1rem;
+         min-width: auto;
+     }
+
+     .calendar-day {
+         min-height: 80px;
+         padding: 0.25rem;
+     }
+
+     .week-day {
+         min-height: 150px;
+         padding: 0.5rem;
+     }
+
+     .day-number {
+         font-size: 0.8rem;
+     }
+
+     .booking-item {
+         font-size: 0.7rem;
+         padding: 0.2rem 0.4rem;
+     }
+
+     .calendar-actions {
+         flex-direction: column;
+         align-items: center;
+     }
+
+     .calendar-actions .btn {
+         width: 100%;
+         max-width: 300px;
+     }
+ }
+
+ @media (max-width: 480px) {
+     .calendar-container {
+         padding: 0.5rem;
+     }
+
+     .day-header {
+         padding: 0.5rem 0.25rem;
+         font-size: 0.8rem;
+     }
+
+     .calendar-day {
+         min-height: 60px;
+         padding: 0.2rem;
+     }
+
+     .day-number {
+         font-size: 0.75rem;
+         margin-bottom: 0.25rem;
+     }
+
+     .booking-item {
+         font-size: 0.65rem;
+         padding: 0.1rem 0.3rem;
+     }
+
+     .children-legend {
+         gap: 0.5rem;
+         padding: 0.75rem;
+     }
+
+     .child-legend-item {
+         font-size: 0.85rem;
+     }
+
+     .color-indicator {
+         width: 12px;
+         height: 12px;
+     }
+ }
+
+ /* Calendar Grid Animation */
+ .calendar-grid {
+     animation: fadeIn 0.3s ease-out;
+ }
+
+ @keyframes fadeIn {
+     from {
+         opacity: 0;
+         transform: translateY(10px);
+     }
+
+     to {
+         opacity: 1;
+         transform: translateY(0);
+     }
+ }
