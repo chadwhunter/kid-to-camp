@@ -465,6 +465,26 @@ class FamilyCalendar {
         const week = startPos.week;
         const spanWidth = endDay - startDay + 1;
 
+        // Determine the best text to display based on span width
+        let displayText = '';
+        let fontSize = '0.75rem';
+
+        if (spanWidth >= 4) {
+            // Long span - show full text
+            displayText = `${child?.first_name} - ${booking.camps?.name}`;
+            fontSize = '0.8rem';
+        } else if (spanWidth >= 2) {
+            // Medium span - show child name + abbreviated camp
+            const campName = booking.camps?.name || 'Camp';
+            const shortCamp = campName.length > 15 ? campName.substring(0, 12) + '...' : campName;
+            displayText = `${child?.first_name} - ${shortCamp}`;
+            fontSize = '0.75rem';
+        } else {
+            // Short span - just child name
+            displayText = child?.first_name || 'Camp';
+            fontSize = '0.7rem';
+        }
+
         // Create the booking span element
         const spanElement = document.createElement('div');
         spanElement.className = 'booking-span single-week';
@@ -473,8 +493,8 @@ class FamilyCalendar {
             background-color: ${color};
             color: white;
             border-radius: 4px;
-            padding: 2px 8px;
-            font-size: 0.75rem;
+            padding: 4px 8px;
+            font-size: ${fontSize};
             font-weight: 500;
             cursor: pointer;
             z-index: 10;
@@ -482,21 +502,27 @@ class FamilyCalendar {
             overflow: hidden;
             text-overflow: ellipsis;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            line-height: 1.2;
+            display: flex;
+            align-items: center;
+            min-height: 18px;
         `;
 
         // Position the span
         const leftPercent = (startDay / 7) * 100;
         const widthPercent = (spanWidth / 7) * 100;
-        const topOffset = 25 + (this.getBookingLayer(span) * 20); // Stack multiple bookings
+        const topOffset = 30 + (this.getBookingLayer(span) * 22); // Slightly more space between layers
 
         spanElement.style.left = `${leftPercent}%`;
         spanElement.style.width = `${widthPercent}%`;
-        spanElement.style.top = `${week * (100 / 6) + (topOffset / 100)}%`;
-        spanElement.style.height = '16px';
+        spanElement.style.top = `${week * (100 / 6)}%`;
+        spanElement.style.marginTop = `${topOffset}px`;
+        spanElement.style.height = '18px';
 
-        // Set content
-        spanElement.textContent = `${child?.first_name} - ${booking.camps?.name}`;
-        spanElement.title = `${child?.first_name} ${child?.last_name} - ${booking.camps?.name}`;
+        // Set content and tooltip
+        spanElement.textContent = displayText;
+        spanElement.title = `${child?.first_name} ${child?.last_name} - ${booking.camps?.name}\nClick for details`;
 
         // Add click handler
         spanElement.onclick = (e) => {
