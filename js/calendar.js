@@ -292,6 +292,10 @@ class FamilyCalendar {
         const startDate = new Date(firstDay);
         startDate.setDate(startDate.getDate() - firstDay.getDay());
 
+        // Create a map of dates to their grid positions
+        this.dateToGridPosition = new Map();
+        let gridPosition = 0;
+
         // Render calendar grid
         let gridHTML = '';
         let currentDate = new Date(startDate);
@@ -300,34 +304,40 @@ class FamilyCalendar {
             for (let day = 0; day < 7; day++) {
                 const isCurrentMonth = currentDate.getMonth() === month;
                 const isToday = this.isToday(currentDate);
-                const dayBookings = this.getBookingsForDate(currentDate);
 
-                // Create a proper date string for the onclick handler (fixing timezone issue here too)
+                // Create a proper date string for the onclick handler
                 const yearStr = currentDate.getFullYear();
                 const monthStr = String(currentDate.getMonth() + 1).padStart(2, '0');
                 const dayStr = String(currentDate.getDate()).padStart(2, '0');
                 const dateStr = `${yearStr}-${monthStr}-${dayStr}`;
 
-                // Debug logging for first week of July
-                if (currentDate.getFullYear() === 2025 && currentDate.getMonth() === 6 && currentDate.getDate() <= 12) {
-                    console.log(`📅 Rendering calendar day ${currentDate.getDate()}: dateStr=${dateStr}, bookings=${dayBookings.length}`);
-                }
+                // Store the grid position for this date
+                this.dateToGridPosition.set(dateStr, {
+                    week,
+                    day,
+                    gridIndex: gridPosition
+                });
 
                 gridHTML += `
                     <div class="calendar-day ${isCurrentMonth ? 'current-month' : 'other-month'} ${isToday ? 'today' : ''}"
+                         data-date="${dateStr}" data-grid-position="${gridPosition}"
                          onclick="familyCalendar.handleDayClick('${dateStr}')">
                         <div class="day-number">${currentDate.getDate()}</div>
                         <div class="day-bookings">
-                            ${this.renderDayBookings(dayBookings)}
+                            <!-- Booking spans will be positioned here -->
                         </div>
                     </div>
                 `;
 
                 currentDate.setDate(currentDate.getDate() + 1);
+                gridPosition++;
             }
         }
 
         gridContainer.innerHTML = gridHTML;
+
+        // Now render the booking spans after the grid is created
+        this.renderBookingSpans();
     }
 
     renderWeekView() {
@@ -376,24 +386,164 @@ class FamilyCalendar {
         gridContainer.innerHTML = gridHTML;
     }
 
-    renderDayBookings(bookings) {
-        if (!bookings || bookings.length === 0) {
-            return '';
+    renderBookingSpans() {
+        // Group bookings by their date ranges to create spans
+        const bookingSpans = this.createBookingSpans();
+
+        // Clear any existing booking spans
+        document.querySelectorAll('.booking-span').forEach(span => span.remove());
+
+        // Render each booking span
+        bookingSpans.forEach(span => this.renderBookingSpan(span));
+    }
+
+    createBookingSpans() {
+        const spans = [];
+
+        // Process each booking
+        this.bookings.forEach(booking => {
+            if (!booking.camp_schedules) return;
+
+            const schedule = booking.camp_schedules;
+            const startDate = schedule.start_date;
+            const endDate = schedule.end_date;
+
+            // Find the grid positions for start and end dates
+            const startPos = this.dateToGridPosition.get(startDate);
+            const endPos = this.dateToGridPosition.get(endDate);
+
+            // Only render if both dates are visible in current calendar view
+            if (startPos && endPos) {
+                const child = kidToCamp.children?.find(c => c.id === booking.child_id);
+                const color = this.childColors[booking.child_id] || '#ccc';
+
+                spans.push({
+                    booking,
+                    child,
+                    color,
+                    startPos,
+                    endPos,
+                    startDate,
+                    endDate
+                });
+            }
+        });
+
+        // Sort spans by start date and then by child name for consistent layering
+        spans.sort((a, b) => {
+            if (a.startDate !== b.startDate) {
+                return a.startDate.localeCompare(b.startDate);
+            }
+            return (a.child?.first_name || '').localeCompare(b.child?.first_name || '');
+        });
+
+        return spans;
+    }
+
+    renderBookingSpan(span) {
+        const { booking, child, color, startPos, endPos } = span;
+        const gridContainer = document.getElementById('calendarGrid');
+
+        // Calculate span dimensions
+        const isMultiWeek = startPos.week !== endPos.week;
+
+        if (isMultiWeek) {
+            // Handle multi-week bookings by creating separate spans for each week
+            this.renderMultiWeekSpan(span);
+        } else {
+            // Single week span
+            this.renderSingleWeekSpan(span);
         }
+    }
 
-        return bookings.map(booking => {
-            const child = kidToCamp.children?.find(c => c.id === booking.child_id);
-            const color = this.childColors[booking.child_id] || '#ccc';
+    renderSingleWeekSpan(span) {
+        const { booking, child, color, startPos, endPos } = span;
+        const gridContainer = document.getElementById('calendarGrid');
 
-            return `
-                <div class="booking-item" 
-                     style="background-color: ${color}; color: white;"
-                     onclick="event.stopPropagation(); familyCalendar.showBookingDetails('${booking.id}')"
-                     title="${child?.first_name || 'Child'} - ${booking.camps?.name || 'Camp'}">
-                    ${child?.first_name || 'Booking'}
-                </div>
-            `;
-        }).join('');
+        const startDay = startPos.day;
+        const endDay = endPos.day;
+        const week = startPos.week;
+        const spanWidth = endDay - startDay + 1;
+
+        // Create the booking span element
+        const spanElement = document.createElement('div');
+        spanElement.className = 'booking-span single-week';
+        spanElement.style.cssText = `
+            position: absolute;
+            background-color: ${color};
+            color: white;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            z-index: 10;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        `;
+
+        // Position the span
+        const leftPercent = (startDay / 7) * 100;
+        const widthPercent = (spanWidth / 7) * 100;
+        const topOffset = 25 + (this.getBookingLayer(span) * 20); // Stack multiple bookings
+
+        spanElement.style.left = `${leftPercent}%`;
+        spanElement.style.width = `${widthPercent}%`;
+        spanElement.style.top = `${week * (100 / 6) + (topOffset / 100)}%`;
+        spanElement.style.height = '16px';
+
+        // Set content
+        spanElement.textContent = `${child?.first_name} - ${booking.camps?.name}`;
+        spanElement.title = `${child?.first_name} ${child?.last_name} - ${booking.camps?.name}`;
+
+        // Add click handler
+        spanElement.onclick = (e) => {
+            e.stopPropagation();
+            this.showBookingDetails(booking.id);
+        };
+
+        // Add to grid container
+        gridContainer.appendChild(spanElement);
+    }
+
+    renderMultiWeekSpan(span) {
+        const { booking, child, color, startPos, endPos } = span;
+
+        // Create spans for each week
+        for (let week = startPos.week; week <= endPos.week; week++) {
+            const isFirstWeek = week === startPos.week;
+            const isLastWeek = week === endPos.week;
+
+            const weekStartDay = isFirstWeek ? startPos.day : 0;
+            const weekEndDay = isLastWeek ? endPos.day : 6;
+
+            const weekSpan = {
+                ...span,
+                startPos: { ...startPos, week, day: weekStartDay },
+                endPos: { ...endPos, week, day: weekEndDay }
+            };
+
+            this.renderSingleWeekSpan(weekSpan);
+        }
+    }
+
+    getBookingLayer(span) {
+        // Simple layer calculation - in a real implementation, you'd want
+        // more sophisticated conflict resolution
+        const startDate = span.startDate;
+        const overlappingBookings = this.bookings.filter(booking => {
+            if (!booking.camp_schedules || booking.id === span.booking.id) return false;
+
+            const otherStart = booking.camp_schedules.start_date;
+            const otherEnd = booking.camp_schedules.end_date;
+
+            // Check if date ranges overlap
+            return startDate <= otherEnd && span.endDate >= otherStart;
+        });
+
+        return overlappingBookings.length;
     }
 
     renderWeekDayBookings(bookings) {
