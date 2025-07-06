@@ -1,4 +1,4 @@
-// js/navigation.js - FIXED VERSION with Proper Dependency Handling
+// js/navigation.js - FIXED VERSION with Working Dropdown
 
 class Navigation {
     constructor() {
@@ -119,19 +119,20 @@ class Navigation {
         navAuth.innerHTML = `
             <div class="user-dropdown">
                 <button class="user-btn" id="userBtn">
-                    ${displayName}
+                    <span>${displayName}</span>
+                    <span class="dropdown-arrow">▼</span>
                 </button>
                 <div class="dropdown-menu" id="dropdownMenu">
-                    <a href="/profile.html">Profile</a>
-                    <a href="/calendar.html">Calendar</a>
-                    <a href="/bookings.html">Bookings</a>
+                    <a href="/profile.html">👤 Profile</a>
+                    <a href="/calendar.html">📅 Calendar</a>
+                    <a href="/bookings.html">📋 Bookings</a>
                     <div class="divider"></div>
-                    <a href="#" id="logoutBtn">Logout</a>
+                    <a href="#" id="logoutBtn">🚪 Logout</a>
                 </div>
             </div>
         `;
 
-        console.log('✅ Navigation: User dropdown rendered');
+        console.log('✅ Navigation: User dropdown rendered for:', displayName);
     }
 
     renderAuthButtons() {
@@ -157,9 +158,14 @@ class Navigation {
             const userBtn = document.getElementById('userBtn');
             const dropdownMenu = document.getElementById('dropdownMenu');
 
-            if (userBtn && e.target === userBtn) {
+            // Check if clicked on user button or its children
+            if (userBtn && (e.target === userBtn || userBtn.contains(e.target))) {
                 e.preventDefault();
-                const isOpen = dropdownMenu.classList.contains('show');
+                e.stopPropagation();
+
+                console.log('👆 User button clicked');
+
+                const isOpen = dropdownMenu && dropdownMenu.classList.contains('show');
 
                 if (isOpen) {
                     this.closeDropdown();
@@ -172,10 +178,12 @@ class Navigation {
             }
         });
 
-        // Handle logout
+        // Handle logout with event delegation
         document.addEventListener('click', (e) => {
             if (e.target.id === 'logoutBtn') {
                 e.preventDefault();
+                e.stopPropagation();
+                console.log('👆 Logout button clicked');
                 this.logout();
             }
         });
@@ -195,8 +203,15 @@ class Navigation {
         const dropdownMenu = document.getElementById('dropdownMenu');
 
         if (userBtn && dropdownMenu) {
+            console.log('📂 Opening dropdown');
             userBtn.classList.add('active');
             dropdownMenu.classList.add('show');
+
+            // Update arrow
+            const arrow = userBtn.querySelector('.dropdown-arrow');
+            if (arrow) {
+                arrow.style.transform = 'rotate(180deg)';
+            }
         }
     }
 
@@ -205,8 +220,15 @@ class Navigation {
         const dropdownMenu = document.getElementById('dropdownMenu');
 
         if (userBtn && dropdownMenu) {
+            console.log('📁 Closing dropdown');
             userBtn.classList.remove('active');
             dropdownMenu.classList.remove('show');
+
+            // Reset arrow
+            const arrow = userBtn.querySelector('.dropdown-arrow');
+            if (arrow) {
+                arrow.style.transform = 'rotate(0deg)';
+            }
         }
     }
 
@@ -218,6 +240,9 @@ class Navigation {
 
         try {
             console.log('👋 Navigation: Logging out...');
+
+            // Close dropdown first
+            this.closeDropdown();
 
             const { error } = await this.supabase.auth.signOut();
 
@@ -234,3 +259,25 @@ class Navigation {
             if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
                 window.location.href = '/';
             }
+
+        } catch (error) {
+            console.error('❌ Navigation: Logout failed:', error);
+        }
+    }
+
+    // Public method to manually refresh auth state
+    async refreshAuth() {
+        await this.checkAuth();
+    }
+}
+
+// Initialize navigation when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 DOM ready - Initializing navigation...');
+    window.navigation = new Navigation();
+});
+
+// Export for use in other files if needed
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Navigation;
+}

@@ -175,6 +175,20 @@ nav {
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Ensure dropdown appears above other content */
+.navbar {
+    position: relative !important;
+    z-index: 1000 !important;
+}
+
+.user-dropdown {
+    z-index: 1001 !important;
+}
+
+.user-dropdown .dropdown-menu {
+    z-index: 1002 !important;
+}
+
 .nav-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -242,45 +256,50 @@ nav {
     justify-content: flex-end;
 }
 
-/* USER DROPDOWN STYLES - NEW SYSTEM */
+/* CRITICAL FIX: High specificity dropdown styles */
+
+/* USER DROPDOWN STYLES - WORKING VERSION */
 .user-dropdown {
-    position: relative;
-    display: inline-block;
+    position: relative !important;
+    display: inline-block !important;
 }
 
 .user-dropdown .user-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    padding: 0.75rem 1.5rem !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    font-weight: 500 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    transition: all 0.3s ease !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    outline: none !important;
 }
 
 .user-dropdown .user-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(-1px) !important;
 }
 
-.user-dropdown .user-btn::after {
-    content: '▼';
-    font-size: 0.8rem;
-    transition: transform 0.3s ease;
+.user-dropdown .user-btn.active {
+    background: rgba(255, 255, 255, 0.25) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
-.user-dropdown .user-btn.active::after {
-    transform: rotate(180deg);
+.user-dropdown .dropdown-arrow {
+    font-size: 0.8rem !important;
+    transition: transform 0.3s ease !important;
+    color: white !important;
 }
 
-/* CRITICAL FIX: High specificity dropdown menu for new system */
+/* CRITICAL: Dropdown menu with maximum specificity */
 .user-dropdown .dropdown-menu {
     position: absolute !important;
-    top: 100% !important;
+    top: calc(100% + 0.5rem) !important;
     right: 0 !important;
     background: white !important;
     border-radius: 12px !important;
@@ -291,13 +310,16 @@ nav {
     visibility: hidden !important;
     transform: translateY(-10px) !important;
     transition: all 0.3s ease !important;
-    z-index: 1001 !important;
+    z-index: 9999 !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    display: block !important;
 }
 
 .user-dropdown .dropdown-menu.show {
     opacity: 1 !important;
     visibility: visible !important;
     transform: translateY(0) !important;
+    display: block !important;
 }
 
 .user-dropdown .dropdown-menu a {
@@ -306,6 +328,9 @@ nav {
     color: #333 !important;
     text-decoration: none !important;
     transition: background-color 0.2s ease !important;
+    font-weight: 500 !important;
+    border: none !important;
+    outline: none !important;
 }
 
 .user-dropdown .dropdown-menu a:hover {
@@ -319,41 +344,44 @@ nav {
     margin: 0.5rem 0 !important;
 }
 
-/* Auth buttons */
+/* Auth buttons styling */
 .auth-buttons {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
+    display: flex !important;
+    gap: 1rem !important;
+    align-items: center !important;
 }
 
 .auth-buttons .btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    white-space: nowrap;
+    padding: 0.75rem 1.5rem !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    transition: all 0.3s ease !important;
+    white-space: nowrap !important;
+    display: inline-block !important;
 }
 
 .auth-buttons .btn-secondary {
-    background: transparent;
-    color: white;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: transparent !important;
+    color: white !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
 }
 
 .auth-buttons .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
 .auth-buttons .btn-primary {
-    background: #4CAF50;
-    color: white;
-    border: 2px solid #4CAF50;
+    background: #4CAF50 !important;
+    color: white !important;
+    border: 2px solid #4CAF50 !important;
 }
 
 .auth-buttons .btn-primary:hover {
-    background: #45a049;
-    transform: translateY(-1px);
+    background: #45a049 !important;
+    border-color: #45a049 !important;
+    transform: translateY(-1px) !important;
 }
 
 @keyframes dropdownFadeIn {
@@ -1792,6 +1820,25 @@ nav {
     .color-indicator {
         width: 12px;
         height: 12px;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .user-dropdown .dropdown-menu {
+        right: -1rem !important;
+        left: -1rem !important;
+        min-width: auto !important;
+    }
+
+    .auth-buttons {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+
+    .auth-buttons .btn {
+        width: 100% !important;
+        text-align: center !important;
     }
 }
 
