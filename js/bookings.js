@@ -1,4 +1,4 @@
-// js/bookings.js - Booking List Management
+// js/bookings.js - Clean Booking List (No Sample Data)
 
 class BookingList {
     constructor() {
@@ -6,45 +6,88 @@ class BookingList {
         this.filteredBookings = [];
         this.children = [];
         this.supabase = window.supabase;
+        this.currentUser = null;
         this.init();
     }
 
     init() {
+        console.log('Initializing BookingList...');
         this.loadData();
         this.setupEventListeners();
     }
 
     async loadData() {
         try {
-            await this.loadBookings();
-            await this.loadChildren();
+            console.log('Loading booking data...');
+
+            // Wait for auth state
+            await this.waitForAuth();
+
+            if (!this.currentUser) {
+                console.log('No user found, redirecting to login...');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            console.log('Loading data for user:', this.currentUser.email);
+
+            await Promise.all([
+                this.loadBookings(),
+                this.loadChildren()
+            ]);
+
             this.populateFilters();
             this.renderBookings();
+
         } catch (error) {
             console.error('Error loading booking data:', error);
             this.showError('Failed to load bookings. Please refresh the page.');
         }
     }
 
+    async waitForAuth() {
+        // Wait for supabase to be available
+        let attempts = 0;
+        while (!this.supabase && attempts < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            this.supabase = window.supabase;
+            attempts++;
+        }
+
+        if (!this.supabase) {
+            throw new Error('Supabase not available');
+        }
+
+        // Get current user
+        const { data: { user }, error } = await this.supabase.auth.getUser();
+        if (error) {
+            console.error('Error getting user:', error);
+            return;
+        }
+
+        this.currentUser = user;
+        console.log('Current user:', user?.email);
+    }
+
     async loadBookings() {
         try {
-            // Get current user
-            const { data: { user }, error: userError } = await this.supabase.auth.getUser();
-            if (userError) throw userError;
-
-            if (!user) {
-                window.location.href = '/login.html';
+            if (!this.currentUser) {
+                this.bookings = [];
+                this.filteredBookings = [];
                 return;
             }
 
-            // Fetch bookings with related data
+            console.log('Fetching bookings from database...');
+
+            // Try the full query with joins
             const { data: bookings, error } = await this.supabase
                 .from('bookings')
                 .select(`
                     *,
                     child_profiles!inner(
                         id,
-                        name
+                        name,
+                        parent_id
                     ),
                     camp_schedules!inner(
                         id,
@@ -58,27 +101,43 @@ class BookingList {
                         )
                     )
                 `)
-                .eq('child_profiles.parent_id', user.id)
+                .eq('child_profiles.parent_id', this.currentUser.id)
                 .order('camp_schedules.start_date', { ascending: true });
 
-            if (error) throw error;
+            if (error) {
+                console.error('Error fetching bookings:', error);
+                this.bookings = [];
+                this.filteredBookings = [];
+                return;
+            }
+
+            console.log('Raw bookings data:', bookings);
+
+            if (!bookings || bookings.length === 0) {
+                console.log('No bookings found for user');
+                this.bookings = [];
+                this.filteredBookings = [];
+                return;
+            }
 
             // Transform data for easier use
             this.bookings = bookings.map(booking => ({
                 id: booking.id,
-                child_id: booking.child_profiles.id,
-                child_name: booking.child_profiles.name,
-                camp_id: booking.camp_schedules.camps.id,
-                camp_name: booking.camp_schedules.camps.name,
-                camp_description: booking.camp_schedules.camps.description,
-                start_date: booking.camp_schedules.start_date,
-                end_date: booking.camp_schedules.end_date,
-                cost: booking.camp_schedules.cost,
+                child_id: booking.child_profiles?.id || booking.child_id,
+                child_name: booking.child_profiles?.name || 'Unknown Child',
+                camp_id: booking.camp_schedules?.camps?.id || 'unknown',
+                camp_name: booking.camp_schedules?.camps?.name || 'Unknown Camp',
+                camp_description: booking.camp_schedules?.camps?.description || '',
+                start_date: booking.camp_schedules?.start_date,
+                end_date: booking.camp_schedules?.end_date,
+                cost: booking.camp_schedules?.cost || 0,
                 status: booking.status || 'confirmed',
                 created_at: booking.created_at
             }));
 
             this.filteredBookings = [...this.bookings];
+            console.log('Processed bookings:', this.bookings);
+
         } catch (error) {
             console.error('Error loading bookings:', error);
             this.bookings = [];
@@ -88,20 +147,28 @@ class BookingList {
 
     async loadChildren() {
         try {
-            // Get current user
-            const { data: { user }, error: userError } = await this.supabase.auth.getUser();
-            if (userError) throw userError;
+            if (!this.currentUser) {
+                this.children = [];
+                return;
+            }
 
-            // Fetch children
+            console.log('Fetching children from database...');
+
             const { data: children, error } = await this.supabase
                 .from('child_profiles')
                 .select('id, name')
-                .eq('parent_id', user.id)
+                .eq('parent_id', this.currentUser.id)
                 .order('name');
 
-            if (error) throw error;
+            if (error) {
+                console.error('Error loading children:', error);
+                this.children = [];
+                return;
+            }
 
             this.children = children || [];
+            console.log('Children loaded:', this.children);
+
         } catch (error) {
             console.error('Error loading children:', error);
             this.children = [];
@@ -110,14 +177,20 @@ class BookingList {
 
     populateFilters() {
         const childFilter = document.getElementById('childFilter');
+        if (!childFilter) return;
 
         // Clear existing options except "All Children"
         childFilter.innerHTML = '<option value="">All Children</option>';
 
-        this.children.forEach(child => {
+        // Get unique child names from bookings if no children data
+        const childNames = this.children.length > 0
+            ? this.children.map(child => child.name)
+            : [...new Set(this.bookings.map(booking => booking.child_name))];
+
+        childNames.forEach(name => {
             const option = document.createElement('option');
-            option.value = child.name;
-            option.textContent = child.name;
+            option.value = name;
+            option.textContent = name;
             childFilter.appendChild(option);
         });
     }
@@ -136,18 +209,18 @@ class BookingList {
 
         // Handle action buttons with event delegation
         document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('btn-danger') && e.target.textContent === 'Cancel') {
+            if (e.target.classList.contains('btn-danger') && e.target.textContent.trim() === 'Cancel') {
                 this.handleCancelBooking(e.target);
-            } else if (e.target.classList.contains('btn-info') && e.target.textContent === 'View') {
+            } else if (e.target.classList.contains('btn-info') && e.target.textContent.trim() === 'View') {
                 this.handleViewBooking(e.target);
             }
         });
     }
 
     applyFilters() {
-        const childFilter = document.getElementById('childFilter').value;
-        const statusFilter = document.getElementById('statusFilter').value;
-        const dateFilter = document.getElementById('dateFilter').value;
+        const childFilter = document.getElementById('childFilter')?.value || '';
+        const statusFilter = document.getElementById('statusFilter')?.value || '';
+        const dateFilter = document.getElementById('dateFilter')?.value || '';
 
         this.filteredBookings = this.bookings.filter(booking => {
             let matches = true;
@@ -167,7 +240,7 @@ class BookingList {
                 const bookingStartDate = new Date(booking.start_date);
                 const bookingEndDate = new Date(booking.end_date);
                 const today = new Date();
-                today.setHours(0, 0, 0, 0); // Reset time for accurate comparison
+                today.setHours(0, 0, 0, 0);
 
                 switch (dateFilter) {
                     case 'upcoming':
@@ -192,6 +265,11 @@ class BookingList {
         const tableBody = document.getElementById('bookingTableBody');
         const emptyState = document.getElementById('emptyState');
         const tableContainer = document.getElementById('bookingTableContainer');
+
+        if (!tableBody || !emptyState || !tableContainer) {
+            console.error('Required DOM elements not found');
+            return;
+        }
 
         if (this.filteredBookings.length === 0) {
             tableContainer.style.display = 'none';
@@ -239,17 +317,14 @@ class BookingList {
         const end = endDate.toLocaleDateString('en-US', options);
         const year = startDate.getFullYear();
 
-        // Same day
         if (startDate.toDateString() === endDate.toDateString()) {
             return `${start}, ${year}`;
         }
 
-        // Same month
         if (startDate.getMonth() === endDate.getMonth()) {
             return `${start.split(' ')[0]} ${start.split(' ')[1]}-${end.split(' ')[1]}, ${year}`;
         }
 
-        // Different months
         return `${start}-${end}, ${year}`;
     }
 
@@ -261,11 +336,13 @@ class BookingList {
         const totalBookings = document.getElementById('totalBookings');
         const totalCost = document.getElementById('totalCost');
 
-        const count = this.filteredBookings.length;
-        const cost = this.filteredBookings.reduce((sum, booking) => sum + parseFloat(booking.cost), 0);
+        if (totalBookings && totalCost) {
+            const count = this.filteredBookings.length;
+            const cost = this.filteredBookings.reduce((sum, booking) => sum + parseFloat(booking.cost || 0), 0);
 
-        totalBookings.textContent = count;
-        totalCost.textContent = cost.toFixed(2);
+            totalBookings.textContent = count;
+            totalCost.textContent = cost.toFixed(2);
+        }
     }
 
     handleViewBooking(button) {
@@ -274,21 +351,21 @@ class BookingList {
         const booking = this.bookings.find(b => b.id == bookingId);
 
         if (booking) {
-            // Show booking details in modal or navigate to detail page
             this.showBookingDetails(booking);
         }
     }
 
     showBookingDetails(booking) {
-        // Simple alert for now - you can implement a modal later
         const details = `
 Booking Details:
-- Child: ${booking.child_name}
-- Camp: ${booking.camp_name}
-- Dates: ${this.formatDateRange(new Date(booking.start_date), new Date(booking.end_date))}
-- Status: ${this.capitalizeFirst(booking.status)}
-- Cost: $${booking.cost}
-- Booked: ${new Date(booking.created_at).toLocaleDateString()}
+━━━━━━━━━━━━━━━━━━━━
+Child: ${booking.child_name}
+Camp: ${booking.camp_name}
+${booking.camp_description ? `Description: ${booking.camp_description}` : ''}
+Dates: ${this.formatDateRange(new Date(booking.start_date), new Date(booking.end_date))}
+Status: ${this.capitalizeFirst(booking.status)}
+Cost: $${booking.cost}
+Booked: ${new Date(booking.created_at).toLocaleDateString()}
         `;
 
         alert(details);
@@ -340,12 +417,12 @@ This action cannot be undone and cancellation policies may apply.`;
     }
 
     showError(message) {
-        // Simple alert for now - you can implement toast notifications later
+        console.error('Error:', message);
         alert('Error: ' + message);
     }
 
     showSuccess(message) {
-        // Simple alert for now - you can implement toast notifications later
+        console.log('Success:', message);
         alert('Success: ' + message);
     }
 
@@ -360,6 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if we're on the bookings page
     if (window.location.pathname.includes('bookings.html') ||
         document.getElementById('bookingTableBody')) {
+        console.log('Initializing BookingList...');
         window.bookingList = new BookingList();
     }
 });

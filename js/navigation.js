@@ -1,26 +1,54 @@
-// js/navigation.js - Fixed Navigation Dropdown System
+// js/navigation.js - Fixed Navigation with Proper Authentication
 
 class Navigation {
     constructor() {
         this.user = null;
-        this.supabase = window.supabase; // Assuming you have supabase initialized
+        this.supabase = window.supabase;
         this.init();
     }
 
     init() {
         this.checkAuth();
         this.setupEventListeners();
+
+        // Listen for auth state changes
+        if (this.supabase) {
+            this.supabase.auth.onAuthStateChange((event, session) => {
+                console.log('Auth state changed:', event, session);
+                if (event === 'SIGNED_IN') {
+                    this.user = session.user;
+                    this.renderUserDropdown();
+                } else if (event === 'SIGNED_OUT') {
+                    this.user = null;
+                    this.renderAuthButtons();
+                }
+            });
+        }
     }
 
     async checkAuth() {
         try {
-            // Replace with your actual Supabase auth check
-            const { data: { user }, error } = await this.supabase.auth.getUser();
+            if (!this.supabase) {
+                console.warn('Supabase not initialized, showing auth buttons');
+                this.renderAuthButtons();
+                return;
+            }
 
-            if (user) {
-                this.user = user;
+            // Get current session
+            const { data: { session }, error } = await this.supabase.auth.getSession();
+
+            if (error) {
+                console.error('Error getting session:', error);
+                this.renderAuthButtons();
+                return;
+            }
+
+            if (session && session.user) {
+                this.user = session.user;
+                console.log('User is logged in:', this.user.email);
                 this.renderUserDropdown();
             } else {
+                console.log('No active session, showing auth buttons');
                 this.renderAuthButtons();
             }
         } catch (error) {
@@ -31,14 +59,19 @@ class Navigation {
 
     renderUserDropdown() {
         const navAuth = document.getElementById('navAuth');
-        if (!navAuth) return;
+        if (!navAuth) {
+            console.warn('navAuth element not found');
+            return;
+        }
 
-        const userEmail = this.user.email || 'User';
+        const userEmail = this.user?.email || 'User';
+        // Take first part of email for display
+        const displayName = userEmail.split('@')[0];
 
         navAuth.innerHTML = `
             <div class="user-dropdown">
                 <button class="user-btn" id="userBtn">
-                    ${userEmail}
+                    ${displayName}
                 </button>
                 <div class="dropdown-menu" id="dropdownMenu">
                     <a href="/profile.html">Profile</a>
@@ -53,7 +86,10 @@ class Navigation {
 
     renderAuthButtons() {
         const navAuth = document.getElementById('navAuth');
-        if (!navAuth) return;
+        if (!navAuth) {
+            console.warn('navAuth element not found');
+            return;
+        }
 
         navAuth.innerHTML = `
             <div class="auth-buttons">
@@ -122,7 +158,12 @@ class Navigation {
 
     async logout() {
         try {
-            // Replace with your actual Supabase logout
+            if (!this.supabase) {
+                console.warn('Supabase not initialized');
+                return;
+            }
+
+            console.log('Logging out...');
             const { error } = await this.supabase.auth.signOut();
 
             if (error) {
@@ -130,20 +171,29 @@ class Navigation {
                 return;
             }
 
+            console.log('Logout successful');
             this.user = null;
             this.renderAuthButtons();
 
-            // Redirect to home page
-            window.location.href = '/';
+            // Redirect to home page after logout
+            if (window.location.pathname !== '/') {
+                window.location.href = '/';
+            }
         } catch (error) {
             console.error('Logout failed:', error);
         }
+    }
+
+    // Public method to manually refresh auth state
+    async refreshAuth() {
+        await this.checkAuth();
     }
 }
 
 // Initialize navigation when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    new Navigation();
+    console.log('Initializing navigation...');
+    window.navigation = new Navigation();
 });
 
 // Export for use in other files if needed

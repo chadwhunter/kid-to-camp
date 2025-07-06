@@ -1,4 +1,4 @@
-/* COMPLETE styles.css for Kid To Camp Platform - FULL REPLACEMENT */
+/* COMPLETE FIXED styles.css for Kid To Camp Platform */
 
 /* ========================================
    RESET AND BASE STYLES
@@ -32,7 +32,7 @@ html {
    NAVIGATION STYLES - FIXED VERSION
 ======================================== */
 
-/* Header Styles */
+/* Original Header Styles - For existing pages */
 header {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
@@ -52,13 +52,13 @@ nav {
 .logo {
     font-size: 1.5rem;
     font-weight: bold;
-    color: white;
+    color: white !important;
     text-decoration: none;
     transition: color 0.3s ease;
 }
 
 .logo:hover {
-    color: #f0f0f0;
+    color: #f0f0f0 !important;
 }
 
 .nav-buttons {
@@ -163,15 +163,16 @@ nav {
     color: #667eea !important;
 }
 
-/* NEW NAVBAR STYLES - For new navigation system */
+/* NEW NAVBAR STYLES - Fixed Color and Layout */
 .navbar {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.1) !important;
     backdrop-filter: blur(10px);
     padding: 1rem 0;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     position: sticky;
     top: 0;
     z-index: 1000;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .nav-container {
@@ -181,6 +182,7 @@ nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 2rem;
 }
 
 .nav-links {
@@ -188,22 +190,25 @@ nav {
     list-style: none;
     gap: 2rem;
     align-items: center;
+    flex: 1;
+    justify-content: center;
 }
 
 .nav-links a {
     text-decoration: none;
-    color: #333;
+    color: white !important;
     font-weight: 500;
     transition: color 0.3s ease;
     position: relative;
+    white-space: nowrap;
 }
 
 .nav-links a:hover {
-    color: #667eea;
+    color: #f0f0f0 !important;
 }
 
 .nav-links a.active {
-    color: #667eea;
+    color: #4CAF50 !important;
 }
 
 .nav-links a.active::after {
@@ -213,7 +218,28 @@ nav {
     left: 0;
     right: 0;
     height: 2px;
-    background: #667eea;
+    background: #4CAF50;
+}
+
+/* Logo styling for new navbar */
+.navbar .logo {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: white !important;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.navbar .logo:hover {
+    color: #f0f0f0 !important;
+}
+
+/* Auth section styling */
+#navAuth {
+    flex-shrink: 0;
+    min-width: 200px;
+    display: flex;
+    justify-content: flex-end;
 }
 
 /* USER DROPDOWN STYLES - NEW SYSTEM */
@@ -223,11 +249,11 @@ nav {
 }
 
 .user-dropdown .user-btn {
-    background: #667eea;
+    background: rgba(255, 255, 255, 0.1);
     color: white;
-    border: none;
+    border: 2px solid rgba(255, 255, 255, 0.3);
     padding: 0.75rem 1.5rem;
-    border-radius: 50px;
+    border-radius: 8px;
     cursor: pointer;
     font-weight: 500;
     display: flex;
@@ -237,8 +263,8 @@ nav {
 }
 
 .user-dropdown .user-btn:hover {
-    background: #5a67d8;
-    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
 }
 
 .user-dropdown .user-btn::after {
@@ -297,6 +323,37 @@ nav {
 .auth-buttons {
     display: flex;
     gap: 1rem;
+    align-items: center;
+}
+
+.auth-buttons .btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.auth-buttons .btn-secondary {
+    background: transparent;
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.auth-buttons .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.auth-buttons .btn-primary {
+    background: #4CAF50;
+    color: white;
+    border: 2px solid #4CAF50;
+}
+
+.auth-buttons .btn-primary:hover {
+    background: #45a049;
+    transform: translateY(-1px);
 }
 
 @keyframes dropdownFadeIn {
@@ -378,21 +435,23 @@ nav {
 }
 
 .btn-danger {
-    background: #dc3545;
-    color: white;
+    background: #fed7d7;
+    color: #c53030;
+    border: 1px solid #feb2b2;
 }
 
 .btn-danger:hover {
-    background: #c82333;
+    background: #feb2b2;
 }
 
 .btn-info {
-    background: #17a2b8;
-    color: white;
+    background: #bee3f8;
+    color: #2b6cb0;
+    border: 1px solid #90cdf4;
 }
 
 .btn-info:hover {
-    background: #138496;
+    background: #90cdf4;
 }
 
 .filter-toggle-btn {
@@ -1220,7 +1279,7 @@ nav {
 }
 
 /* ========================================
-   BOOKING LIST STYLES - NEW
+   BOOKING LIST STYLES
 ======================================== */
 
 .booking-list-container {
@@ -1466,6 +1525,19 @@ nav {
 ======================================== */
 
 @media (max-width: 1024px) {
+    .nav-container {
+        padding: 0 1rem;
+        gap: 1rem;
+    }
+
+    .nav-links {
+        gap: 1.5rem;
+    }
+
+    #navAuth {
+        min-width: 180px;
+    }
+
     .calendar-controls {
         flex-direction: column;
         gap: 1rem;
@@ -1539,12 +1611,29 @@ nav {
         margin-bottom: 0.5rem;
     }
 
+    /* New navbar responsive */
     .nav-container {
-        padding: 0 1rem;
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
     }
 
     .nav-links {
-        display: none;
+        order: 2;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    #navAuth {
+        order: 3;
+        min-width: auto;
+        justify-content: center;
+    }
+
+    .navbar .logo {
+        order: 1;
+        font-size: 1.5rem;
     }
 
     .container {
