@@ -229,26 +229,49 @@ class FamilyCalendar {
     }
 
     updatePeriodDisplay() {
-        const periodElement = document.getElementById('currentPeriod');
+        // FIXED: Check for both possible element IDs and add null checks
+        const periodElement = document.getElementById('currentPeriod') ||
+            document.getElementById('currentMonth');
 
-        if (this.currentView === 'month') {
-            const monthYear = this.currentDate.toLocaleDateString('en-US', {
-                month: 'long',
-                year: 'numeric'
-            });
-            periodElement.textContent = monthYear;
-        } else {
-            const startOfWeek = this.getStartOfWeek(this.currentDate);
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(endOfWeek.getDate() + 6);
+        if (!periodElement) {
+            console.warn('Period display element not found (looking for currentPeriod or currentMonth)');
+            return;
+        }
 
-            const weekRange = `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-            periodElement.textContent = weekRange;
+        try {
+            if (this.currentView === 'month') {
+                const monthYear = this.currentDate.toLocaleDateString('en-US', {
+                    month: 'long',
+                    year: 'numeric'
+                });
+                periodElement.textContent = monthYear;
+            } else {
+                const startOfWeek = this.getStartOfWeek(this.currentDate);
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(endOfWeek.getDate() + 6);
+
+                const weekRange = `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                periodElement.textContent = weekRange;
+            }
+        } catch (error) {
+            console.error('Error updating period display:', error);
+            // Fallback: set a basic date
+            if (periodElement) {
+                periodElement.textContent = this.currentDate.toLocaleDateString('en-US', {
+                    month: 'long',
+                    year: 'numeric'
+                });
+            }
         }
     }
 
     renderChildrenLegend() {
         const legendContainer = document.getElementById('childrenLegend');
+
+        if (!legendContainer) {
+            console.warn('childrenLegend element not found');
+            return;
+        }
 
         if (!kidToCamp.children || kidToCamp.children.length === 0) {
             legendContainer.innerHTML = `
@@ -277,6 +300,11 @@ class FamilyCalendar {
     renderMonthView() {
         const headerContainer = document.getElementById('calendarHeader');
         const gridContainer = document.getElementById('calendarGrid');
+
+        if (!headerContainer || !gridContainer) {
+            console.warn('Calendar header or grid container not found');
+            return;
+        }
 
         // Render day headers
         const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -343,6 +371,11 @@ class FamilyCalendar {
     renderWeekView() {
         const headerContainer = document.getElementById('calendarHeader');
         const gridContainer = document.getElementById('calendarGrid');
+
+        if (!headerContainer || !gridContainer) {
+            console.warn('Calendar header or grid container not found');
+            return;
+        }
 
         const startOfWeek = this.getStartOfWeek(this.currentDate);
         const dayHeaders = [];
@@ -444,6 +477,11 @@ class FamilyCalendar {
         const { booking, child, color, startPos, endPos } = span;
         const gridContainer = document.getElementById('calendarGrid');
 
+        if (!gridContainer) {
+            console.warn('Calendar grid container not found');
+            return;
+        }
+
         // Calculate span dimensions
         const isMultiWeek = startPos.week !== endPos.week;
 
@@ -459,6 +497,8 @@ class FamilyCalendar {
     renderSingleWeekSpan(span) {
         const { booking, child, color, startPos, endPos } = span;
         const gridContainer = document.getElementById('calendarGrid');
+
+        if (!gridContainer) return;
 
         const startDay = startPos.day;
         const endDay = endPos.day;
@@ -694,8 +734,8 @@ class FamilyCalendar {
         this.currentView = view;
 
         // Update button states
-        document.getElementById('monthViewBtn').classList.toggle('active', view === 'month');
-        document.getElementById('weekViewBtn').classList.toggle('active', view === 'week');
+        document.getElementById('monthViewBtn')?.classList.toggle('active', view === 'month');
+        document.getElementById('weekViewBtn')?.classList.toggle('active', view === 'week');
 
         this.render();
     }
@@ -931,8 +971,11 @@ class FamilyCalendar {
             </div>
         `;
 
-        document.getElementById('bookingDetailsContent').innerHTML = detailsHTML;
-        this.ui.openModal('bookingDetailsModal');
+        const detailsContent = document.getElementById('bookingDetailsContent');
+        if (detailsContent) {
+            detailsContent.innerHTML = detailsHTML;
+            this.ui.openModal('bookingDetailsModal');
+        }
     }
 
     formatDaysOfWeek(daysArray) {
@@ -1029,7 +1072,8 @@ FamilyCalendar.prototype.ui = {
 
         // Reset forms when closing
         if (modalId === 'addBookingModal') {
-            document.getElementById('bookingForm').reset();
+            const form = document.getElementById('bookingForm');
+            if (form) form.reset();
         }
     }
 };
