@@ -12,7 +12,13 @@ class KidToCamp {
         try {
             // Initialize Supabase
             const { createClient } = supabase;
-            this.supabase = createClient(CONFIG.supabase.url, CONFIG.supabase.key);
+            if (window.supabase && window.supabase.auth) {
+                this.supabase = window.supabase;
+                console.log('✅ Using existing Supabase client from config.js');
+            } else {
+                console.error('❌ Supabase client not ready in app.js');
+                throw new Error('Supabase client not available');
+            }
 
             // Check for existing session
             const { data: { session } } = await this.supabase.auth.getSession();
