@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kid To Camp - Your Bookings</title>
     <link rel="stylesheet" href="css/styles.css">
-    <script src="js/config.js"></script>
 </head>
 
 <body>
@@ -102,10 +101,17 @@
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- CRITICAL: Scripts in correct order -->
+    <!-- 1. Load Supabase library first -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- 2. Load config.js to initialize Supabase client -->
     <script src="js/config.js"></script>
+
+    <!-- 3. Load navigation.js -->
     <script src="js/navigation.js"></script>
+
+    <!-- 4. Load bookings.js last -->
     <script src="js/bookings.js"></script>
 </body>
 

@@ -35,18 +35,21 @@
             <!-- Calendar Controls -->
             <div class="calendar-controls">
                 <div class="view-controls">
-                    <button class="btn btn-outline active" data-view="month">Month</button>
-                    <button class="btn btn-outline" data-view="week">Week</button>
+                    <button class="btn btn-outline active" id="monthViewBtn"
+                        onclick="familyCalendar.setView('month')">Month</button>
+                    <button class="btn btn-outline" id="weekViewBtn"
+                        onclick="familyCalendar.setView('week')">Week</button>
                 </div>
 
                 <div class="month-navigation">
-                    <button class="nav-btn" id="prevMonth">‹ Previous</button>
-                    <h2 id="currentMonth">Loading...</h2>
-                    <button class="nav-btn" id="nextMonth">Next ›</button>
+                    <button class="nav-btn" onclick="familyCalendar.previousPeriod()">‹ Previous</button>
+                    <h2 id="currentPeriod">Loading...</h2>
+                    <button class="nav-btn" onclick="familyCalendar.nextPeriod()">Next ›</button>
                 </div>
 
                 <div class="calendar-actions">
-                    <button class="btn btn-primary" id="addBookingBtn">Add Booking</button>
+                    <button class="btn btn-primary" onclick="familyCalendar.showAddBooking()">Add Booking</button>
+                    <button class="btn btn-outline" onclick="familyCalendar.goToToday()">Today</button>
                 </div>
             </div>
 
@@ -67,7 +70,54 @@
         </div>
     </div>
 
-    <!-- FIXED SCRIPT ORDER: Critical for proper initialization -->
+    <!-- Add Booking Modal -->
+    <div id="addBookingModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="familyCalendar.ui.closeModal('addBookingModal')">&times;</span>
+            <h2>Add New Booking</h2>
+            <form id="bookingForm">
+                <div class="form-group">
+                    <label>Select Child</label>
+                    <select id="bookingChild" required>
+                        <option value="">Select a child...</option>
+                        <!-- Populated by JavaScript -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Select Camp Session</label>
+                    <select id="bookingCamp" required>
+                        <option value="">Select a camp session...</option>
+                        <!-- Populated by JavaScript -->
+                    </select>
+                </div>
+
+                <div class="form-buttons">
+                    <button type="button" class="btn btn-outline"
+                        onclick="familyCalendar.ui.closeModal('addBookingModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Booking</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Booking Details Modal -->
+    <div id="bookingDetailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="familyCalendar.ui.closeModal('bookingDetailsModal')">&times;</span>
+            <h2>Booking Details</h2>
+            <div id="bookingDetailsContent">
+                <!-- Populated by JavaScript -->
+            </div>
+            <div class="form-buttons">
+                <button class="btn btn-outline"
+                    onclick="familyCalendar.ui.closeModal('bookingDetailsModal')">Close</button>
+                <button class="btn btn-danger" onclick="familyCalendar.deleteCurrentBooking()">Delete Booking</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CRITICAL: Scripts in correct order -->
     <!-- 1. Load Supabase library first -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -77,8 +127,10 @@
     <!-- 3. Load navigation.js (depends on Supabase client) -->
     <script src="js/navigation.js"></script>
 
-    <!-- 4. Load other scripts last -->
+    <!-- 4. Load app.js (core application logic) -->
     <script src="js/app.js"></script>
+
+    <!-- 5. Load calendar.js last (depends on app.js) -->
     <script src="js/calendar.js"></script>
 </body>
 

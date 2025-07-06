@@ -1,30 +1,45 @@
-// js/config.js - FINAL VERSION with Session Persistence
+// js/config.js - FIXED VERSION - Prevents duplicate declarations
 
-// Configuration object
-const CONFIG = {
-    supabase: {
-        url: 'https://jjrvkntowkmdfbejlnwk.supabase.co',
-        key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqcnZrbnRvd2ttZGZiZWpsbndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNjc5OTgsImV4cCI6MjA2NTc0Mzk5OH0.Ng0lYJAki_FeJK2_fAR5w95SZJ-7-BHzpkMbNm4uKuM'
-    },
-    app: {
-        name: 'Kid To Camp',
-        version: '1.0.0'
-    }
-};
+// Check if CONFIG already exists to prevent redeclaration
+if (typeof window.CONFIG === 'undefined') {
+    // Configuration object
+    const CONFIG = {
+        supabase: {
+            url: 'https://jjrvkntowkmdfbejlnwk.supabase.co',
+            key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqcnZrbnRvd2ttZGZiZWpsbndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNjc5OTgsImV4cCI6MjA2NTc0Mzk5OH0.Ng0lYJAki_FeJK2_fAR5w95SZJ-7-BHzpkMbNm4uKuM'
+        },
+        app: {
+            name: 'Kid To Camp',
+            version: '1.0.0'
+        }
+    };
+
+    // Export CONFIG for other scripts
+    window.CONFIG = CONFIG;
+    console.log('✅ CONFIG initialized');
+} else {
+    console.log('ℹ️ CONFIG already exists, skipping initialization');
+}
 
 // Function to initialize Supabase client
 function initializeSupabase() {
+    // Prevent multiple initializations
+    if (window.supabase && window.supabase.auth && typeof window.supabase.auth.getSession === 'function') {
+        console.log('ℹ️ Supabase client already initialized, skipping...');
+        return window.supabase;
+    }
+
     try {
         // Check if Supabase library is loaded
         if (typeof supabase === 'undefined' || !window.supabase) {
-            console.error('Supabase library not loaded! Make sure to include the Supabase script tag.');
+            console.error('❌ Supabase library not loaded! Make sure to include the Supabase script tag.');
             return null;
         }
 
-        console.log('Initializing Supabase client...');
+        console.log('🚀 Initializing Supabase client...');
 
         // CRITICAL FIX: Create client with session persistence enabled
-        const client = window.supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.key, {
+        const client = window.supabase.createClient(window.CONFIG.supabase.url, window.CONFIG.supabase.key, {
             auth: {
                 persistSession: true,           // ✅ ENABLE session persistence across page loads
                 detectSessionInUrl: true,       // ✅ Detect auth from URL redirects  
@@ -40,7 +55,7 @@ function initializeSupabase() {
 
         console.log('✅ Supabase client initialized successfully');
         console.log('✅ Session persistence ENABLED');
-        console.log('Client has auth methods:', !!(client.auth && client.auth.signOut));
+        console.log('✅ Client has auth methods:', !!(client.auth && client.auth.signOut));
 
         return client;
 
@@ -50,12 +65,12 @@ function initializeSupabase() {
     }
 }
 
-// Initialize when script loads
+// Initialize when script loads - but only if Supabase library is available
 if (typeof supabase !== 'undefined' && window.supabase) {
     initializeSupabase();
 } else {
     // Wait for Supabase library to load
-    console.log('Waiting for Supabase library to load...');
+    console.log('⏳ Waiting for Supabase library to load...');
 
     let attempts = 0;
     const maxAttempts = 50;
@@ -65,6 +80,7 @@ if (typeof supabase !== 'undefined' && window.supabase) {
 
         if (typeof supabase !== 'undefined' && window.supabase) {
             clearInterval(waitForSupabase);
+            console.log('✅ Supabase library loaded, initializing client...');
             initializeSupabase();
         } else if (attempts >= maxAttempts) {
             clearInterval(waitForSupabase);
@@ -75,7 +91,7 @@ if (typeof supabase !== 'undefined' && window.supabase) {
 
 // Session management - UPDATED to be less aggressive
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('Setting up session management...');
+    console.log('🔧 Setting up session management...');
 
     // Wait for Supabase client to be ready
     let attempts = 0;
@@ -96,12 +112,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const { data: { session }, error } = await window.supabase.auth.getSession();
         if (session) {
             console.log('✅ Found existing session for:', session.user.email);
-            console.log('Session expires:', new Date(session.expires_at * 1000));
+            console.log('📅 Session expires:', new Date(session.expires_at * 1000));
         } else {
             console.log('ℹ️ No existing session found');
         }
     } catch (error) {
-        console.error('Error checking existing session:', error);
+        console.error('❌ Error checking existing session:', error);
     }
 
     // Extended session timeout (24 hours of inactivity)
@@ -118,7 +134,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await window.supabase.auth.signOut();
                 localStorage.removeItem('last_activity');
             } catch (error) {
-                console.error('Error during auto-logout:', error);
+                console.error('❌ Error during auto-logout:', error);
             }
         }
     }
@@ -135,6 +151,3 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     console.log('✅ Session management setup complete');
 });
-
-// Export CONFIG for other scripts
-window.CONFIG = CONFIG;

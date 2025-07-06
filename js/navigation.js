@@ -1,58 +1,106 @@
-// js/navigation.js - Fixed Navigation with Proper Authentication
+// js/navigation.js - FIXED VERSION with Proper Dependency Handling
 
 class Navigation {
     constructor() {
         this.user = null;
-        this.supabase = window.supabase;
+        this.supabase = null;
+        this.initializationAttempts = 0;
+        this.maxInitializationAttempts = 50;
         this.init();
     }
 
-    init() {
+    async init() {
+        console.log('🚀 Initializing navigation...');
+
+        // Wait for Supabase to be ready
+        await this.waitForSupabase();
+
+        if (!this.supabase) {
+            console.error('❌ Navigation: Supabase not available');
+            this.renderAuthButtons(); // Fallback to showing auth buttons
+            return;
+        }
+
+        console.log('✅ Navigation: Supabase ready');
+
+        // Now we can safely proceed
         this.checkAuth();
         this.setupEventListeners();
+        this.setupAuthListener();
+    }
+
+    async waitForSupabase() {
+        console.log('⏳ Navigation: Waiting for Supabase...');
+
+        while (this.initializationAttempts < this.maxInitializationAttempts) {
+            this.initializationAttempts++;
+
+            // Check if Supabase client is ready
+            if (window.supabase && window.supabase.auth) {
+                this.supabase = window.supabase;
+                console.log('✅ Navigation: Supabase client ready');
+                return;
+            }
+
+            console.log(`⏳ Navigation: Attempt ${this.initializationAttempts}/${this.maxInitializationAttempts}`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+        console.error('❌ Navigation: Timeout waiting for Supabase');
+    }
+
+    setupAuthListener() {
+        if (!this.supabase || !this.supabase.auth) {
+            console.warn('⚠️ Navigation: Cannot setup auth listener - Supabase not ready');
+            return;
+        }
 
         // Listen for auth state changes
-        if (this.supabase) {
-            this.supabase.auth.onAuthStateChange((event, session) => {
-                console.log('Auth state changed:', event, session);
-                if (event === 'SIGNED_IN') {
-                    this.user = session.user;
-                    this.renderUserDropdown();
-                } else if (event === 'SIGNED_OUT') {
-                    this.user = null;
-                    this.renderAuthButtons();
-                }
-            });
-        }
+        this.supabase.auth.onAuthStateChange((event, session) => {
+            console.log('🔄 Navigation: Auth state changed:', event);
+
+            if (event === 'SIGNED_IN' && session) {
+                this.user = session.user;
+                console.log('✅ Navigation: User signed in:', this.user.email);
+                this.renderUserDropdown();
+            } else if (event === 'SIGNED_OUT') {
+                this.user = null;
+                console.log('👋 Navigation: User signed out');
+                this.renderAuthButtons();
+            }
+        });
     }
 
     async checkAuth() {
+        if (!this.supabase || !this.supabase.auth) {
+            console.warn('⚠️ Navigation: Cannot check auth - Supabase not ready');
+            this.renderAuthButtons();
+            return;
+        }
+
         try {
-            if (!this.supabase) {
-                console.warn('Supabase not initialized, showing auth buttons');
-                this.renderAuthButtons();
-                return;
-            }
+            console.log('🔍 Navigation: Checking authentication...');
 
             // Get current session
             const { data: { session }, error } = await this.supabase.auth.getSession();
 
             if (error) {
-                console.error('Error getting session:', error);
+                console.error('❌ Navigation: Error getting session:', error);
                 this.renderAuthButtons();
                 return;
             }
 
             if (session && session.user) {
                 this.user = session.user;
-                console.log('User is logged in:', this.user.email);
+                console.log('✅ Navigation: User is logged in:', this.user.email);
                 this.renderUserDropdown();
             } else {
-                console.log('No active session, showing auth buttons');
+                console.log('ℹ️ Navigation: No active session');
                 this.renderAuthButtons();
             }
+
         } catch (error) {
-            console.error('Auth check failed:', error);
+            console.error('❌ Navigation: Auth check failed:', error);
             this.renderAuthButtons();
         }
     }
@@ -60,7 +108,7 @@ class Navigation {
     renderUserDropdown() {
         const navAuth = document.getElementById('navAuth');
         if (!navAuth) {
-            console.warn('navAuth element not found');
+            console.warn('⚠️ Navigation: navAuth element not found');
             return;
         }
 
@@ -82,12 +130,14 @@ class Navigation {
                 </div>
             </div>
         `;
+
+        console.log('✅ Navigation: User dropdown rendered');
     }
 
     renderAuthButtons() {
         const navAuth = document.getElementById('navAuth');
         if (!navAuth) {
-            console.warn('navAuth element not found');
+            console.warn('⚠️ Navigation: navAuth element not found');
             return;
         }
 
@@ -97,6 +147,8 @@ class Navigation {
                 <a href="/signup.html" class="btn btn-primary">Sign Up</a>
             </div>
         `;
+
+        console.log('✅ Navigation: Auth buttons rendered');
     }
 
     setupEventListeners() {
@@ -134,6 +186,8 @@ class Navigation {
                 this.closeDropdown();
             }
         });
+
+        console.log('✅ Navigation: Event listeners setup');
     }
 
     openDropdown() {
@@ -157,46 +211,26 @@ class Navigation {
     }
 
     async logout() {
-        try {
-            if (!this.supabase) {
-                console.warn('Supabase not initialized');
-                return;
-            }
+        if (!this.supabase || !this.supabase.auth) {
+            console.warn('⚠️ Navigation: Cannot logout - Supabase not ready');
+            return;
+        }
 
-            console.log('Logging out...');
+        try {
+            console.log('👋 Navigation: Logging out...');
+
             const { error } = await this.supabase.auth.signOut();
 
             if (error) {
-                console.error('Logout error:', error);
+                console.error('❌ Navigation: Logout error:', error);
                 return;
             }
 
-            console.log('Logout successful');
+            console.log('✅ Navigation: Logout successful');
             this.user = null;
             this.renderAuthButtons();
 
             // Redirect to home page after logout
-            if (window.location.pathname !== '/') {
+            if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
                 window.location.href = '/';
             }
-        } catch (error) {
-            console.error('Logout failed:', error);
-        }
-    }
-
-    // Public method to manually refresh auth state
-    async refreshAuth() {
-        await this.checkAuth();
-    }
-}
-
-// Initialize navigation when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Initializing navigation...');
-    window.navigation = new Navigation();
-});
-
-// Export for use in other files if needed
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = Navigation;
-}
