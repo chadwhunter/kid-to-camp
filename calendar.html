@@ -11,12 +11,21 @@
 
 <body>
     <header>
-        <nav class="container">
-            <a href="index.html" class="logo">Kid To Camp</a>
-            <div class="nav-buttons" id="navButtons">
-                <a href="index.html" class="btn btn-outline">🔍 Search</a>
-                <a href="profile.html" class="btn btn-outline">👤 Profile</a>
-                <button class="btn btn-primary" onclick="kidToCamp.logout()">Sign Out</button>
+        <nav class="navbar">
+            <div class="nav-container">
+                <a href="/" class="logo">Kid To Camp</a>
+
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/profile.html">Profile</a></li>
+                    <li><a href="/calendar.html">Calendar</a></li>
+                    <li><a href="/bookings.html">Bookings</a></li>
+                </ul>
+
+                <!-- User dropdown or auth buttons -->
+                <div id="navAuth">
+                    <!-- Will be populated by navigation.js -->
+                </div>
             </div>
         </nav>
     </header>
@@ -193,6 +202,7 @@
             setTimeout(waitForKidToCamp, 100);
         });
     </script>
+    <script src="js/navigation.js"></script>
 </body>
 
 </html>

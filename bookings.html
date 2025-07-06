@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kid To Camp - Your Bookings</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/config.js"></script>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">Kid To Camp</a>
+
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/profile.html">Profile</a></li>
+                <li><a href="/calendar.html">Calendar</a></li>
+                <li><a href="/bookings.html" class="active">Bookings</a></li>
+            </ul>
+
+            <!-- User dropdown or auth buttons -->
+            <div id="navAuth">
+                <!-- Will be populated by navigation.js -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-header">
+            <h1>Your Bookings</h1>
+            <p>Manage all your camp bookings in one place</p>
+        </div>
+
+        <!-- Booking List -->
+        <div class="booking-list-container">
+            <!-- Filters -->
+            <div class="booking-filters">
+                <div class="filter-group">
+                    <label for="childFilter">Filter by Child</label>
+                    <select id="childFilter" class="filter-select">
+                        <option value="">All Children</option>
+                        <!-- Populated by JavaScript -->
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="statusFilter">Filter by Status</label>
+                    <select id="statusFilter" class="filter-select">
+                        <option value="">All Status</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="dateFilter">Filter by Date</label>
+                    <select id="dateFilter" class="filter-select">
+                        <option value="">All Dates</option>
+                        <option value="upcoming">Upcoming</option>
+                        <option value="past">Past</option>
+                        <option value="current">Current</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Booking Table -->
+            <div id="bookingTableContainer">
+                <table class="booking-table">
+                    <thead>
+                        <tr>
+                            <th>Child</th>
+                            <th>Camp</th>
+                            <th>Dates</th>
+                            <th>Status</th>
+                            <th>Cost</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookingTableBody">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty state -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div>📅</div>
+                <h3>No bookings found</h3>
+                <p>You haven't made any camp bookings yet. <a href="/calendar.html">Browse camps</a> to get started!</p>
+            </div>
+
+            <!-- Total Section -->
+            <div class="total-section">
+                <h3>Total Bookings: <span id="totalBookings">0</span></h3>
+                <div class="total-amount">Total Cost: $<span id="totalCost">0</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/navigation.js"></script>
+    <script src="js/bookings.js"></script>
+</body>
+
+</html>

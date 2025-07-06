@@ -1,3502 +1,1724 @@
- * {
-     margin: 0;
-     padding: 0;
-     box-sizing: border-box;
- }
-
- body {
-     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-     line-height: 1.6;
-     color: #333;
-     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-     min-height: 100vh;
- }
-
- .container {
-     max-width: 1200px;
-     margin: 0 auto;
-     padding: 0 20px;
- }
-
- /* Header Styles */
- header {
-     background: rgba(255, 255, 255, 0.1);
-     backdrop-filter: blur(10px);
-     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-     position: sticky;
-     top: 0;
-     z-index: 100;
- }
-
- nav {
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     padding: 1rem 0;
- }
-
- .logo {
-     font-size: 1.5rem;
-     font-weight: bold;
-     color: white;
-     text-decoration: none;
- }
-
- .nav-buttons {
-     display: flex;
-     align-items: center;
-     gap: 1rem;
-     width: 100%;
-     justify-content: space-between;
- }
-
- .nav-user-info {
-     display: flex;
-     align-items: center;
- }
-
- .welcome-text {
-     color: white;
-     font-weight: 500;
-     white-space: nowrap;
- }
-
- .nav-menu {
-     display: flex;
-     align-items: center;
-     gap: 1rem;
- }
-
- /* Dropdown Navigation */
- .nav-dropdown {
-     position: relative;
-     display: inline-block;
- }
-
- .nav-btn {
-     padding: 0.75rem 1.5rem;
-     border: none;
-     border-radius: 8px;
-     font-weight: 600;
-     cursor: pointer;
-     text-decoration: none;
-     display: inline-flex;
-     align-items: center;
-     gap: 0.25rem;
-     transition: all 0.3s ease;
-     font-size: 0.9rem;
-     background: transparent;
-     color: white;
-     border: 2px solid rgba(255, 255, 255, 0.3);
- }
-
- .nav-btn:hover {
-     background: rgba(255, 255, 255, 0.1);
-     transform: translateY(-1px);
- }
-
- .dropdown-btn {
-     background: rgba(255, 255, 255, 0.1);
-     border: 2px solid rgba(255, 255, 255, 0.3);
- }
-
- .dropdown-arrow {
-     font-size: 0.7rem;
-     transition: transform 0.3s ease;
- }
-
- .nav-dropdown:hover .dropdown-arrow {
-     transform: rotate(180deg);
- }
-
- .dropdown-content {
-     display: none;
-     position: absolute;
-     background: white;
-     min-width: 200px;
-     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-     border-radius: 8px;
-     z-index: 1000;
-     top: 100%;
-     left: 0;
-     margin-top: 0.5rem;
-     border: 1px solid rgba(0, 0, 0, 0.1);
-     overflow: hidden;
- }
-
- .dropdown-content.show {
-     display: block;
-     animation: dropdownFadeIn 0.3s ease-out;
- }
-
- .dropdown-content a {
-     color: #333;
-     padding: 0.75rem 1rem;
-     text-decoration: none;
-     display: block;
-     transition: background-color 0.2s ease;
-     font-weight: 500;
- }
-
- .dropdown-content a:hover {
-     background-color: #f8f9fa;
-     color: #667eea;
- }
-
- @keyframes dropdownFadeIn {
-     from {
-         opacity: 0;
-         transform: translateY(-10px);
-     }
-
-     to {
-         opacity: 1;
-         transform: translateY(0);
-     }
- }
-
- /* Button Styles */
- .btn {
-     padding: 0.75rem 1.5rem;
-     border: none;
-     border-radius: 8px;
-     font-weight: 600;
-     cursor: pointer;
-     text-decoration: none;
-     display: inline-block;
-     transition: all 0.3s ease;
-     font-size: 0.9rem;
- }
-
- .btn-primary {
-     background: #4CAF50;
-     color: white;
- }
-
- .btn-primary:hover {
-     background: #45a049;
-     transform: translateY(-2px);
- }
-
- .btn-outline {
-     background: transparent;
-     color: white;
-     border: 2px solid white;
- }
-
- .btn-outline:hover {
-     background: white;
-     color: #667eea;
- }
-
- .btn-search {
-     background: #FF6B35;
-     color: white;
- }
-
- .btn-search:hover {
-     background: #e55a2b;
-     transform: translateY(-2px);
- }
-
- .filter-toggle-btn {
-     background: rgba(255, 255, 255, 0.2);
-     color: white;
-     border: 1px solid rgba(255, 255, 255, 0.3);
-     padding: 0.3rem 0.8rem;
-     border-radius: 4px;
-     cursor: pointer;
-     font-size: 0.8rem;
-     margin-right: 0.5rem;
- }
-
- .filter-toggle-btn:hover {
-     background: rgba(255, 255, 255, 0.3);
- }
-
- /* Hero Section */
- .hero {
-     padding: 4rem 0;
-     text-align: center;
-     color: white;
- }
-
- .hero h1 {
-     font-size: 3rem;
-     margin-bottom: 1rem;
-     font-weight: 700;
-     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
- }
-
- .hero p {
-     font-size: 1.2rem;
-     margin-bottom: 3rem;
-     opacity: 0.9;
-     max-width: 600px;
-     margin-left: auto;
-     margin-right: auto;
- }
-
- /* Search Widget */
- .search-widget {
-     background: rgba(255, 255, 255, 0.1);
-     backdrop-filter: blur(10px);
-     border-radius: 20px;
-     padding: 2rem;
-     margin-bottom: 3rem;
-     border: 1px solid rgba(255, 255, 255, 0.2);
-     text-align: left;
- }
-
- .search-widget h3 {
-     margin-bottom: 1.5rem;
-     font-size: 1.3rem;
-     text-align: center;
- }
-
- .search-form {
-     max-width: 100%;
- }
-
- .search-row {
-     display: grid;
-     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-     gap: 1rem;
-     margin-bottom: 1rem;
- }
-
- .search-field {
-     display: flex;
-     flex-direction: column;
- }
-
- .search-field label {
-     margin-bottom: 0.5rem;
-     font-weight: 600;
-     color: white;
- }
-
- .search-field input,
- .search-field select {
-     padding: 0.75rem;
-     border: 1px solid rgba(255, 255, 255, 0.3);
-     border-radius: 8px;
-     background: rgba(255, 255, 255, 0.9);
-     font-size: 1rem;
- }
-
- .search-field textarea {
-     padding: 0.75rem;
-     border: 1px solid rgba(255, 255, 255, 0.3);
-     border-radius: 8px;
-     background: rgba(255, 255, 255, 0.9);
-     font-size: 1rem;
-     resize: vertical;
-     min-height: 80px;
- }
-
- .checkbox-grid {
-     display: grid;
-     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-     gap: 0.5rem;
-     margin-top: 0.5rem;
- }
-
- .checkbox-grid label {
-     display: flex;
-     align-items: center;
-     gap: 0.5rem;
-     font-weight: normal;
-     cursor: pointer;
-     padding: 0.3rem;
-     border-radius: 4px;
-     transition: background-color 0.2s;
- }
-
- .checkbox-grid label:hover {
-     background: rgba(255, 255, 255, 0.1);
- }
-
- .checkbox-grid input[type="checkbox"] {
-     margin: 0;
- }
-
- .interest-grid {
-     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
- }
-
- .accommodation-grid {
-     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
- }
-
- /* Search Results */
- .search-results {
-     margin-top: 2rem;
-     padding: 1rem;
-     background: rgba(255, 255, 255, 0.95);
-     border-radius: 12px;
-     color: #333;
-     display: none;
- }
-
- .search-results.show {
-     display: block;
- }
-
- .camp-card {
-     background: white;
-     border-radius: 12px;
-     padding: 1.5rem;
-     margin-bottom: 1rem;
-     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-     border-left: 4px solid #4CAF50;
- }
-
- .camp-card h4 {
-     color: #2c3e50;
-     margin-bottom: 0.5rem;
-     font-size: 1.2rem;
- }
-
- .camp-details {
-     display: grid;
-     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-     gap: 1rem;
-     margin: 1rem 0;
- }
-
- .camp-detail {
-     display: flex;
-     align-items: center;
-     gap: 0.5rem;
-     font-size: 0.9rem;
-     color: #666;
- }
-
- .camp-tags {
-     display: flex;
-     flex-wrap: wrap;
-     gap: 0.5rem;
-     margin: 1rem 0;
- }
-
- .tag {
-     background: #e3f2fd;
-     color: #1565c0;
-     padding: 0.2rem 0.8rem;
-     border-radius: 15px;
-     font-size: 0.8rem;
-     font-weight: 500;
- }
-
- .accommodation-tag {
-     background: #fff3e0;
-     color: #ef6c00;
- }
-
- /* Hero Buttons */
- .hero-buttons {
-     display: grid;
-     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-     gap: 2rem;
-     max-width: 800px;
-     margin: 0 auto;
- }
-
- .user-card {
-     background: rgba(255, 255, 255, 0.1);
-     backdrop-filter: blur(10px);
-     border: 1px solid rgba(255, 255, 255, 0.2);
-     border-radius: 20px;
-     padding: 2rem;
-     text-align: center;
-     transition: transform 0.3s ease;
- }
-
- .user-card:hover {
-     transform: translateY(-5px);
- }
-
- .user-card h3 {
-     margin-bottom: 1rem;
-     font-size: 1.3rem;
- }
-
- .user-card p {
-     margin-bottom: 1.5rem;
-     opacity: 0.9;
- }
-
- .card-features {
-     margin: 1.5rem 0;
-     text-align: left;
- }
-
- .feature {
-     margin-bottom: 0.5rem;
-     font-size: 0.9rem;
-     opacity: 0.9;
- }
-
- /* Modal Styles */
- .modal {
-     display: none;
-     position: fixed;
-     z-index: 1000;
-     left: 0;
-     top: 0;
-     width: 100%;
-     height: 100%;
-     background-color: rgba(0, 0, 0, 0.5);
-     backdrop-filter: blur(5px);
- }
-
- .modal-content {
-     background-color: white;
-     margin: 5% auto;
-     padding: 2rem;
-     border-radius: 15px;
-     width: 90%;
-     max-width: 500px;
-     position: relative;
-     max-height: 90vh;
-     overflow-y: auto;
- }
-
- .modal-content.wide {
-     max-width: 700px;
- }
-
- .close {
-     color: #aaa;
-     float: right;
-     font-size: 28px;
-     font-weight: bold;
-     cursor: pointer;
-     position: absolute;
-     right: 1rem;
-     top: 1rem;
- }
-
- .close:hover {
-     color: #000;
- }
-
- .modal h2 {
-     margin-bottom: 1.5rem;
-     color: #333;
-     text-align: center;
- }
-
- /* Form Styles */
- .form-group {
-     margin-bottom: 1rem;
- }
-
- .form-row {
-     display: grid;
-     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-     gap: 1rem;
- }
-
- .form-group label {
-     display: block;
-     margin-bottom: 0.5rem;
-     font-weight: 600;
-     color: #333;
- }
-
- .form-group input,
- .form-group select,
- .form-group textarea {
-     width: 100%;
-     padding: 0.75rem;
-     border: 2px solid #ddd;
-     border-radius: 8px;
-     font-size: 1rem;
-     transition: border-color 0.3s ease;
- }
-
- .form-group input:focus,
- .form-group select:focus,
- .form-group textarea:focus {
-     outline: none;
-     border-color: #4CAF50;
- }
-
- .form-buttons {
-     display: flex;
-     gap: 1rem;
-     justify-content: flex-end;
-     margin-top: 2rem;
- }
-
- /* Responsive Design */
- @media (max-width: 768px) {
-     .hero h1 {
-         font-size: 2rem;
-     }
-
-     .search-row {
-         grid-template-columns: 1fr;
-     }
-
-     .hero-buttons {
-         grid-template-columns: 1fr;
-     }
-
-     .camp-details {
-         grid-template-columns: 1fr;
-     }
-
-     .form-row {
-         grid-template-columns: 1fr;
-     }
-
-     .nav-buttons {
-         flex-direction: column;
-         gap: 0.5rem;
-     }
- }
-
- @media (max-width: 480px) {
-     .container {
-         padding: 0 10px;
-     }
-
-     .search-widget {
-         padding: 1rem;
-     }
-
-     .hero {
-         padding: 2rem 0;
-     }
-
-     .modal-content {
-         margin: 10% auto;
-         padding: 1rem;
-     }
-
-     .checkbox-grid {
-         grid-template-columns: 1fr;
-     }
- }
-
- /* Loading States */
- .loading {
-     opacity: 0.7;
-     pointer-events: none;
- }
-
- .spinner {
-     border: 2px solid #f3f3f3;
-     border-top: 2px solid #4CAF50;
-     border-radius: 50%;
-     width: 20px;
-     height: 20px;
-     animation: spin 1s linear infinite;
-     display: inline-block;
-     margin-right: 10px;
- }
-
- @keyframes spin {
-     0% {
-         transform: rotate(0deg);
-     }
-
-     100% {
-         transform: rotate(360deg);
-     }
- }
-
- /* Success/Error States */
- .success-message {
-     background: #d4edda;
-     color: #155724;
-     padding: 1rem;
-     border-radius: 8px;
-     margin: 1rem 0;
-     border-left: 4px solid #28a745;
- }
-
- .error-message {
-     background: #f8d7da;
-     color: #721c24;
-     padding: 1rem;
-     border-radius: 8px;
-     margin: 1rem 0;
-     border-left: 4px solid #dc3545;
- }
-
- /* Child filter buttons */
- .child-filter-btn {
-     background: rgba(255, 255, 255, 0.9);
-     color: #333;
-     border: 2px solid transparent;
-     padding: 0.5rem 1rem;
-     border-radius: 20px;
-     cursor: pointer;
-     font-size: 0.9rem;
-     transition: all 0.3s ease;
- }
-
- .child-filter-btn:hover {
-     background: white;
-     transform: translateY(-2px);
- }
-
- .child-filter-btn.active {
-     background: #4CAF50;
-     color: white;
-     border-color: #45a049;
- }
-
- /* Profile Page Styles */
- .profile-page {
-     padding: 2rem 0;
-     min-height: 80vh;
- }
-
- .profile-page h1 {
-     color: white;
-     margin-bottom: 2rem;
-     text-align: center;
-     font-size: 2.5rem;
- }
-
- .profile-section {
-     background: rgba(255, 255, 255, 0.1);
-     backdrop-filter: blur(10px);
-     border: 1px solid rgba(255, 255, 255, 0.2);
-     border-radius: 15px;
-     padding: 2rem;
-     margin-bottom: 2rem;
- }
-
- .section-header {
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     margin-bottom: 1.5rem;
-     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-     padding-bottom: 1rem;
- }
-
- .section-header h2 {
-     color: white;
-     margin: 0;
-     font-size: 1.5rem;
- }
-
- /* Profile Display */
- .profile-display {
-     color: white;
- }
-
- .profile-grid {
-     display: grid;
-     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-     gap: 1rem;
- }
-
- .profile-item {
-     display: flex;
-     flex-direction: column;
-     gap: 0.25rem;
- }
-
- .profile-item label {
-     font-weight: 600;
-     opacity: 0.8;
-     font-size: 0.9rem;
- }
-
- .profile-item span {
-     font-size: 1.1rem;
-     padding: 0.5rem 0;
- }
-
- /* Profile Edit */
- .profile-edit {
-     background: rgba(255, 255, 255, 0.05);
-     border-radius: 10px;
-     padding: 1.5rem;
- }
-
- /* Children List */
- .children-list {
-     display: flex;
-     flex-direction: column;
-     gap: 1rem;
- }
-
- .empty-state {
-     text-align: center;
-     padding: 3rem 1rem;
-     color: white;
- }
-
- .empty-state h3 {
-     margin-bottom: 1rem;
-     opacity: 0.9;
- }
-
- .empty-state p {
-     margin-bottom: 2rem;
-     opacity: 0.7;
- }
-
- /* Child Cards */
- .child-card {
-     background: rgba(255, 255, 255, 0.05);
-     border: 1px solid rgba(255, 255, 255, 0.1);
-     border-radius: 12px;
-     padding: 1.5rem;
-     color: white;
- }
-
- .child-header {
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     margin-bottom: 1rem;
-     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-     padding-bottom: 1rem;
- }
-
- .child-header h3 {
-     margin: 0;
-     font-size: 1.3rem;
- }
-
- .child-actions {
-     display: flex;
-     gap: 0.5rem;
- }
-
- .child-details {
-     display: grid;
-     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-     gap: 1rem;
- }
-
- .child-detail {
-     font-size: 0.95rem;
-     line-height: 1.4;
- }
-
- .child-detail strong {
-     display: inline-block;
-     min-width: 120px;
-     opacity: 0.8;
- }
-
- /* Child Form */
- .child-form {
-     background: rgba(255, 255, 255, 0.05);
-     border-radius: 10px;
-     padding: 1.5rem;
-     margin-top: 1rem;
- }
-
- .child-form h3 {
-     color: white;
-     margin-bottom: 1.5rem;
-     text-align: center;
- }
-
- /* Quick Actions */
- .quick-actions {
-     display: grid;
-     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-     gap: 1rem;
- }
-
- .action-card {
-     background: rgba(255, 255, 255, 0.05);
-     border: 1px solid rgba(255, 255, 255, 0.1);
-     border-radius: 12px;
-     padding: 1.5rem;
-     text-decoration: none;
-     color: white;
-     cursor: pointer;
-     transition: all 0.3s ease;
- }
-
- .action-card:hover {
-     background: rgba(255, 255, 255, 0.1);
-     transform: translateY(-2px);
- }
-
- .action-card h3 {
-     margin: 0 0 0.5rem 0;
-     font-size: 1.2rem;
- }
-
- .action-card p {
-     margin: 0;
-     opacity: 0.8;
-     font-size: 0.95rem;
- }
-
- /* Button Variants */
- .btn-small {
-     padding: 0.4rem 0.8rem;
-     font-size: 0.85rem;
- }
-
- .btn-danger {
-     background: #dc3545;
-     color: white;
- }
-
- .btn-danger:hover {
-     background: #c82333;
- }
-
- /* Responsive */
- @media (max-width: 768px) {
-     .section-header {
-         flex-direction: column;
-         gap: 1rem;
-         align-items: stretch;
-     }
-
-     .child-header {
-         flex-direction: column;
-         gap: 1rem;
-         align-items: stretch;
-     }
-
-     .child-actions {
-         justify-content: center;
-     }
-
-     .profile-grid,
-     .child-details {
-         grid-template-columns: 1fr;
-     }
-
-     .quick-actions {
-         grid-template-columns: 1fr;
-     }
- }
-
- /* Better Message Notifications */
- .message-container {
-     position: fixed;
-     top: 20px;
-     right: 20px;
-     z-index: 9999;
-     max-width: 400px;
-     pointer-events: none;
- }
-
- .success-message,
- .error-message,
- .info-message {
-     position: relative;
-     margin-bottom: 10px;
-     padding: 12px 16px;
-     border-radius: 8px;
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-     backdrop-filter: blur(10px);
-     border-left: 4px solid;
-     animation: slideInRight 0.3s ease-out;
-     pointer-events: auto;
-     max-width: 100%;
-     word-wrap: break-word;
- }
-
- .success-message {
-     background: rgba(76, 175, 80, 0.9);
-     color: white;
-     border-left-color: #4CAF50;
- }
-
- .error-message {
-     background: rgba(244, 67, 54, 0.9);
-     color: white;
-     border-left-color: #f44336;
- }
-
- .info-message {
-     background: rgba(33, 150, 243, 0.9);
-     color: white;
-     border-left-color: #2196F3;
- }
-
- @keyframes slideInRight {
-     from {
-         transform: translateX(100%);
-         opacity: 0;
-     }
-
-     to {
-         transform: translateX(0);
-         opacity: 1;
-     }
- }
-
- .message-exit {
-     animation: slideOutRight 0.3s ease-in;
- }
-
- @keyframes slideOutRight {
-     from {
-         transform: translateX(0);
-         opacity: 1;
-     }
-
-     to {
-         transform: translateX(100%);
-         opacity: 0;
-     }
- }
-
- /* Mobile responsive */
- @media (max-width: 768px) {
-     .message-container {
-         right: 10px;
-         left: 10px;
-         max-width: none;
-     }
- }
-
- /* Additional Mobile Navigation - ADD THIS NEW SECTION */
- @media (max-width: 768px) {
-     .nav-buttons {
-         flex-direction: column !important;
-         gap: 0.5rem !important;
-         align-items: stretch !important;
-     }
-
-     .nav-menu {
-         flex-direction: column;
-         width: 100%;
-         gap: 0.5rem;
-     }
-
-     .nav-dropdown {
-         width: 100%;
-     }
-
-     .dropdown-content {
-         position: static;
-         box-shadow: none;
-         background: rgba(255, 255, 255, 0.1);
-         border: 1px solid rgba(255, 255, 255, 0.2);
-         margin-top: 0;
-     }
-
-     .dropdown-content a {
-         color: white;
-     }
-
-     .dropdown-content a:hover {
-         background: rgba(255, 255, 255, 0.1);
-     }
-
-     .welcome-text {
-         text-align: center;
-         margin-bottom: 0.5rem;
-     }
- }
-
- /* ============================================
+/* COMPLETE styles.css for Kid To Camp Platform - FULL REPLACEMENT */
+
+/* ========================================
+   RESET AND BASE STYLES
+======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* ========================================
+   NAVIGATION STYLES - FIXED VERSION
+======================================== */
+
+/* Header Styles */
+header {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.logo:hover {
+    color: #f0f0f0;
+}
+
+.nav-buttons {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.nav-user-info {
+    display: flex;
+    align-items: center;
+}
+
+.welcome-text {
+    color: white;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* FIXED DROPDOWN NAVIGATION - HIGH SPECIFICITY */
+.nav-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.nav-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    background: transparent;
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.dropdown-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.dropdown-arrow {
+    font-size: 0.7rem;
+    transition: transform 0.3s ease;
+}
+
+.nav-dropdown:hover .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+/* CRITICAL FIX: High specificity dropdown menu */
+.nav-dropdown .dropdown-content {
+    display: none !important;
+    position: absolute !important;
+    background: white !important;
+    min-width: 200px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 8px !important;
+    z-index: 1001 !important;
+    top: 100% !important;
+    left: 0 !important;
+    margin-top: 0.5rem !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    overflow: hidden !important;
+}
+
+.nav-dropdown .dropdown-content.show {
+    display: block !important;
+    animation: dropdownFadeIn 0.3s ease-out !important;
+}
+
+.nav-dropdown .dropdown-content a {
+    color: #333 !important;
+    padding: 0.75rem 1rem !important;
+    text-decoration: none !important;
+    display: block !important;
+    transition: background-color 0.2s ease !important;
+    font-weight: 500 !important;
+}
+
+.nav-dropdown .dropdown-content a:hover {
+    background-color: #f8f9fa !important;
+    color: #667eea !important;
+}
+
+/* NEW NAVBAR STYLES - For new navigation system */
+.navbar {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 1rem 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 2rem;
+    align-items: center;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    position: relative;
+}
+
+.nav-links a:hover {
+    color: #667eea;
+}
+
+.nav-links a.active {
+    color: #667eea;
+}
+
+.nav-links a.active::after {
+    content: '';
+    position: absolute;
+    bottom: -0.5rem;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #667eea;
+}
+
+/* USER DROPDOWN STYLES - NEW SYSTEM */
+.user-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.user-dropdown .user-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.user-dropdown .user-btn:hover {
+    background: #5a67d8;
+    transform: translateY(-2px);
+}
+
+.user-dropdown .user-btn::after {
+    content: '▼';
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+}
+
+.user-dropdown .user-btn.active::after {
+    transform: rotate(180deg);
+}
+
+/* CRITICAL FIX: High specificity dropdown menu for new system */
+.user-dropdown .dropdown-menu {
+    position: absolute !important;
+    top: 100% !important;
+    right: 0 !important;
+    background: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+    padding: 0.5rem 0 !important;
+    min-width: 200px !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(-10px) !important;
+    transition: all 0.3s ease !important;
+    z-index: 1001 !important;
+}
+
+.user-dropdown .dropdown-menu.show {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) !important;
+}
+
+.user-dropdown .dropdown-menu a {
+    display: block !important;
+    padding: 0.75rem 1.5rem !important;
+    color: #333 !important;
+    text-decoration: none !important;
+    transition: background-color 0.2s ease !important;
+}
+
+.user-dropdown .dropdown-menu a:hover {
+    background-color: #f8f9ff !important;
+    color: #667eea !important;
+}
+
+.user-dropdown .dropdown-menu .divider {
+    height: 1px !important;
+    background-color: #e2e8f0 !important;
+    margin: 0.5rem 0 !important;
+}
+
+/* Auth buttons */
+.auth-buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========================================
+   BUTTON STYLES
+======================================== */
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.btn-primary {
+    background: #4CAF50;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+}
+
+.btn-outline {
+    background: transparent;
+    color: white;
+    border: 2px solid white;
+}
+
+.btn-outline:hover {
+    background: white;
+    color: #667eea;
+}
+
+.btn-search {
+    background: #FF6B35;
+    color: white;
+}
+
+.btn-search:hover {
+    background: #e55a2b;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: #667eea;
+    border: 2px solid #667eea;
+    border-radius: 50px;
+}
+
+.btn-secondary:hover {
+    background: #667eea;
+    color: white;
+}
+
+.btn-small {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    border-radius: 6px;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+.btn-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #138496;
+}
+
+.filter-toggle-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    margin-right: 0.5rem;
+}
+
+.filter-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ========================================
+   HERO SECTION
+======================================== */
+
+.hero {
+    padding: 4rem 0;
+    text-align: center;
+    color: white;
+}
+
+.hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.hero p {
+    font-size: 1.2rem;
+    margin-bottom: 3rem;
+    opacity: 0.9;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.hero-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.user-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.user-card:hover {
+    transform: translateY(-5px);
+}
+
+.user-card h3 {
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.user-card p {
+    margin-bottom: 1.5rem;
+    opacity: 0.9;
+}
+
+.card-features {
+    margin: 1.5rem 0;
+    text-align: left;
+}
+
+.feature {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+/* ========================================
+   SEARCH WIDGET
+======================================== */
+
+.search-widget {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: left;
+}
+
+.search-widget h3 {
+    margin-bottom: 1.5rem;
+    font-size: 1.3rem;
+    text-align: center;
+}
+
+.search-form {
+    max-width: 100%;
+}
+
+.search-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.search-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.search-field label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: white;
+}
+
+.search-field input,
+.search-field select {
+    padding: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+}
+
+.search-field textarea {
+    padding: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.checkbox-grid label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: normal;
+    cursor: pointer;
+    padding: 0.3rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.checkbox-grid label:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.checkbox-grid input[type="checkbox"] {
+    margin: 0;
+}
+
+.interest-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.accommodation-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* ========================================
+   SEARCH RESULTS
+======================================== */
+
+.search-results {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    color: #333;
+    display: none;
+}
+
+.search-results.show {
+    display: block;
+}
+
+.camp-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #4CAF50;
+}
+
+.camp-card h4 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.camp-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.camp-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.camp-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.tag {
+    background: #e3f2fd;
+    color: #1565c0;
+    padding: 0.2rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.accommodation-tag {
+    background: #fff3e0;
+    color: #ef6c00;
+}
+
+/* Child filter buttons */
+.child-filter-btn {
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    border: 2px solid transparent;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.child-filter-btn:hover {
+    background: white;
+    transform: translateY(-2px);
+}
+
+.child-filter-btn.active {
+    background: #4CAF50;
+    color: white;
+    border-color: #45a049;
+}
+
+/* ========================================
+   MODAL STYLES
+======================================== */
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 2rem;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-content.wide {
+    max-width: 700px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.modal h2 {
+    margin-bottom: 1.5rem;
+    color: #333;
+    text-align: center;
+}
+
+/* ========================================
+   FORM STYLES
+======================================== */
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.form-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+/* ========================================
+   COMMON PAGE STYLES
+======================================== */
+
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.page-header p {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* ========================================
+   PROFILE PAGE STYLES
+======================================== */
+
+.profile-page {
+    padding: 2rem 0;
+    min-height: 80vh;
+}
+
+.profile-page h1 {
+    color: white;
+    margin-bottom: 2rem;
+    text-align: center;
+    font-size: 2.5rem;
+}
+
+.profile-section {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 1rem;
+}
+
+.section-header h2 {
+    color: white;
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.profile-display {
+    color: white;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.profile-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.profile-item label {
+    font-weight: 600;
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+.profile-item span {
+    font-size: 1.1rem;
+    padding: 0.5rem 0;
+}
+
+.profile-edit {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 1.5rem;
+}
+
+.children-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: white;
+}
+
+.empty-state h3 {
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.empty-state p {
+    margin-bottom: 2rem;
+    opacity: 0.7;
+}
+
+.child-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    color: white;
+}
+
+.child-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 1rem;
+}
+
+.child-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.child-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.child-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.child-detail {
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.child-detail strong {
+    display: inline-block;
+    min-width: 120px;
+    opacity: 0.8;
+}
+
+.child-form {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.child-form h3 {
+    color: white;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.action-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.action-card:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.action-card h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+}
+
+.action-card p {
+    margin: 0;
+    opacity: 0.8;
+    font-size: 0.95rem;
+}
+
+/* ========================================
    FAMILY CALENDAR STYLES
-   Add these styles to the end of your styles.css file
-   ============================================ */
-
- /* Calendar Page Layout */
- .calendar-page {
-     padding: 2rem 0;
-     min-height: 80vh;
- }
-
- .calendar-page h1 {
-     color: white;
-     margin-bottom: 2rem;
-     text-align: center;
-     font-size: 2.5rem;
- }
-
- /* Calendar Controls */
- .calendar-controls {
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     background: rgba(255, 255, 255, 0.1);
-     backdrop-filter: blur(10px);
-     border-radius: 15px;
-     padding: 1.5rem;
-     margin-bottom: 2rem;
-     border: 1px solid rgba(255, 255, 255, 0.2);
- }
-
- .view-controls {
-     display: flex;
-     gap: 0.5rem;
- }
-
- .view-controls .btn {
-     padding: 0.5rem 1rem;
-     font-size: 0.9rem;
- }
-
- .view-controls .btn.active {
-     background: #4CAF50;
-     color: white;
-     border-color: #45a049;
- }
-
- .month-navigation {
-     display: flex;
-     align-items: center;
-     gap: 1rem;
- }
-
- .month-navigation h2 {
-     color: white;
-     margin: 0;
-     font-size: 1.3rem;
-     min-width: 200px;
-     text-align: center;
- }
-
- .nav-btn {
-     background: rgba(255, 255, 255, 0.2);
-     color: white;
-     border: 1px solid rgba(255, 255, 255, 0.3);
-     padding: 0.5rem 1rem;
-     border-radius: 8px;
-     cursor: pointer;
-     transition: all 0.3s ease;
- }
-
- .nav-btn:hover {
-     background: rgba(255, 255, 255, 0.3);
-     transform: translateY(-1px);
- }
-
- /* Children Legend */
- .children-legend {
-     display: flex;
-     flex-wrap: wrap;
-     gap: 1rem;
-     margin-bottom: 2rem;
-     padding: 1rem;
-     background: rgba(255, 255, 255, 0.1);
-     border-radius: 10px;
-     border: 1px solid rgba(255, 255, 255, 0.2);
- }
-
- .child-legend-item {
-     display: flex;
-     align-items: center;
-     gap: 0.5rem;
-     color: white;
-     font-weight: 500;
- }
-
- .color-indicator {
-     width: 16px;
-     height: 16px;
-     border-radius: 50%;
-     border: 2px solid white;
- }
-
- .empty-legend {
-     color: white;
-     text-align: center;
-     opacity: 0.8;
- }
-
- .empty-legend a {
-     color: #4CAF50;
-     text-decoration: underline;
- }
-
- /* Calendar Container */
- .calendar-container {
-     background: rgba(255, 255, 255, 0.95);
-     border-radius: 15px;
-     padding: 1rem;
-     margin-bottom: 2rem;
-     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
- }
-
- /* Calendar Headers */
- .calendar-header {
-     display: grid;
-     grid-template-columns: repeat(7, 1fr);
-     gap: 1px;
-     margin-bottom: 1px;
- }
-
- .day-header {
-     background: #f8f9fa;
-     color: #495057;
-     padding: 1rem;
-     text-align: center;
-     font-weight: 600;
-     font-size: 0.9rem;
-     border-radius: 8px 8px 0 0;
- }
-
- .week-header {
-     display: flex;
-     flex-direction: column;
-     gap: 0.25rem;
-     padding: 0.75rem;
- }
-
- .week-header .day-number {
-     font-size: 1.1rem;
-     font-weight: 700;
-     color: #333;
- }
-
- /* Calendar Grid */
- .calendar-grid {
-     display: grid;
-     grid-template-columns: repeat(7, 1fr);
-     gap: 1px;
-     background: #e9ecef;
-     border-radius: 0 0 8px 8px;
- }
-
- /* Calendar Days */
- .calendar-day {
-     background: white;
-     min-height: 120px;
-     padding: 0.5rem;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     display: flex;
-     flex-direction: column;
-     position: relative;
- }
-
- .calendar-day:hover {
-     background: #f8f9fa;
-     transform: scale(1.02);
-     z-index: 10;
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
- }
-
- .calendar-day.other-month {
-     background: #f8f9fa;
-     opacity: 0.5;
- }
-
- .calendar-day.today {
-     background: #e3f2fd;
-     border: 2px solid #2196F3;
- }
-
- .calendar-day.today .day-number {
-     color: #1976D2;
-     font-weight: 700;
- }
-
- .day-number {
-     font-weight: 600;
-     color: #333;
-     margin-bottom: 0.5rem;
-     font-size: 0.9rem;
- }
-
- .current-month .day-number {
-     color: #333;
- }
-
- .other-month .day-number {
-     color: #999;
- }
-
- /* Week View Specific */
- .week-day {
-     min-height: 200px;
-     padding: 1rem;
- }
-
- .week-day-bookings {
-     display: flex;
-     flex-direction: column;
-     gap: 0.5rem;
-     height: 100%;
- }
-
- /* Booking Items */
- .day-bookings {
-     display: flex;
-     flex-direction: column;
-     gap: 0.25rem;
-     flex: 1;
- }
-
- .booking-item {
-     padding: 0.25rem 0.5rem;
-     border-radius: 4px;
-     font-size: 0.75rem;
-     font-weight: 500;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     text-overflow: ellipsis;
-     overflow: hidden;
-     white-space: nowrap;
- }
-
- .booking-item:hover {
-     transform: scale(1.05);
-     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
- }
-
- .week-booking-item {
-     padding: 0.75rem;
-     border-radius: 8px;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     margin-bottom: 0.5rem;
- }
-
- .week-booking-item:hover {
-     transform: translateY(-1px);
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
- }
-
- .booking-child {
-     font-weight: 600;
-     font-size: 0.9rem;
-     margin-bottom: 0.25rem;
- }
-
- .booking-camp {
-     font-size: 0.8rem;
-     opacity: 0.9;
-     text-overflow: ellipsis;
-     overflow: hidden;
-     white-space: nowrap;
- }
-
- /* Calendar Actions */
- .calendar-actions {
-     display: flex;
-     gap: 1rem;
-     justify-content: center;
-     flex-wrap: wrap;
- }
-
- /* Booking Details Modal */
- .booking-details {
-     color: #333;
- }
-
- .booking-header {
-     text-align: center;
-     margin-bottom: 1.5rem;
- }
-
- .booking-header h3 {
-     margin: 0 0 0.5rem 0;
-     font-size: 1.3rem;
- }
-
- .booking-header p {
-     margin: 0;
-     opacity: 0.9;
- }
-
- .booking-info {
-     display: flex;
-     flex-direction: column;
-     gap: 1rem;
- }
-
- .info-item {
-     display: flex;
-     align-items: center;
-     gap: 0.5rem;
-     padding: 0.5rem 0;
-     border-bottom: 1px solid #eee;
- }
-
- .info-item:last-child {
-     border-bottom: none;
- }
-
- .info-item strong {
-     min-width: 100px;
-     color: #555;
- }
-
- .status-badge {
-     padding: 0.25rem 0.75rem;
-     border-radius: 12px;
-     font-size: 0.8rem;
-     font-weight: 600;
-     text-transform: capitalize;
- }
-
- .status-badge.confirmed {
-     background: #d4edda;
-     color: #155724;
- }
-
- .status-badge.pending {
-     background: #fff3cd;
-     color: #856404;
- }
-
- .status-badge.cancelled {
-     background: #f8d7da;
-     color: #721c24;
- }
-
- /* Responsive Design */
- @media (max-width: 1024px) {
-     .calendar-controls {
-         flex-direction: column;
-         gap: 1rem;
-         text-align: center;
-     }
-
-     .month-navigation {
-         justify-content: center;
-     }
-
-     .children-legend {
-         justify-content: center;
-     }
- }
-
- @media (max-width: 768px) {
-     .calendar-page h1 {
-         font-size: 2rem;
-     }
-
-     .calendar-controls {
-         padding: 1rem;
-     }
-
-     .month-navigation {
-         flex-wrap: wrap;
-         gap: 0.5rem;
-     }
-
-     .month-navigation h2 {
-         font-size: 1.1rem;
-         min-width: auto;
-     }
-
-     .calendar-day {
-         min-height: 80px;
-         padding: 0.25rem;
-     }
-
-     .week-day {
-         min-height: 150px;
-         padding: 0.5rem;
-     }
-
-     .day-number {
-         font-size: 0.8rem;
-     }
-
-     .booking-item {
-         font-size: 0.7rem;
-         padding: 0.2rem 0.4rem;
-     }
-
-     .calendar-actions {
-         flex-direction: column;
-         align-items: center;
-     }
-
-     .calendar-actions .btn {
-         width: 100%;
-         max-width: 300px;
-     }
- }
-
- @media (max-width: 480px) {
-     .calendar-container {
-         padding: 0.5rem;
-     }
-
-     .day-header {
-         padding: 0.5rem 0.25rem;
-         font-size: 0.8rem;
-     }
-
-     .calendar-day {
-         min-height: 60px;
-         padding: 0.2rem;
-     }
-
-     .day-number {
-         font-size: 0.75rem;
-         margin-bottom: 0.25rem;
-     }
-
-     .booking-item {
-         font-size: 0.65rem;
-         padding: 0.1rem 0.3rem;
-     }
-
-     .children-legend {
-         gap: 0.5rem;
-         padding: 0.75rem;
-     }
-
-     .child-legend-item {
-         font-size: 0.85rem;
-     }
-
-     .color-indicator {
-         width: 12px;
-         height: 12px;
-     }
- }
-
- /* Calendar Grid Animation */
- .calendar-grid {
-     animation: fadeIn 0.3s ease-out;
- }
-
- @keyframes fadeIn {
-     from {
-         opacity: 0;
-         transform: translateY(10px);
-     }
-
-     to {
-         opacity: 1;
-         transform: translateY(0);
-     }
- }
-
- /* ============================================
-   FAMILY CALENDAR STYLES
-   Add these styles to the end of your styles.css file
-   ============================================ */
-
- /* Calendar Page Layout */
- .calendar-page {
-     padding: 2rem 0;
-     min-height: 80vh;
- }
-
- .calendar-page h1 {
-     color: white;
-     margin-bottom: 2rem;
-     text-align: center;
-     font-size: 2.5rem;
- }
-
- /* Calendar Controls */
- .calendar-controls {
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     background: rgba(255, 255, 255, 0.1);
-     backdrop-filter: blur(10px);
-     border-radius: 15px;
-     padding: 1.5rem;
-     margin-bottom: 2rem;
-     border: 1px solid rgba(255, 255, 255, 0.2);
- }
-
- .view-controls {
-     display: flex;
-     gap: 0.5rem;
- }
-
- .view-controls .btn {
-     padding: 0.5rem 1rem;
-     font-size: 0.9rem;
- }
-
- .view-controls .btn.active {
-     background: #4CAF50;
-     color: white;
-     border-color: #45a049;
- }
-
- .month-navigation {
-     display: flex;
-     align-items: center;
-     gap: 1rem;
- }
-
- .month-navigation h2 {
-     color: white;
-     margin: 0;
-     font-size: 1.3rem;
-     min-width: 200px;
-     text-align: center;
- }
-
- .nav-btn {
-     background: rgba(255, 255, 255, 0.2);
-     color: white;
-     border: 1px solid rgba(255, 255, 255, 0.3);
-     padding: 0.5rem 1rem;
-     border-radius: 8px;
-     cursor: pointer;
-     transition: all 0.3s ease;
- }
-
- .nav-btn:hover {
-     background: rgba(255, 255, 255, 0.3);
-     transform: translateY(-1px);
- }
-
- /* Children Legend */
- .children-legend {
-     display: flex;
-     flex-wrap: wrap;
-     gap: 1rem;
-     margin-bottom: 2rem;
-     padding: 1rem;
-     background: rgba(255, 255, 255, 0.1);
-     border-radius: 10px;
-     border: 1px solid rgba(255, 255, 255, 0.2);
- }
-
- .child-legend-item {
-     display: flex;
-     align-items: center;
-     gap: 0.5rem;
-     color: white;
-     font-weight: 500;
- }
-
- .color-indicator {
-     width: 16px;
-     height: 16px;
-     border-radius: 50%;
-     border: 2px solid white;
- }
-
- .empty-legend {
-     color: white;
-     text-align: center;
-     opacity: 0.8;
- }
-
- .empty-legend a {
-     color: #4CAF50;
-     text-decoration: underline;
- }
-
- /* Calendar Container */
- .calendar-container {
-     background: rgba(255, 255, 255, 0.95);
-     border-radius: 15px;
-     padding: 1rem;
-     margin-bottom: 2rem;
-     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-     position: relative;
-     /* Important for absolute positioned booking spans */
- }
-
- /* Calendar Headers */
- .calendar-header {
-     display: grid;
-     grid-template-columns: repeat(7, 1fr);
-     gap: 1px;
-     margin-bottom: 1px;
- }
-
- .day-header {
-     background: #f8f9fa;
-     color: #495057;
-     padding: 1rem;
-     text-align: center;
-     font-weight: 600;
-     font-size: 0.9rem;
-     border-radius: 8px 8px 0 0;
- }
-
- .week-header {
-     display: flex;
-     flex-direction: column;
-     gap: 0.25rem;
-     padding: 0.75rem;
- }
-
- .week-header .day-number {
-     font-size: 1.1rem;
-     font-weight: 700;
-     color: #333;
- }
-
- /* Calendar Grid */
- .calendar-grid {
-     display: grid;
-     grid-template-columns: repeat(7, 1fr);
-     gap: 1px;
-     background: #e9ecef;
-     border-radius: 0 0 8px 8px;
-     position: relative;
-     /* Important for absolute positioned booking spans */
-     min-height: 400px;
-     /* Ensure enough height for booking spans */
- }
-
- /* Booking Spans - New Multi-Day Display */
- .booking-span {
-     transition: all 0.2s ease;
-     border: 1px solid rgba(255, 255, 255, 0.3);
- }
-
- .booking-span:hover {
-     transform: translateY(-1px);
-     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-     z-index: 20 !important;
- }
-
- .booking-span.single-week {
-     /* Styling handled in JavaScript for positioning */
- }
-
- /* Calendar Days - Updated for Span System */
- .calendar-day {
-     background: white;
-     min-height: 120px;
-     padding: 0.5rem;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     display: flex;
-     flex-direction: column;
-     position: relative;
- }
-
- .calendar-day:hover {
-     background: #f8f9fa;
-     transform: scale(1.02);
-     z-index: 5;
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
- }
-
- .calendar-day .day-bookings {
-     /* Remove individual booking items styling since we use spans now */
-     flex: 1;
-     pointer-events: none;
-     /* Let clicks pass through to day */
- }
-
- .calendar-day.other-month {
-     background: #f8f9fa;
-     opacity: 0.5;
- }
-
- .calendar-day.today {
-     background: #e3f2fd;
-     border: 2px solid #2196F3;
- }
-
- .calendar-day.today .day-number {
-     color: #1976D2;
-     font-weight: 700;
- }
-
- .day-number {
-     font-weight: 600;
-     color: #333;
-     margin-bottom: 0.5rem;
-     font-size: 0.9rem;
- }
-
- .current-month .day-number {
-     color: #333;
- }
-
- .other-month .day-number {
-     color: #999;
- }
-
- /* Week View Specific */
- .week-day {
-     min-height: 200px;
-     padding: 1rem;
- }
-
- .week-day-bookings {
-     display: flex;
-     flex-direction: column;
-     gap: 0.5rem;
-     height: 100%;
- }
-
- /* Booking Items */
- .day-bookings {
-     display: flex;
-     flex-direction: column;
-     gap: 0.25rem;
-     flex: 1;
- }
-
- .booking-item {
-     padding: 0.25rem 0.5rem;
-     border-radius: 4px;
-     font-size: 0.75rem;
-     font-weight: 500;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     text-overflow: ellipsis;
-     overflow: hidden;
-     white-space: nowrap;
- }
-
- .booking-item:hover {
-     transform: scale(1.05);
-     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
- }
-
- .week-booking-item {
-     padding: 0.75rem;
-     border-radius: 8px;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     margin-bottom: 0.5rem;
- }
-
- .week-booking-item:hover {
-     transform: translateY(-1px);
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
- }
-
- .booking-child {
-     font-weight: 600;
-     font-size: 0.9rem;
-     margin-bottom: 0.25rem;
- }
-
- .booking-camp {
-     font-size: 0.8rem;
-     opacity: 0.9;
-     text-overflow: ellipsis;
-     overflow: hidden;
-     white-space: nowrap;
- }
-
- /* Calendar Actions */
- .calendar-actions {
-     display: flex;
-     gap: 1rem;
-     justify-content: center;
-     flex-wrap: wrap;
- }
-
- /* Booking Details Modal */
- .booking-details {
-     color: #333;
- }
-
- .booking-header {
-     text-align: center;
-     margin-bottom: 1.5rem;
- }
-
- .booking-header h3 {
-     margin: 0 0 0.5rem 0;
-     font-size: 1.3rem;
- }
-
- .booking-header p {
-     margin: 0;
-     opacity: 0.9;
- }
-
- .booking-info {
-     display: flex;
-     flex-direction: column;
-     gap: 1rem;
- }
-
- .info-item {
-     display: flex;
-     align-items: center;
-     gap: 0.5rem;
-     padding: 0.5rem 0;
-     border-bottom: 1px solid #eee;
- }
-
- .info-item:last-child {
-     border-bottom: none;
- }
-
- .info-item strong {
-     min-width: 100px;
-     color: #555;
- }
-
- .status-badge {
-     padding: 0.25rem 0.75rem;
-     border-radius: 12px;
-     font-size: 0.8rem;
-     font-weight: 600;
-     text-transform: capitalize;
- }
-
- .status-badge.confirmed {
-     background: #d4edda;
-     color: #155724;
- }
-
- .status-badge.pending {
-     background: #fff3cd;
-     color: #856404;
- }
-
- .status-badge.cancelled {
-     background: #f8d7da;
-     color: #721c24;
- }
-
- /* Responsive Design */
- @media (max-width: 1024px) {
-     .calendar-controls {
-         flex-direction: column;
-         gap: 1rem;
-         text-align: center;
-     }
-
-     .month-navigation {
-         justify-content: center;
-     }
-
-     .children-legend {
-         justify-content: center;
-     }
- }
-
- @media (max-width: 768px) {
-     .calendar-page h1 {
-         font-size: 2rem;
-     }
-
-     .calendar-controls {
-         padding: 1rem;
-     }
-
-     .month-navigation {
-         flex-wrap: wrap;
-         gap: 0.5rem;
-     }
-
-     .month-navigation h2 {
-         font-size: 1.1rem;
-         min-width: auto;
-     }
-
-     .calendar-day {
-         min-height: 80px;
-         padding: 0.25rem;
-     }
-
-     .week-day {
-         min-height: 150px;
-         padding: 0.5rem;
-     }
-
-     .day-number {
-         font-size: 0.8rem;
-     }
-
-     .booking-item {
-         font-size: 0.7rem;
-         padding: 0.2rem 0.4rem;
-     }
-
-     .calendar-actions {
-         flex-direction: column;
-         align-items: center;
-     }
-
-     .calendar-actions .btn {
-         width: 100%;
-         max-width: 300px;
-     }
- }
-
- @media (max-width: 480px) {
-     .calendar-container {
-         padding: 0.5rem;
-     }
-
-     .day-header {
-         padding: 0.5rem 0.25rem;
-         font-size: 0.8rem;
-     }
-
-     .calendar-day {
-         min-height: 60px;
-         padding: 0.2rem;
-     }
-
-     .day-number {
-         font-size: 0.75rem;
-         margin-bottom: 0.25rem;
-     }
-
-     .booking-item {
-         font-size: 0.65rem;
-         padding: 0.1rem 0.3rem;
-     }
-
-     .children-legend {
-         gap: 0.5rem;
-         padding: 0.75rem;
-     }
-
-     .child-legend-item {
-         font-size: 0.85rem;
-     }
-
-     .color-indicator {
-         width: 12px;
-         height: 12px;
-     }
- }
-
- /* Calendar Grid Animation */
- .calendar-grid {
-     animation: fadeIn 0.3s ease-out;
- }
-
- @keyframes fadeIn {
-     from {
-         opacity: 0;
-         transform: translateY(10px);
-     }
-
-     to {
-         opacity: 1;
-         transform: translateY(0);
-     }
- }
-
- /* ============================================
-   FAMILY CALENDAR STYLES
-   Add these styles to the end of your styles.css file
-   ============================================ */
-
- /* Calendar Page Layout */
- .calendar-page {
-     padding: 2rem 0;
-     min-height: 80vh;
- }
-
- .calendar-page h1 {
-     color: white;
-     margin-bottom: 2rem;
-     text-align: center;
-     font-size: 2.5rem;
- }
-
- /* Calendar Controls */
- .calendar-controls {
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     background: rgba(255, 255, 255, 0.1);
-     backdrop-filter: blur(10px);
-     border-radius: 15px;
-     padding: 1.5rem;
-     margin-bottom: 2rem;
-     border: 1px solid rgba(255, 255, 255, 0.2);
- }
-
- .view-controls {
-     display: flex;
-     gap: 0.5rem;
- }
-
- .view-controls .btn {
-     padding: 0.5rem 1rem;
-     font-size: 0.9rem;
- }
-
- .view-controls .btn.active {
-     background: #4CAF50;
-     color: white;
-     border-color: #45a049;
- }
-
- .month-navigation {
-     display: flex;
-     align-items: center;
-     gap: 1rem;
- }
-
- .month-navigation h2 {
-     color: white;
-     margin: 0;
-     font-size: 1.3rem;
-     min-width: 200px;
-     text-align: center;
- }
-
- .nav-btn {
-     background: rgba(255, 255, 255, 0.2);
-     color: white;
-     border: 1px solid rgba(255, 255, 255, 0.3);
-     padding: 0.5rem 1rem;
-     border-radius: 8px;
-     cursor: pointer;
-     transition: all 0.3s ease;
- }
-
- .nav-btn:hover {
-     background: rgba(255, 255, 255, 0.3);
-     transform: translateY(-1px);
- }
-
- /* Children Legend */
- .children-legend {
-     display: flex;
-     flex-wrap: wrap;
-     gap: 1rem;
-     margin-bottom: 2rem;
-     padding: 1rem;
-     background: rgba(255, 255, 255, 0.1);
-     border-radius: 10px;
-     border: 1px solid rgba(255, 255, 255, 0.2);
- }
-
- .child-legend-item {
-     display: flex;
-     align-items: center;
-     gap: 0.5rem;
-     color: white;
-     font-weight: 500;
- }
-
- .color-indicator {
-     width: 16px;
-     height: 16px;
-     border-radius: 50%;
-     border: 2px solid white;
- }
-
- .empty-legend {
-     color: white;
-     text-align: center;
-     opacity: 0.8;
- }
-
- .empty-legend a {
-     color: #4CAF50;
-     text-decoration: underline;
- }
-
- /* Calendar Container */
- .calendar-container {
-     background: rgba(255, 255, 255, 0.95);
-     border-radius: 15px;
-     padding: 1rem;
-     margin-bottom: 2rem;
-     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-     position: relative;
-     /* Important for absolute positioned booking spans */
- }
-
- /* Calendar Headers */
- .calendar-header {
-     display: grid;
-     grid-template-columns: repeat(7, 1fr);
-     gap: 1px;
-     margin-bottom: 1px;
- }
-
- .day-header {
-     background: #f8f9fa;
-     color: #495057;
-     padding: 1rem;
-     text-align: center;
-     font-weight: 600;
-     font-size: 0.9rem;
-     border-radius: 8px 8px 0 0;
- }
-
- .week-header {
-     display: flex;
-     flex-direction: column;
-     gap: 0.25rem;
-     padding: 0.75rem;
- }
-
- .week-header .day-number {
-     font-size: 1.1rem;
-     font-weight: 700;
-     color: #333;
- }
-
- /* Calendar Grid */
- .calendar-grid {
-     display: grid;
-     grid-template-columns: repeat(7, 1fr);
-     gap: 1px;
-     background: #e9ecef;
-     border-radius: 0 0 8px 8px;
-     position: relative;
-     /* Important for absolute positioned booking spans */
-     min-height: 400px;
-     /* Ensure enough height for booking spans */
- }
-
- /* Booking Spans - New Multi-Day Display */
- .booking-span {
-     transition: all 0.2s ease;
-     border: 1px solid rgba(255, 255, 255, 0.3);
-     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-     /* Improve text readability */
- }
-
- .booking-span:hover {
-     transform: translateY(-1px);
-     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-     z-index: 20 !important;
-     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-     /* Stronger text shadow on hover */
- }
-
- .booking-span.single-week {
-     /* Styling handled in JavaScript for positioning */
- }
-
- /* Calendar Days - Updated for Span System */
- .calendar-day {
-     background: white;
-     min-height: 120px;
-     padding: 0.5rem;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     display: flex;
-     flex-direction: column;
-     position: relative;
- }
-
- .calendar-day:hover {
-     background: #f8f9fa;
-     transform: scale(1.02);
-     z-index: 5;
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
- }
-
- .calendar-day .day-bookings {
-     /* Remove individual booking items styling since we use spans now */
-     flex: 1;
-     pointer-events: none;
-     /* Let clicks pass through to day */
- }
-
- .calendar-day.other-month {
-     background: #f8f9fa;
-     opacity: 0.5;
- }
-
- .calendar-day.today {
-     background: #e3f2fd;
-     border: 2px solid #2196F3;
- }
-
- .calendar-day.today .day-number {
-     color: #1976D2;
-     font-weight: 700;
- }
-
- .day-number {
-     font-weight: 600;
-     color: #333;
-     margin-bottom: 0.5rem;
-     font-size: 0.9rem;
- }
-
- .current-month .day-number {
-     color: #333;
- }
-
- .other-month .day-number {
-     color: #999;
- }
-
- /* Week View Specific */
- .week-day {
-     min-height: 200px;
-     padding: 1rem;
- }
-
- .week-day-bookings {
-     display: flex;
-     flex-direction: column;
-     gap: 0.5rem;
-     height: 100%;
- }
-
- /* Booking Items */
- .day-bookings {
-     display: flex;
-     flex-direction: column;
-     gap: 0.25rem;
-     flex: 1;
- }
-
- .booking-item {
-     padding: 0.25rem 0.5rem;
-     border-radius: 4px;
-     font-size: 0.75rem;
-     font-weight: 500;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     text-overflow: ellipsis;
-     overflow: hidden;
-     white-space: nowrap;
- }
-
- .booking-item:hover {
-     transform: scale(1.05);
-     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
- }
-
- .week-booking-item {
-     padding: 0.75rem;
-     border-radius: 8px;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     margin-bottom: 0.5rem;
- }
-
- .week-booking-item:hover {
-     transform: translateY(-1px);
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
- }
-
- .booking-child {
-     font-weight: 600;
-     font-size: 0.9rem;
-     margin-bottom: 0.25rem;
- }
-
- .booking-camp {
-     font-size: 0.8rem;
-     opacity: 0.9;
-     text-overflow: ellipsis;
-     overflow: hidden;
-     white-space: nowrap;
- }
-
- /* Calendar Actions */
- .calendar-actions {
-     display: flex;
-     gap: 1rem;
-     justify-content: center;
-     flex-wrap: wrap;
- }
-
- /* Booking Details Modal */
- .booking-details {
-     color: #333;
- }
-
- .booking-header {
-     text-align: center;
-     margin-bottom: 1.5rem;
- }
-
- .booking-header h3 {
-     margin: 0 0 0.5rem 0;
-     font-size: 1.3rem;
- }
-
- .booking-header p {
-     margin: 0;
-     opacity: 0.9;
- }
-
- .booking-info {
-     display: flex;
-     flex-direction: column;
-     gap: 1rem;
- }
-
- .info-item {
-     display: flex;
-     align-items: center;
-     gap: 0.5rem;
-     padding: 0.5rem 0;
-     border-bottom: 1px solid #eee;
- }
-
- .info-item:last-child {
-     border-bottom: none;
- }
-
- .info-item strong {
-     min-width: 100px;
-     color: #555;
- }
-
- .status-badge {
-     padding: 0.25rem 0.75rem;
-     border-radius: 12px;
-     font-size: 0.8rem;
-     font-weight: 600;
-     text-transform: capitalize;
- }
-
- .status-badge.confirmed {
-     background: #d4edda;
-     color: #155724;
- }
-
- .status-badge.pending {
-     background: #fff3cd;
-     color: #856404;
- }
-
- .status-badge.cancelled {
-     background: #f8d7da;
-     color: #721c24;
- }
-
- /* Responsive Design */
- @media (max-width: 1024px) {
-     .calendar-controls {
-         flex-direction: column;
-         gap: 1rem;
-         text-align: center;
-     }
-
-     .month-navigation {
-         justify-content: center;
-     }
-
-     .children-legend {
-         justify-content: center;
-     }
- }
-
- @media (max-width: 768px) {
-     .calendar-page h1 {
-         font-size: 2rem;
-     }
-
-     .calendar-controls {
-         padding: 1rem;
-     }
-
-     .month-navigation {
-         flex-wrap: wrap;
-         gap: 0.5rem;
-     }
-
-     .month-navigation h2 {
-         font-size: 1.1rem;
-         min-width: auto;
-     }
-
-     .calendar-day {
-         min-height: 80px;
-         padding: 0.25rem;
-     }
-
-     .week-day {
-         min-height: 150px;
-         padding: 0.5rem;
-     }
-
-     .day-number {
-         font-size: 0.8rem;
-     }
-
-     .booking-item {
-         font-size: 0.7rem;
-         padding: 0.2rem 0.4rem;
-     }
-
-     .calendar-actions {
-         flex-direction: column;
-         align-items: center;
-     }
-
-     .calendar-actions .btn {
-         width: 100%;
-         max-width: 300px;
-     }
- }
-
- @media (max-width: 480px) {
-     .calendar-container {
-         padding: 0.5rem;
-     }
-
-     .day-header {
-         padding: 0.5rem 0.25rem;
-         font-size: 0.8rem;
-     }
-
-     .calendar-day {
-         min-height: 60px;
-         padding: 0.2rem;
-     }
-
-     .day-number {
-         font-size: 0.75rem;
-         margin-bottom: 0.25rem;
-     }
-
-     .booking-item {
-         font-size: 0.65rem;
-         padding: 0.1rem 0.3rem;
-     }
-
-     .children-legend {
-         gap: 0.5rem;
-         padding: 0.75rem;
-     }
-
-     .child-legend-item {
-         font-size: 0.85rem;
-     }
-
-     .color-indicator {
-         width: 12px;
-         height: 12px;
-     }
- }
-
- /* Calendar Grid Animation */
- .calendar-grid {
-     animation: fadeIn 0.3s ease-out;
- }
-
- @keyframes fadeIn {
-     from {
-         opacity: 0;
-         transform: translateY(10px);
-     }
-
-     to {
-         opacity: 1;
-         transform: translateY(0);
-     }
- }
-
- /* ============================================
-   FAMILY CALENDAR STYLES
-   Add these styles to the end of your styles.css file
-   ============================================ */
-
- /* Calendar Page Layout */
- .calendar-page {
-     padding: 2rem 0;
-     min-height: 80vh;
- }
-
- .calendar-page h1 {
-     color: white;
-     margin-bottom: 2rem;
-     text-align: center;
-     font-size: 2.5rem;
- }
-
- /* Calendar Controls */
- .calendar-controls {
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     background: rgba(255, 255, 255, 0.1);
-     backdrop-filter: blur(10px);
-     border-radius: 15px;
-     padding: 1.5rem;
-     margin-bottom: 2rem;
-     border: 1px solid rgba(255, 255, 255, 0.2);
- }
-
- .view-controls {
-     display: flex;
-     gap: 0.5rem;
- }
-
- .view-controls .btn {
-     padding: 0.5rem 1rem;
-     font-size: 0.9rem;
- }
-
- .view-controls .btn.active {
-     background: #4CAF50;
-     color: white;
-     border-color: #45a049;
- }
-
- .month-navigation {
-     display: flex;
-     align-items: center;
-     gap: 1rem;
- }
-
- .month-navigation h2 {
-     color: white;
-     margin: 0;
-     font-size: 1.3rem;
-     min-width: 200px;
-     text-align: center;
- }
-
- .nav-btn {
-     background: rgba(255, 255, 255, 0.2);
-     color: white;
-     border: 1px solid rgba(255, 255, 255, 0.3);
-     padding: 0.5rem 1rem;
-     border-radius: 8px;
-     cursor: pointer;
-     transition: all 0.3s ease;
- }
-
- .nav-btn:hover {
-     background: rgba(255, 255, 255, 0.3);
-     transform: translateY(-1px);
- }
-
- /* Children Legend */
- .children-legend {
-     display: flex;
-     flex-wrap: wrap;
-     gap: 1rem;
-     margin-bottom: 2rem;
-     padding: 1rem;
-     background: rgba(255, 255, 255, 0.1);
-     border-radius: 10px;
-     border: 1px solid rgba(255, 255, 255, 0.2);
- }
-
- .child-legend-item {
-     display: flex;
-     align-items: center;
-     gap: 0.5rem;
-     color: white;
-     font-weight: 500;
- }
-
- .color-indicator {
-     width: 16px;
-     height: 16px;
-     border-radius: 50%;
-     border: 2px solid white;
- }
-
- .empty-legend {
-     color: white;
-     text-align: center;
-     opacity: 0.8;
- }
-
- .empty-legend a {
-     color: #4CAF50;
-     text-decoration: underline;
- }
-
- /* Calendar Container */
- .calendar-container {
-     background: rgba(255, 255, 255, 0.95);
-     border-radius: 15px;
-     padding: 1rem;
-     margin-bottom: 2rem;
-     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-     position: relative;
-     /* Important for absolute positioned booking spans */
- }
-
- /* Calendar Headers */
- .calendar-header {
-     display: grid;
-     grid-template-columns: repeat(7, 1fr);
-     gap: 1px;
-     margin-bottom: 1px;
- }
-
- .day-header {
-     background: #f8f9fa;
-     color: #495057;
-     padding: 1rem;
-     text-align: center;
-     font-weight: 600;
-     font-size: 0.9rem;
-     border-radius: 8px 8px 0 0;
- }
-
- .week-header {
-     display: flex;
-     flex-direction: column;
-     gap: 0.25rem;
-     padding: 0.75rem;
- }
-
- .week-header .day-number {
-     font-size: 1.1rem;
-     font-weight: 700;
-     color: #333;
- }
-
- /* Calendar Grid */
- .calendar-grid {
-     display: grid;
-     grid-template-columns: repeat(7, 1fr);
-     gap: 1px;
-     background: #e9ecef;
-     border-radius: 0 0 8px 8px;
-     position: relative;
-     /* Important for absolute positioned booking spans */
-     min-height: 400px;
-     /* Ensure enough height for booking spans */
- }
-
- /* Booking Spans - New Multi-Day Display */
- .booking-span {
-     transition: all 0.2s ease;
-     border: 1px solid rgba(255, 255, 255, 0.3);
-     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-     /* Improve text readability */
- }
-
- .booking-span:hover {
-     transform: translateY(-1px);
-     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-     z-index: 20 !important;
-     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-     /* Stronger text shadow on hover */
- }
-
- .booking-span.single-week {
-     /* Styling handled in JavaScript for positioning */
- }
-
- /* Calendar Days - Updated for Span System */
- .calendar-day {
-     background: white;
-     min-height: 120px;
-     padding: 0.5rem;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     display: flex;
-     flex-direction: column;
-     position: relative;
- }
-
- .calendar-day:hover {
-     background: #f8f9fa;
-     transform: scale(1.02);
-     z-index: 5;
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
- }
-
- .calendar-day .day-bookings {
-     /* Remove individual booking items styling since we use spans now */
-     flex: 1;
-     pointer-events: none;
-     /* Let clicks pass through to day */
- }
-
- .calendar-day.other-month {
-     background: #f8f9fa;
-     opacity: 0.5;
- }
-
- .calendar-day.today {
-     background: #e3f2fd;
-     border: 2px solid #2196F3;
- }
-
- .calendar-day.today .day-number {
-     color: #1976D2;
-     font-weight: 700;
- }
-
- .day-number {
-     font-weight: 600;
-     color: #333;
-     margin-bottom: 0.5rem;
-     font-size: 0.9rem;
- }
-
- .current-month .day-number {
-     color: #333;
- }
-
- .other-month .day-number {
-     color: #999;
- }
-
- /* Week View Specific */
- .week-day {
-     min-height: 200px;
-     padding: 1rem;
- }
-
- .week-day-bookings {
-     display: flex;
-     flex-direction: column;
-     gap: 0.5rem;
-     height: 100%;
- }
-
- /* Booking Items */
- .day-bookings {
-     display: flex;
-     flex-direction: column;
-     gap: 0.25rem;
-     flex: 1;
- }
-
- .booking-item {
-     padding: 0.25rem 0.5rem;
-     border-radius: 4px;
-     font-size: 0.75rem;
-     font-weight: 500;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     text-overflow: ellipsis;
-     overflow: hidden;
-     white-space: nowrap;
- }
-
- .booking-item:hover {
-     transform: scale(1.05);
-     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
- }
-
- .week-booking-item {
-     padding: 0.75rem;
-     border-radius: 8px;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     margin-bottom: 0.5rem;
- }
-
- .week-booking-item:hover {
-     transform: translateY(-1px);
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
- }
-
- .booking-child {
-     font-weight: 600;
-     font-size: 0.9rem;
-     margin-bottom: 0.25rem;
- }
-
- .booking-camp {
-     font-size: 0.8rem;
-     opacity: 0.9;
-     text-overflow: ellipsis;
-     overflow: hidden;
-     white-space: nowrap;
- }
-
- /* Calendar Actions */
- .calendar-actions {
-     display: flex;
-     gap: 1rem;
-     justify-content: center;
-     flex-wrap: wrap;
- }
-
- /* Booking Details Modal */
- .booking-details {
-     color: #333;
- }
-
- .booking-header {
-     text-align: center;
-     margin-bottom: 1.5rem;
- }
-
- .booking-header h3 {
-     margin: 0 0 0.5rem 0;
-     font-size: 1.3rem;
- }
-
- .booking-header p {
-     margin: 0;
-     opacity: 0.9;
- }
-
- .booking-info {
-     display: flex;
-     flex-direction: column;
-     gap: 1rem;
- }
-
- .info-item {
-     display: flex;
-     align-items: center;
-     gap: 0.5rem;
-     padding: 0.5rem 0;
-     border-bottom: 1px solid #eee;
- }
-
- .info-item:last-child {
-     border-bottom: none;
- }
-
- .info-item strong {
-     min-width: 100px;
-     color: #555;
- }
-
- .status-badge {
-     padding: 0.25rem 0.75rem;
-     border-radius: 12px;
-     font-size: 0.8rem;
-     font-weight: 600;
-     text-transform: capitalize;
- }
-
- .status-badge.confirmed {
-     background: #d4edda;
-     color: #155724;
- }
-
- .status-badge.pending {
-     background: #fff3cd;
-     color: #856404;
- }
-
- .status-badge.cancelled {
-     background: #f8d7da;
-     color: #721c24;
- }
-
- /* Responsive Design */
- @media (max-width: 1024px) {
-     .calendar-controls {
-         flex-direction: column;
-         gap: 1rem;
-         text-align: center;
-     }
-
-     .month-navigation {
-         justify-content: center;
-     }
-
-     .children-legend {
-         justify-content: center;
-     }
- }
-
- @media (max-width: 768px) {
-     .calendar-page h1 {
-         font-size: 2rem;
-     }
-
-     .calendar-controls {
-         padding: 1rem;
-     }
-
-     .month-navigation {
-         flex-wrap: wrap;
-         gap: 0.5rem;
-     }
-
-     .month-navigation h2 {
-         font-size: 1.1rem;
-         min-width: auto;
-     }
-
-     .calendar-day {
-         min-height: 80px;
-         padding: 0.25rem;
-     }
-
-     .week-day {
-         min-height: 150px;
-         padding: 0.5rem;
-     }
-
-     .day-number {
-         font-size: 0.8rem;
-     }
-
-     .booking-item {
-         font-size: 0.7rem;
-         padding: 0.2rem 0.4rem;
-     }
-
-     .calendar-actions {
-         flex-direction: column;
-         align-items: center;
-     }
-
-     .calendar-actions .btn {
-         width: 100%;
-         max-width: 300px;
-     }
- }
-
- @media (max-width: 480px) {
-     .calendar-container {
-         padding: 0.5rem;
-     }
-
-     .day-header {
-         padding: 0.5rem 0.25rem;
-         font-size: 0.8rem;
-     }
-
-     .calendar-day {
-         min-height: 60px;
-         padding: 0.2rem;
-     }
-
-     .day-number {
-         font-size: 0.75rem;
-         margin-bottom: 0.25rem;
-     }
-
-     .booking-item {
-         font-size: 0.65rem;
-         padding: 0.1rem 0.3rem;
-     }
-
-     .children-legend {
-         gap: 0.5rem;
-         padding: 0.75rem;
-     }
-
-     .child-legend-item {
-         font-size: 0.85rem;
-     }
-
-     .color-indicator {
-         width: 12px;
-         height: 12px;
-     }
- }
-
- /* Calendar Grid Animation */
- .calendar-grid {
-     animation: fadeIn 0.3s ease-out;
- }
-
- @keyframes fadeIn {
-     from {
-         opacity: 0;
-         transform: translateY(10px);
-     }
-
-     to {
-         opacity: 1;
-         transform: translateY(0);
-     }
- }
-
- /* ============================================
-   FAMILY CALENDAR STYLES
-   Add these styles to the end of your styles.css file
-   ============================================ */
-
- /* Calendar Page Layout */
- .calendar-page {
-     padding: 2rem 0;
-     min-height: 80vh;
- }
-
- .calendar-page h1 {
-     color: white;
-     margin-bottom: 2rem;
-     text-align: center;
-     font-size: 2.5rem;
- }
-
- /* Calendar Controls */
- .calendar-controls {
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     background: rgba(255, 255, 255, 0.1);
-     backdrop-filter: blur(10px);
-     border-radius: 15px;
-     padding: 1.5rem;
-     margin-bottom: 2rem;
-     border: 1px solid rgba(255, 255, 255, 0.2);
- }
-
- .view-controls {
-     display: flex;
-     gap: 0.5rem;
- }
-
- .view-controls .btn {
-     padding: 0.5rem 1rem;
-     font-size: 0.9rem;
- }
-
- .view-controls .btn.active {
-     background: #4CAF50;
-     color: white;
-     border-color: #45a049;
- }
-
- .month-navigation {
-     display: flex;
-     align-items: center;
-     gap: 1rem;
- }
-
- .month-navigation h2 {
-     color: white;
-     margin: 0;
-     font-size: 1.3rem;
-     min-width: 200px;
-     text-align: center;
- }
-
- .nav-btn {
-     background: rgba(255, 255, 255, 0.2);
-     color: white;
-     border: 1px solid rgba(255, 255, 255, 0.3);
-     padding: 0.5rem 1rem;
-     border-radius: 8px;
-     cursor: pointer;
-     transition: all 0.3s ease;
- }
-
- .nav-btn:hover {
-     background: rgba(255, 255, 255, 0.3);
-     transform: translateY(-1px);
- }
-
- /* Children Legend */
- .children-legend {
-     display: flex;
-     flex-wrap: wrap;
-     gap: 1rem;
-     margin-bottom: 2rem;
-     padding: 1rem;
-     background: rgba(255, 255, 255, 0.1);
-     border-radius: 10px;
-     border: 1px solid rgba(255, 255, 255, 0.2);
- }
-
- .child-legend-item {
-     display: flex;
-     align-items: center;
-     gap: 0.5rem;
-     color: white;
-     font-weight: 500;
- }
-
- .color-indicator {
-     width: 16px;
-     height: 16px;
-     border-radius: 50%;
-     border: 2px solid white;
- }
-
- .empty-legend {
-     color: white;
-     text-align: center;
-     opacity: 0.8;
- }
-
- .empty-legend a {
-     color: #4CAF50;
-     text-decoration: underline;
- }
-
- /* Calendar Container */
- .calendar-container {
-     background: rgba(255, 255, 255, 0.95);
-     border-radius: 15px;
-     padding: 1rem;
-     margin-bottom: 2rem;
-     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-     position: relative;
-     /* Important for absolute positioned booking spans */
- }
-
- /* Calendar Headers */
- .calendar-header {
-     display: grid;
-     grid-template-columns: repeat(7, 1fr);
-     gap: 1px;
-     margin-bottom: 1px;
- }
-
- .day-header {
-     background: #f8f9fa;
-     color: #495057;
-     padding: 1rem;
-     text-align: center;
-     font-weight: 600;
-     font-size: 0.9rem;
-     border-radius: 8px 8px 0 0;
- }
-
- .week-header {
-     display: flex;
-     flex-direction: column;
-     gap: 0.25rem;
-     padding: 0.75rem;
- }
-
- .week-header .day-number {
-     font-size: 1.1rem;
-     font-weight: 700;
-     color: #333;
- }
-
- /* Calendar Grid */
- .calendar-grid {
-     display: grid;
-     grid-template-columns: repeat(7, 1fr);
-     gap: 1px;
-     background: #e9ecef;
-     border-radius: 0 0 8px 8px;
-     position: relative;
-     /* Important for absolute positioned booking spans */
-     min-height: 400px;
-     /* Ensure enough height for booking spans */
- }
-
- /* Booking Spans - New Multi-Day Display */
- .booking-span {
-     transition: all 0.2s ease;
-     border: 1px solid rgba(255, 255, 255, 0.3);
-     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-     /* Improve text readability */
- }
-
- .booking-span:hover {
-     transform: translateY(-1px);
-     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-     z-index: 20 !important;
-     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-     /* Stronger text shadow on hover */
- }
-
- .booking-span.single-week {
-     /* Styling handled in JavaScript for positioning */
- }
-
- /* Calendar Days - Updated for Span System */
- .calendar-day {
-     background: white;
-     min-height: 120px;
-     padding: 0.5rem;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     display: flex;
-     flex-direction: column;
-     position: relative;
- }
-
- .calendar-day:hover {
-     background: #f8f9fa;
-     transform: scale(1.02);
-     z-index: 5;
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
- }
-
- .calendar-day .day-bookings {
-     /* Remove individual booking items styling since we use spans now */
-     flex: 1;
-     pointer-events: none;
-     /* Let clicks pass through to day */
- }
-
- .calendar-day.other-month {
-     background: #f8f9fa;
-     opacity: 0.5;
- }
-
- .calendar-day.today {
-     background: #e3f2fd;
-     border: 2px solid #2196F3;
- }
-
- .calendar-day.today .day-number {
-     color: #1976D2;
-     font-weight: 700;
- }
-
- .day-number {
-     font-weight: 600;
-     color: #333;
-     margin-bottom: 0.5rem;
-     font-size: 0.9rem;
- }
-
- .current-month .day-number {
-     color: #333;
- }
-
- .other-month .day-number {
-     color: #999;
- }
-
- /* Week View Specific */
- .week-day {
-     min-height: 200px;
-     padding: 1rem;
- }
-
- .week-day-bookings {
-     display: flex;
-     flex-direction: column;
-     gap: 0.5rem;
-     height: 100%;
- }
-
- /* Booking Items */
- .day-bookings {
-     display: flex;
-     flex-direction: column;
-     gap: 0.25rem;
-     flex: 1;
- }
-
- .booking-item {
-     padding: 0.25rem 0.5rem;
-     border-radius: 4px;
-     font-size: 0.75rem;
-     font-weight: 500;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     text-overflow: ellipsis;
-     overflow: hidden;
-     white-space: nowrap;
- }
-
- .booking-item:hover {
-     transform: scale(1.05);
-     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
- }
-
- .week-booking-item {
-     padding: 0.75rem;
-     border-radius: 8px;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     margin-bottom: 0.5rem;
- }
-
- .week-booking-item:hover {
-     transform: translateY(-1px);
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
- }
-
- .booking-child {
-     font-weight: 600;
-     font-size: 0.9rem;
-     margin-bottom: 0.25rem;
- }
-
- .booking-camp {
-     font-size: 0.8rem;
-     opacity: 0.9;
-     text-overflow: ellipsis;
-     overflow: hidden;
-     white-space: nowrap;
- }
-
- /* Calendar Actions */
- .calendar-actions {
-     display: flex;
-     gap: 1rem;
-     justify-content: center;
-     flex-wrap: wrap;
- }
-
- /* Booking Details Modal */
- .booking-details {
-     color: #333;
- }
-
- .booking-header {
-     text-align: center;
-     margin-bottom: 1.5rem;
- }
-
- .booking-header h3 {
-     margin: 0 0 0.5rem 0;
-     font-size: 1.3rem;
- }
-
- .booking-header p {
-     margin: 0;
-     opacity: 0.9;
- }
-
- .booking-info {
-     display: flex;
-     flex-direction: column;
-     gap: 1rem;
- }
-
- .info-item {
-     display: flex;
-     align-items: center;
-     gap: 0.5rem;
-     padding: 0.5rem 0;
-     border-bottom: 1px solid #eee;
- }
-
- .info-item:last-child {
-     border-bottom: none;
- }
-
- .info-item strong {
-     min-width: 100px;
-     color: #555;
- }
-
- .status-badge {
-     padding: 0.25rem 0.75rem;
-     border-radius: 12px;
-     font-size: 0.8rem;
-     font-weight: 600;
-     text-transform: capitalize;
- }
-
- .status-badge.confirmed {
-     background: #d4edda;
-     color: #155724;
- }
-
- .status-badge.pending {
-     background: #fff3cd;
-     color: #856404;
- }
-
- .status-badge.cancelled {
-     background: #f8d7da;
-     color: #721c24;
- }
-
- /* Responsive Design */
- @media (max-width: 1024px) {
-     .calendar-controls {
-         flex-direction: column;
-         gap: 1rem;
-         text-align: center;
-     }
-
-     .month-navigation {
-         justify-content: center;
-     }
-
-     .children-legend {
-         justify-content: center;
-     }
- }
-
- @media (max-width: 768px) {
-     .calendar-page h1 {
-         font-size: 2rem;
-     }
-
-     .calendar-controls {
-         padding: 1rem;
-     }
-
-     .month-navigation {
-         flex-wrap: wrap;
-         gap: 0.5rem;
-     }
-
-     .month-navigation h2 {
-         font-size: 1.1rem;
-         min-width: auto;
-     }
-
-     .calendar-day {
-         min-height: 80px;
-         padding: 0.25rem;
-     }
-
-     .week-day {
-         min-height: 150px;
-         padding: 0.5rem;
-     }
-
-     .day-number {
-         font-size: 0.8rem;
-     }
-
-     .booking-item {
-         font-size: 0.7rem;
-         padding: 0.2rem 0.4rem;
-     }
-
-     .calendar-actions {
-         flex-direction: column;
-         align-items: center;
-     }
-
-     .calendar-actions .btn {
-         width: 100%;
-         max-width: 300px;
-     }
- }
-
- @media (max-width: 480px) {
-     .calendar-container {
-         padding: 0.5rem;
-     }
-
-     .day-header {
-         padding: 0.5rem 0.25rem;
-         font-size: 0.8rem;
-     }
-
-     .calendar-day {
-         min-height: 60px;
-         padding: 0.2rem;
-     }
-
-     .day-number {
-         font-size: 0.75rem;
-         margin-bottom: 0.25rem;
-     }
-
-     .booking-item {
-         font-size: 0.65rem;
-         padding: 0.1rem 0.3rem;
-     }
-
-     .children-legend {
-         gap: 0.5rem;
-         padding: 0.75rem;
-     }
-
-     .child-legend-item {
-         font-size: 0.85rem;
-     }
-
-     .color-indicator {
-         width: 12px;
-         height: 12px;
-     }
- }
-
- /* Calendar Grid Animation */
- .calendar-grid {
-     animation: fadeIn 0.3s ease-out;
- }
-
- @keyframes fadeIn {
-     from {
-         opacity: 0;
-         transform: translateY(10px);
-     }
-
-     to {
-         opacity: 1;
-         transform: translateY(0);
-     }
- }
+======================================== */
+
+.calendar-page {
+    padding: 2rem 0;
+    min-height: 80vh;
+}
+
+.calendar-page h1 {
+    color: white;
+    margin-bottom: 2rem;
+    text-align: center;
+    font-size: 2.5rem;
+}
+
+.calendar-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.view-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.view-controls .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.view-controls .btn.active {
+    background: #4CAF50;
+    color: white;
+    border-color: #45a049;
+}
+
+.month-navigation {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.month-navigation h2 {
+    color: white;
+    margin: 0;
+    font-size: 1.3rem;
+    min-width: 200px;
+    text-align: center;
+}
+
+.nav-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.children-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.child-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: white;
+    font-weight: 500;
+}
+
+.color-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.empty-legend {
+    color: white;
+    text-align: center;
+    opacity: 0.8;
+}
+
+.empty-legend a {
+    color: #4CAF50;
+    text-decoration: underline;
+}
+
+.calendar-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.calendar-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    margin-bottom: 1px;
+}
+
+.day-header {
+    background: #f8f9fa;
+    color: #495057;
+    padding: 1rem;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-radius: 8px 8px 0 0;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #e9ecef;
+    border-radius: 0 0 8px 8px;
+    position: relative;
+    min-height: 400px;
+}
+
+.calendar-day {
+    background: white;
+    min-height: 120px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.calendar-day:hover {
+    background: #f8f9fa;
+    transform: scale(1.02);
+    z-index: 5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.calendar-day .day-bookings {
+    flex: 1;
+    pointer-events: none;
+}
+
+.calendar-day.other-month {
+    background: #f8f9fa;
+    opacity: 0.5;
+}
+
+.calendar-day.today {
+    background: #e3f2fd;
+    border: 2px solid #2196F3;
+}
+
+.calendar-day.today .day-number {
+    color: #1976D2;
+    font-weight: 700;
+}
+
+.day-number {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.current-month .day-number {
+    color: #333;
+}
+
+.other-month .day-number {
+    color: #999;
+}
+
+.booking-span {
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.booking-span:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    z-index: 20 !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.booking-item {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.booking-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.booking-child {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.booking-camp {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.calendar-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* ========================================
+   BOOKING LIST STYLES - NEW
+======================================== */
+
+.booking-list-container {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.booking-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-weight: 500;
+    color: #4a5568;
+}
+
+.filter-select {
+    padding: 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.filter-select:focus {
+    border-color: #667eea;
+    outline: none;
+}
+
+.booking-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.booking-table th,
+.booking-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.booking-table th {
+    background: #f8f9ff;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.booking-table tr:hover {
+    background: #f8f9ff;
+}
+
+.child-tag {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #667eea;
+    color: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-confirmed {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+.status-pending {
+    background: #fef5e7;
+    color: #c05621;
+}
+
+.status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.cost-cell {
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.total-section {
+    background: #f8f9ff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-top: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.total-section h3 {
+    color: #4a5568;
+    margin: 0;
+}
+
+.total-amount {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #667eea;
+}
+
+/* ========================================
+   LOADING STATES
+======================================== */
+
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.spinner {
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #4CAF50;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* ========================================
+   SUCCESS/ERROR STATES
+======================================== */
+
+.success-message {
+    background: #d4edda;
+    color: #155724;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border-left: 4px solid #28a745;
+}
+
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border-left: 4px solid #dc3545;
+}
+
+.info-message {
+    background: rgba(33, 150, 243, 0.9);
+    color: white;
+    border-left-color: #2196F3;
+}
+
+.message-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+    pointer-events: none;
+}
+
+.message-container .success-message,
+.message-container .error-message,
+.message-container .info-message {
+    position: relative;
+    margin-bottom: 10px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+    border-left: 4px solid;
+    animation: slideInRight 0.3s ease-out;
+    pointer-events: auto;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.message-exit {
+    animation: slideOutRight 0.3s ease-in;
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+======================================== */
+
+@media (max-width: 1024px) {
+    .calendar-controls {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .month-navigation {
+        justify-content: center;
+    }
+
+    .children-legend {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 2rem;
+    }
+
+    .search-row {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .camp-details {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .nav-buttons {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+        align-items: stretch !important;
+    }
+
+    .nav-menu {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .nav-dropdown {
+        width: 100%;
+    }
+
+    .dropdown-content {
+        position: static;
+        box-shadow: none;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin-top: 0;
+    }
+
+    .dropdown-content a {
+        color: white;
+    }
+
+    .dropdown-content a:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .welcome-text {
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .nav-container {
+        padding: 0 1rem;
+    }
+
+    .nav-links {
+        display: none;
+    }
+
+    .container {
+        padding: 0 1rem;
+    }
+
+    .section-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .child-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .child-actions {
+        justify-content: center;
+    }
+
+    .profile-grid,
+    .child-details {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .calendar-page h1 {
+        font-size: 2rem;
+    }
+
+    .calendar-controls {
+        padding: 1rem;
+    }
+
+    .month-navigation {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .month-navigation h2 {
+        font-size: 1.1rem;
+        min-width: auto;
+    }
+
+    .calendar-day {
+        min-height: 80px;
+        padding: 0.25rem;
+    }
+
+    .day-number {
+        font-size: 0.8rem;
+    }
+
+    .booking-item {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+    }
+
+    .calendar-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .calendar-actions .btn {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .booking-table {
+        font-size: 0.9rem;
+    }
+
+    .booking-table th,
+    .booking-table td {
+        padding: 0.75rem 0.5rem;
+    }
+
+    .booking-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .total-section {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .message-container {
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0 10px;
+    }
+
+    .search-widget {
+        padding: 1rem;
+    }
+
+    .hero {
+        padding: 2rem 0;
+    }
+
+    .modal-content {
+        margin: 10% auto;
+        padding: 1rem;
+    }
+
+    .checkbox-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .calendar-container {
+        padding: 0.5rem;
+    }
+
+    .day-header {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.8rem;
+    }
+
+    .calendar-day {
+        min-height: 60px;
+        padding: 0.2rem;
+    }
+
+    .day-number {
+        font-size: 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .booking-item {
+        font-size: 0.65rem;
+        padding: 0.1rem 0.3rem;
+    }
+
+    .children-legend {
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
+
+    .child-legend-item {
+        font-size: 0.85rem;
+    }
+
+    .color-indicator {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+/* Calendar Grid Animation */
+.calendar-grid {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
