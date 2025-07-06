@@ -4,205 +4,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Family Calendar - Kid To Camp</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Kid To Camp - Family Calendar</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body>
-    <header>
-        <nav class="navbar">
-            <div class="nav-container">
-                <a href="/" class="logo">Kid To Camp</a>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">Kid To Camp</a>
 
-                <ul class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/profile.html">Profile</a></li>
-                    <li><a href="/calendar.html">Calendar</a></li>
-                    <li><a href="/bookings.html">Bookings</a></li>
-                </ul>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/profile.html">Profile</a></li>
+                <li><a href="/calendar.html" class="active">Calendar</a></li>
+                <li><a href="/bookings.html">Bookings</a></li>
+            </ul>
 
-                <!-- User dropdown or auth buttons -->
-                <div id="navAuth">
-                    <!-- Will be populated by navigation.js -->
-                </div>
+            <div id="navAuth">
+                <!-- Will be populated by navigation.js -->
             </div>
-        </nav>
-    </header>
+        </div>
+    </nav>
 
-    <main>
-        <section class="calendar-page">
-            <div class="container">
-                <h1>📅 Family Calendar</h1>
+    <!-- Main Content -->
+    <div class="container">
+        <div class="calendar-page">
+            <h1>Family Calendar</h1>
 
-                <!-- Calendar Controls -->
-                <div class="calendar-controls">
-                    <div class="view-controls">
-                        <button class="btn btn-outline active" id="monthViewBtn"
-                            onclick="familyCalendar.setView('month')">
-                            Month View
-                        </button>
-                        <button class="btn btn-outline" id="weekViewBtn" onclick="familyCalendar.setView('week')">
-                            Week View
-                        </button>
-                    </div>
-
-                    <div class="month-navigation">
-                        <button class="nav-btn" onclick="familyCalendar.previousPeriod()">
-                            ← Previous
-                        </button>
-                        <h2 id="currentPeriod">January 2025</h2>
-                        <button class="nav-btn" onclick="familyCalendar.nextPeriod()">
-                            Next →
-                        </button>
-                        <button class="btn btn-outline" onclick="familyCalendar.goToToday()">
-                            Today
-                        </button>
-                    </div>
+            <!-- Calendar Controls -->
+            <div class="calendar-controls">
+                <div class="view-controls">
+                    <button class="btn btn-outline active" data-view="month">Month</button>
+                    <button class="btn btn-outline" data-view="week">Week</button>
                 </div>
 
-                <!-- Children Legend -->
-                <div class="children-legend" id="childrenLegend">
-                    <!-- Children color legend will be populated here -->
+                <div class="month-navigation">
+                    <button class="nav-btn" id="prevMonth">‹ Previous</button>
+                    <h2 id="currentMonth">Loading...</h2>
+                    <button class="nav-btn" id="nextMonth">Next ›</button>
                 </div>
 
-                <!-- Calendar Grid -->
-                <div class="calendar-container">
-                    <div class="calendar-header" id="calendarHeader">
-                        <!-- Day headers will be populated here -->
-                    </div>
-                    <div class="calendar-grid" id="calendarGrid">
-                        <!-- Calendar days will be populated here -->
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
                 <div class="calendar-actions">
-                    <button class="btn btn-primary" onclick="familyCalendar.showAddBooking()">
-                        + Add New Booking
-                    </button>
-                    <a href="index.html" class="btn btn-outline">
-                        🔍 Search More Camps
-                    </a>
+                    <button class="btn btn-primary" id="addBookingBtn">Add Booking</button>
                 </div>
             </div>
-        </section>
-    </main>
 
-    <!-- Add Booking Modal -->
-    <div id="addBookingModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="familyCalendar.ui.closeModal('addBookingModal')">&times;</span>
-            <h2>Add Camp Booking</h2>
-            <form id="bookingForm">
-                <div class="form-group">
-                    <label>Child</label>
-                    <select id="bookingChild" required>
-                        <option value="">Select a child...</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Camp Session</label>
-                    <select id="bookingCamp" required>
-                        <option value="">Select a camp session...</option>
-                    </select>
-                    <small style="color: #666; font-size: 0.85rem; margin-top: 0.5rem; display: block;">
-                        Choose from available camp sessions with their dates and times
-                    </small>
-                </div>
-
-                <div class="form-group">
-                    <label>Notes (Optional)</label>
-                    <textarea id="bookingNotes" rows="3" placeholder="Any special notes or instructions..."></textarea>
-                </div>
-
-                <div class="form-buttons">
-                    <button type="button" class="btn btn-outline"
-                        onclick="familyCalendar.ui.closeModal('addBookingModal')">
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        Add Booking
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Booking Details Modal -->
-    <div id="bookingDetailsModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="familyCalendar.ui.closeModal('bookingDetailsModal')">&times;</span>
-            <h2>Booking Details</h2>
-            <div id="bookingDetailsContent">
-                <!-- Booking details will be populated here -->
+            <!-- Children Legend -->
+            <div class="children-legend" id="childrenLegend">
+                <!-- Populated by JavaScript -->
             </div>
-            <div class="form-buttons">
-                <button type="button" class="btn btn-outline"
-                    onclick="familyCalendar.ui.closeModal('bookingDetailsModal')">
-                    Close
-                </button>
-                <button type="button" class="btn btn-danger" id="deleteBookingBtn"
-                    onclick="familyCalendar.deleteCurrentBooking()">
-                    Delete Booking
-                </button>
+
+            <!-- Calendar Container -->
+            <div class="calendar-container">
+                <div class="calendar-header" id="calendarHeader">
+                    <!-- Day headers will be populated by JavaScript -->
+                </div>
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Calendar days will be populated by JavaScript -->
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Inline the config and use direct script tags -->
-    <script>
-        // Inline CONFIG to ensure it's available
-        const CONFIG = {
-            supabase: {
-                url: 'https://jjrvkntowkmdfbejlnwk.supabase.co',
-                key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqcnZrbnRvd2ttZGZiZWpsbndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNjc5OTgsImV4cCI6MjA2NTc0Mzk5OH0.Ng0lYJAki_FeJK2_fAR5w95SZJ-7-BHzpkMbNm4uKuM'
-            },
-            app: {
-                name: 'Kid To Camp',
-                version: '1.0.0'
-            }
-        };
-        window.CONFIG = CONFIG;
-        console.log('✅ CONFIG created inline:', !!window.CONFIG);
-    </script>
-    <script src="js/app.js"></script>
-    <script>
-        // Wait for app.js to create kidToCamp
-        let waitAttempts = 0;
-        const waitForKidToCamp = () => {
-            waitAttempts++;
-            if (window.kidToCamp) {
-                console.log('✅ kidToCamp found, loading calendar...');
-                const script = document.createElement('script');
-                script.src = 'js/calendar.js';
-                document.head.appendChild(script);
-            } else if (waitAttempts < 50) {
-                console.log(`Waiting for kidToCamp... (${waitAttempts})`);
-                setTimeout(waitForKidToCamp, 100);
-            } else {
-                console.error('❌ kidToCamp never created');
-                // Show error on page
-                document.querySelector('.container').innerHTML = `
-                    <div style="background: rgba(255,255,255,0.9); padding: 2rem; border-radius: 10px; margin-top: 2rem; text-align: center;">
-                        <h2 style="color: #dc3545;">Calendar Loading Failed</h2>
-                        <p>app.js failed to create kidToCamp object.</p>
-                        <p>
-                            <a href="index.html" class="btn btn-primary">← Return to Home</a>
-                            <button onclick="window.location.reload()" class="btn btn-outline">🔄 Reload Page</button>
-                        </p>
-                    </div>
-                `;
-            }
-        };
+    <!-- FIXED SCRIPT ORDER: Critical for proper initialization -->
+    <!-- 1. Load Supabase library first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-        // Start waiting after DOM loads
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(waitForKidToCamp, 100);
-        });
-    </script>
+    <!-- 2. Load config.js to initialize Supabase client -->
+    <script src="js/config.js"></script>
+
+    <!-- 3. Load navigation.js (depends on Supabase client) -->
     <script src="js/navigation.js"></script>
+
+    <!-- 4. Load other scripts last -->
+    <script src="js/app.js"></script>
+    <script src="js/calendar.js"></script>
 </body>
 
 </html>
