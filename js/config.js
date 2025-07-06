@@ -1,4 +1,4 @@
-// js/config.js - Fixed Configuration with Proper Supabase Initialization
+// js/config.js - FINAL VERSION with Session Persistence
 
 // Configuration object
 const CONFIG = {
@@ -23,12 +23,15 @@ function initializeSupabase() {
 
         console.log('Initializing Supabase client...');
 
-        // Create Supabase client instance
+        // CRITICAL FIX: Create client with session persistence enabled
         const client = window.supabase.createClient(CONFIG.supabase.url, CONFIG.supabase.key, {
             auth: {
-                persistSession: false, // Don't persist sessions across browser restarts
-                detectSessionInUrl: true,
-                flowType: 'pkce'
+                persistSession: true,           // ✅ ENABLE session persistence across page loads
+                detectSessionInUrl: true,       // ✅ Detect auth from URL redirects  
+                flowType: 'pkce',              // ✅ Use PKCE flow for security
+                autoRefreshToken: true,         // ✅ Auto refresh expired tokens
+                storage: window.localStorage,   // ✅ Use localStorage explicitly
+                storageKey: 'sb-jjrvkntowkmdfbejlnwk-auth-token' // ✅ Consistent storage key
             }
         });
 
@@ -36,6 +39,7 @@ function initializeSupabase() {
         window.supabase = client;
 
         console.log('✅ Supabase client initialized successfully');
+        console.log('✅ Session persistence ENABLED');
         console.log('Client has auth methods:', !!(client.auth && client.auth.signOut));
 
         return client;
@@ -69,7 +73,7 @@ if (typeof supabase !== 'undefined' && window.supabase) {
     }, 100);
 }
 
-// Session management
+// Session management - UPDATED to be less aggressive
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Setting up session management...');
 
@@ -85,10 +89,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    console.log('✅ Supabase client ready, setting up session timeout...');
+    console.log('✅ Supabase client ready, checking for existing session...');
 
-    // Session timeout configuration
-    const SESSION_TIMEOUT = 4 * 60 * 60 * 1000; // 4 hours
+    // Check for existing session immediately
+    try {
+        const { data: { session }, error } = await window.supabase.auth.getSession();
+        if (session) {
+            console.log('✅ Found existing session for:', session.user.email);
+            console.log('Session expires:', new Date(session.expires_at * 1000));
+        } else {
+            console.log('ℹ️ No existing session found');
+        }
+    } catch (error) {
+        console.error('Error checking existing session:', error);
+    }
+
+    // Extended session timeout (24 hours of inactivity)
+    const SESSION_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours
     const lastActivity = localStorage.getItem('last_activity');
     const now = Date.now();
 
@@ -96,7 +113,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const timeSinceLastActivity = now - parseInt(lastActivity);
 
         if (timeSinceLastActivity > SESSION_TIMEOUT) {
-            console.log('⏰ Session expired due to inactivity, logging out...');
+            console.log('⏰ Session expired due to extended inactivity (24+ hours)');
             try {
                 await window.supabase.auth.signOut();
                 localStorage.removeItem('last_activity');
@@ -109,8 +126,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Update activity timestamp
     localStorage.setItem('last_activity', now.toString());
 
-    // Track user activity
-    ['click', 'keypress', 'scroll', 'mousemove'].forEach(event => {
+    // Track user activity (only on significant interactions)
+    ['click', 'keydown'].forEach(event => {
         document.addEventListener(event, () => {
             localStorage.setItem('last_activity', Date.now().toString());
         }, { passive: true });
