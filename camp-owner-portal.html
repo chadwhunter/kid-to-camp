@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camp Owner Portal - Kid To Camp</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/camp-owner.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">Kid To Camp</a>
+
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/profile.html">Profile</a></li>
+                <li><a href="/camp-owner-portal.html" class="active">Camp Portal</a></li>
+            </ul>
+
+            <div id="navAuth">
+                <!-- Will be populated by navigation.js -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="portal-container">
+        <!-- Portal Header -->
+        <div class="portal-header">
+            <h1>Camp Owner Portal</h1>
+            <p id="organizationName">Welcome to your camp management dashboard</p>
+        </div>
+
+        <!-- Portal Navigation -->
+        <div class="portal-nav">
+            <button class="nav-tab active" onclick="campOwnerPortal.showTab('dashboard')">
+                📊 Dashboard
+            </button>
+            <button class="nav-tab" onclick="campOwnerPortal.showTab('camps')">
+                🏕️ My Camps
+            </button>
+            <button class="nav-tab" onclick="campOwnerPortal.showTab('schedules')">
+                📅 Schedules
+            </button>
+            <button class="nav-tab" onclick="campOwnerPortal.showTab('registrations')">
+                👥 Registrations
+            </button>
+            <button class="nav-tab" onclick="campOwnerPortal.showTab('team')">
+                👨‍💼 Team Management
+            </button>
+            <button class="nav-tab" onclick="campOwnerPortal.showTab('forms')">
+                📝 Forms & Waivers
+            </button>
+            <button class="nav-tab" onclick="campOwnerPortal.showTab('jobs')">
+                💼 Job Postings
+            </button>
+            <button class="nav-tab" onclick="campOwnerPortal.showTab('settings')">
+                ⚙️ Settings
+            </button>
+        </div>
+
+        <!-- Portal Content -->
+        <div class="portal-content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content active">
+                <!-- Stats Overview -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalCamps">0</div>
+                        <div class="stat-label">Active Camps</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalRegistrations">0</div>
+                        <div class="stat-label">Total Registrations</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalRevenue">$0</div>
+                        <div class="stat-label">Total Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="availableSpots">0</div>
+                        <div class="stat-label">Available Spots</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <h3>Quick Actions</h3>
+                <div class="quick-actions">
+                    <div class="action-card" onclick="campOwnerPortal.showTab('camps')">
+                        <span class="action-icon">🏕️</span>
+                        <div class="action-title">Add New Camp</div>
+                        <div class="action-desc">Create a new camp or activity program</div>
+                    </div>
+                    <div class="action-card" onclick="campOwnerPortal.showTab('schedules')">
+                        <span class="action-icon">📅</span>
+                        <div class="action-title">Create Schedule</div>
+                        <div class="action-desc">Set up recurring or one-time sessions</div>
+                    </div>
+                    <div class="action-card" onclick="campOwnerPortal.showTab('registrations')">
+                        <span class="action-icon">👥</span>
+                        <div class="action-title">View Registrations</div>
+                        <div class="action-desc">Manage participant registrations and waitlists</div>
+                    </div>
+                    <div class="action-card" onclick="campOwnerPortal.showTab('team')">
+                        <span class="action-icon">👨‍💼</span>
+                        <div class="action-title">Manage Team</div>
+                        <div class="action-desc">Add staff and set permissions</div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="recent-activity">
+                    <h3>Recent Activity</h3>
+                    <div id="recentActivityList">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Camps Tab -->
+            <div id="camps-tab" class="tab-content">
+                <div class="tab-header">
+                    <h2>My Camps & Activities</h2>
+                    <button class="btn btn-primary" onclick="campOwnerPortal.showAddCampModal()">
+                        + Add New Camp
+                    </button>
+                </div>
+
+                <div id="campsList" class="camps-grid">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Schedules Tab -->
+            <div id="schedules-tab" class="tab-content">
+                <div class="tab-header">
+                    <h2>Camp Schedules</h2>
+                    <button class="btn btn-primary" onclick="campOwnerPortal.showAddScheduleModal()">
+                        + Create Schedule
+                    </button>
+                </div>
+
+                <div class="schedule-filters">
+                    <select id="campFilter" class="filter-select">
+                        <option value="">All Camps</option>
+                    </select>
+                    <select id="statusFilter" class="filter-select">
+                        <option value="">All Status</option>
+                        <option value="upcoming">Upcoming</option>
+                        <option value="active">Currently Active</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+
+                <div id="schedulesList" class="schedules-list">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Registrations Tab -->
+            <div id="registrations-tab" class="tab-content">
+                <div class="tab-header">
+                    <h2>Participant Registrations</h2>
+                    <div class="registration-actions">
+                        <button class="btn btn-outline" onclick="campOwnerPortal.exportRegistrations()">
+                            📊 Export Data
+                        </button>
+                        <button class="btn btn-outline" onclick="campOwnerPortal.sendBulkEmail()">
+                            📧 Send Email
+                        </button>
+                    </div>
+                </div>
+
+                <div class="registration-filters">
+                    <select id="regCampFilter" class="filter-select">
+                        <option value="">All Camps</option>
+                    </select>
+                    <select id="regStatusFilter" class="filter-select">
+                        <option value="">All Status</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="pending">Pending</option>
+                        <option value="waitlist">Waitlist</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <input type="text" id="participantSearch" placeholder="Search participants..." class="search-input">
+                </div>
+
+                <div id="registrationsList" class="registrations-table">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Team Management Tab -->
+            <div id="team-tab" class="tab-content">
+                <div class="tab-header">
+                    <h2>Team Management</h2>
+                    <button class="btn btn-primary" onclick="campOwnerPortal.showInviteTeamModal()">
+                        + Invite Team Member
+                    </button>
+                </div>
+
+                <div id="teamList" class="team-grid">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Forms & Waivers Tab -->
+            <div id="forms-tab" class="tab-content">
+                <div class="tab-header">
+                    <h2>Registration Forms & Waivers</h2>
+                    <button class="btn btn-primary" onclick="campOwnerPortal.showCreateFormModal()">
+                        + Create Custom Form
+                    </button>
+                </div>
+
+                <div class="forms-section">
+                    <div class="form-category">
+                        <h3>Standard Registration Form</h3>
+                        <p>Default form that collects basic participant information</p>
+                        <button class="btn btn-outline" onclick="campOwnerPortal.previewStandardForm()">
+                            👁️ Preview Form
+                        </button>
+                        <button class="btn btn-outline" onclick="campOwnerPortal.customizeStandardForm()">
+                            ✏️ Customize Fields
+                        </button>
+                    </div>
+
+                    <div class="form-category">
+                        <h3>Waiver Forms</h3>
+                        <div class="waiver-options">
+                            <div class="waiver-item">
+                                <span>📄 Standard Liability Waiver</span>
+                                <button class="btn btn-small btn-outline">Preview</button>
+                                <button class="btn btn-small btn-primary">Use This</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline" onclick="campOwnerPortal.uploadCustomWaiver()">
+                            📎 Upload Custom Waiver
+                        </button>
+                    </div>
+
+                    <div id="customFormsList" class="custom-forms">
+                        <h3>Custom Forms</h3>
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Job Postings Tab -->
+            <div id="jobs-tab" class="tab-content">
+                <div class="tab-header">
+                    <h2>Job Postings</h2>
+                    <button class="btn btn-primary" onclick="campOwnerPortal.showCreateJobModal()">
+                        + Post New Job
+                    </button>
+                </div>
+
+                <div id="jobsList" class="jobs-list">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings-tab" class="tab-content">
+                <h2>Organization Settings</h2>
+
+                <div class="settings-sections">
+                    <div class="settings-section">
+                        <h3>Organization Information</h3>
+                        <form id="organizationForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Organization Name</label>
+                                    <input type="text" id="orgName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Contact Email</label>
+                                    <input type="email" id="orgEmail" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Phone Number</label>
+                                    <input type="tel" id="orgPhone">
+                                </div>
+                                <div class="form-group">
+                                    <label>Website</label>
+                                    <input type="url" id="orgWebsite">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Address</label>
+                                <input type="text" id="orgAddress">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>City</label>
+                                    <input type="text" id="orgCity">
+                                </div>
+                                <div class="form-group">
+                                    <label>State</label>
+                                    <input type="text" id="orgState" value="NC">
+                                </div>
+                                <div class="form-group">
+                                    <label>ZIP Code</label>
+                                    <input type="text" id="orgZip">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Organization Info</button>
+                        </form>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Cancellation & Refund Policies</h3>
+                        <form id="policiesForm">
+                            <div class="form-group">
+                                <label>Cancellation Policy</label>
+                                <textarea id="cancellationPolicy" rows="4"
+                                    placeholder="Describe your cancellation policy..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Refund Policy</label>
+                                <textarea id="refundPolicy" rows="4"
+                                    placeholder="Describe your refund policy..."></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Advance Notice Required (days)</label>
+                                    <input type="number" id="advanceNotice" min="0" max="30" value="7">
+                                </div>
+                                <div class="form-group">
+                                    <label>Refund Percentage</label>
+                                    <select id="refundPercentage">
+                                        <option value="100">100% - Full Refund</option>
+                                        <option value="75">75% - Partial Refund</option>
+                                        <option value="50">50% - Half Refund</option>
+                                        <option value="25">25% - Processing Fee Only</option>
+                                        <option value="0">0% - No Refund</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Policies</button>
+                        </form>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Notification Settings</h3>
+                        <form id="notificationForm">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="emailNewRegistration" checked>
+                                    Email me when someone registers for a camp
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="emailCancellation" checked>
+                                    Email me when someone cancels a registration
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="emailWaitlist" checked>
+                                    Email me when someone joins a waitlist
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="emailCapacityWarning" checked>
+                                    Email me when a camp reaches 80% capacity
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Notification Settings</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals will be added here -->
+    <div id="modalContainer">
+        <!-- Modals will be dynamically created by JavaScript -->
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/camp-owner-portal.js"></script>
+</body>
+
+</html>
