@@ -814,26 +814,35 @@ if (typeof kidToCamp === 'undefined' || !kidToCamp) {
     console.log('🔧 kidToCamp already exists, assigned to window');
 }
 
-// Add this at the END of your app.js file, before the final closing brace
-
-// Marquee functionality
-class CampMarquee {
+// Camp Carousel functionality
+class CampCarousel {
     constructor() {
         this.camps = [];
-        this.marqueeTrack = null;
+        this.currentIndex = 0;
+        this.carouselTrack = null;
+        this.dotsContainer = null;
+        this.autoAdvanceTimer = null;
+        this.autoAdvanceDelay = 5000; // 5 seconds
+        this.isUserInteracting = false;
         this.init();
     }
 
     async init() {
-        this.marqueeTrack = document.getElementById('marqueeTrack');
-        if (!this.marqueeTrack) return;
+        this.carouselTrack = document.getElementById('carouselTrack');
+        this.dotsContainer = document.getElementById('carouselDots');
+
+        if (!this.carouselTrack || !this.dotsContainer) return;
 
         // Wait for kidToCamp to be available
         await this.waitForKidToCamp();
 
         // Load and display camps
         await this.loadCamps();
-        this.renderMarquee();
+        this.renderCarousel();
+        this.startAutoAdvance();
+
+        // Set up navigation
+        this.setupNavigation();
     }
 
     async waitForKidToCamp() {
@@ -847,7 +856,7 @@ class CampMarquee {
     async loadCamps() {
         try {
             if (!window.kidToCamp?.supabase) {
-                console.warn('Supabase not available for marquee');
+                console.warn('Supabase not available for carousel');
                 this.loadDemoCamps();
                 return;
             }
@@ -855,7 +864,7 @@ class CampMarquee {
             const { data: camps, error } = await window.kidToCamp.supabase
                 .from('camps')
                 .select('*')
-                .limit(10);
+                .limit(8); // Limit to 8 for better carousel experience
 
             if (error) throw error;
 
@@ -867,7 +876,7 @@ class CampMarquee {
             }
 
         } catch (error) {
-            console.error('Error loading camps for marquee:', error);
+            console.error('Error loading camps for carousel:', error);
             this.loadDemoCamps();
         }
     }
@@ -878,7 +887,7 @@ class CampMarquee {
             {
                 id: 1,
                 name: "Adventure Quest Summer Camp",
-                description: "Outdoor adventures, hiking, and nature exploration for young adventurers.",
+                description: "Outdoor adventures, hiking, and nature exploration for young adventurers. Join us for an unforgettable week of discovery!",
                 location: "Matthews, NC",
                 min_age: 6,
                 max_age: 12,
@@ -890,7 +899,7 @@ class CampMarquee {
             {
                 id: 2,
                 name: "Tech Innovators Academy",
-                description: "Learn coding, robotics, and digital creativity in our state-of-the-art facility.",
+                description: "Learn coding, robotics, and digital creativity in our state-of-the-art facility with expert instructors.",
                 location: "Charlotte, NC",
                 min_age: 8,
                 max_age: 16,
@@ -902,7 +911,7 @@ class CampMarquee {
             {
                 id: 3,
                 name: "Creative Arts Studio",
-                description: "Painting, sculpting, and mixed media art for budding young artists.",
+                description: "Painting, sculpting, and mixed media art for budding young artists. Express your creativity!",
                 location: "Huntersville, NC",
                 min_age: 5,
                 max_age: 14,
@@ -914,7 +923,7 @@ class CampMarquee {
             {
                 id: 4,
                 name: "Sports Champions Camp",
-                description: "Multi-sport training with professional coaches and team building activities.",
+                description: "Multi-sport training with professional coaches and team building activities for future athletes.",
                 location: "Matthews, NC",
                 min_age: 7,
                 max_age: 15,
@@ -926,7 +935,7 @@ class CampMarquee {
             {
                 id: 5,
                 name: "Junior Chef Academy",
-                description: "Learn cooking basics, nutrition, and culinary creativity in a fun environment.",
+                description: "Learn cooking basics, nutrition, and culinary creativity in a fun, safe kitchen environment.",
                 location: "Charlotte, NC",
                 min_age: 6,
                 max_age: 13,
@@ -938,7 +947,7 @@ class CampMarquee {
             {
                 id: 6,
                 name: "Music & Performance Camp",
-                description: "Singing, instruments, and stage performance for musically inclined children.",
+                description: "Singing, instruments, and stage performance for musically inclined children. Find your voice!",
                 location: "Huntersville, NC",
                 min_age: 5,
                 max_age: 16,
@@ -950,17 +959,29 @@ class CampMarquee {
         ];
     }
 
-    renderMarquee() {
-        if (!this.marqueeTrack || this.camps.length === 0) return;
+    renderCarousel() {
+        if (!this.carouselTrack || this.camps.length === 0) return;
 
-        // Create marquee content (duplicate for seamless loop)
-        const marqueeContent = [...this.camps, ...this.camps];
+        // Render camp cards
+        this.carouselTrack.innerHTML = this.camps.map(camp => this.createCampCard(camp)).join('');
 
-        this.marqueeTrack.innerHTML = marqueeContent.map(camp => this.createCampCard(camp)).join('');
+        // Render dots
+        this.renderDots();
+
+        // Show first camp
+        this.showCamp(0);
+    }
+
+    renderDots() {
+        this.dotsContainer.innerHTML = this.camps.map((_, index) =>
+            `<button class="carousel-dot ${index === 0 ? 'active' : ''}" 
+                     onclick="campCarousel.goToSlide(${index})" 
+                     aria-label="Go to camp ${index + 1}"></button>`
+        ).join('');
     }
 
     createCampCard(camp) {
-        const interests = camp.interests?.slice(0, 3) || [];
+        const interests = camp.interests?.slice(0, 4) || [];
         const badgeClass = camp.badge || 'featured';
         const badgeText = {
             'featured': '⭐ Featured',
@@ -969,33 +990,148 @@ class CampMarquee {
         }[badgeClass] || '⭐ Featured';
 
         return `
-            <div class="marquee-camp-card" onclick="campMarquee.handleCampClick(${camp.id})">
-                <div class="camp-badge ${badgeClass}">${badgeText}</div>
-                <h3>${camp.name}</h3>
-                <p>${camp.description}</p>
-                <div class="camp-details-mini">
-                    <div class="detail-mini">📍 ${camp.location}</div>
-                    <div class="detail-mini">👶 ${camp.min_age}-${camp.max_age}y</div>
-                    <div class="detail-mini">📅 ${camp.duration}d</div>
+            <div class="carousel-camp-card" onclick="campCarousel.handleCampClick(${camp.id})">
+                <div class="camp-card-content">
+                    <div class="camp-header">
+                        <div class="camp-badge ${badgeClass}">${badgeText}</div>
+                        <h3>${camp.name}</h3>
+                        <p class="camp-description">${camp.description}</p>
+                    </div>
+                    
+                    <div class="camp-details-grid">
+                        <div class="detail-item">
+                            <span class="detail-icon">📍</span>
+                            <span class="detail-text">${camp.location}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-icon">👶</span>
+                            <span class="detail-text">Ages ${camp.min_age}-${camp.max_age}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-icon">📅</span>
+                            <span class="detail-text">${camp.duration} days</span>
+                        </div>
+                        <div class="detail-item price-highlight">
+                            <span class="detail-icon">💰</span>
+                            <span class="detail-text">$${camp.price}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="camp-tags">
+                        ${interests.map(interest => `<span class="interest-tag">${interest}</span>`).join('')}
+                    </div>
+                    
+                    <button class="camp-cta-btn" onclick="event.stopPropagation(); campCarousel.handleBookClick(${camp.id})">
+                        📚 Learn More & Book
+                    </button>
                 </div>
-                <div class="camp-tags-mini">
-                    ${interests.map(interest => `<span class="tag-mini">${interest}</span>`).join('')}
-                </div>
-                <div class="camp-price">$${camp.price}</div>
             </div>
         `;
     }
 
+    setupNavigation() {
+        // Previous/Next buttons
+        const prevBtn = document.getElementById('carouselPrev');
+        const nextBtn = document.getElementById('carouselNext');
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => this.previousSlide());
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.nextSlide());
+        }
+
+        // Pause auto-advance on hover
+        const carouselContainer = document.querySelector('.featured-camps-carousel');
+        if (carouselContainer) {
+            carouselContainer.addEventListener('mouseenter', () => this.pauseAutoAdvance());
+            carouselContainer.addEventListener('mouseleave', () => this.resumeAutoAdvance());
+        }
+    }
+
+    goToSlide(index) {
+        this.isUserInteracting = true;
+        this.showCamp(index);
+        this.restartAutoAdvance();
+
+        // Reset user interaction flag after a short delay
+        setTimeout(() => {
+            this.isUserInteracting = false;
+        }, 1000);
+    }
+
+    showCamp(index) {
+        if (index < 0 || index >= this.camps.length) return;
+
+        this.currentIndex = index;
+
+        // Update carousel track position
+        const offset = -index * 100;
+        this.carouselTrack.style.transform = `translateX(${offset}%)`;
+
+        // Update dots
+        document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+            dot.classList.toggle('active', i === index);
+        });
+    }
+
+    nextSlide() {
+        const nextIndex = (this.currentIndex + 1) % this.camps.length;
+        this.goToSlide(nextIndex);
+    }
+
+    previousSlide() {
+        const prevIndex = (this.currentIndex - 1 + this.camps.length) % this.camps.length;
+        this.goToSlide(prevIndex);
+    }
+
+    startAutoAdvance() {
+        this.autoAdvanceTimer = setInterval(() => {
+            if (!this.isUserInteracting) {
+                this.nextSlide();
+            }
+        }, this.autoAdvanceDelay);
+    }
+
+    pauseAutoAdvance() {
+        if (this.autoAdvanceTimer) {
+            clearInterval(this.autoAdvanceTimer);
+            this.autoAdvanceTimer = null;
+        }
+    }
+
+    resumeAutoAdvance() {
+        if (!this.autoAdvanceTimer) {
+            this.startAutoAdvance();
+        }
+    }
+
+    restartAutoAdvance() {
+        this.pauseAutoAdvance();
+        this.startAutoAdvance();
+    }
+
     handleCampClick(campId) {
-        // For now, just show an alert. Later this could open a camp details modal
+        this.pauseAutoAdvance();
         const camp = this.camps.find(c => c.id === campId);
         if (camp) {
-            alert(`Learn more about ${camp.name}!\n\nCamp details and booking coming soon!`);
+            alert(`🏕️ ${camp.name}\n\n📍 ${camp.location}\n💰 $${camp.price} for ${camp.duration} days\n\nFull camp details and booking system coming soon!`);
         }
+        this.resumeAutoAdvance();
+    }
+
+    handleBookClick(campId) {
+        this.pauseAutoAdvance();
+        const camp = this.camps.find(c => c.id === campId);
+        if (camp) {
+            alert(`🎯 Ready to book ${camp.name}?\n\nBooking system coming soon!\nYou'll be able to:\n• See available dates\n• Select your child\n• Complete registration\n• Make payment`);
+        }
+        this.resumeAutoAdvance();
     }
 }
 
-// Initialize marquee when DOM is ready
+// Initialize carousel when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    window.campMarquee = new CampMarquee();
+    window.campCarousel = new CampCarousel();
 });

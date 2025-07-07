@@ -151,16 +151,31 @@
                 <div id="heroButtons" class="hero-buttons">
                     <!-- Content will be populated by JavaScript based on auth state -->
                 </div>
-                <!-- NEW: Featured Camps Marquee Section -->
-                <section class="featured-camps-marquee">
+                <section class="featured-camps-carousel">
                     <div class="container">
-                        <h2 class="marquee-title">✨ Featured Camps & Programs</h2>
-                        <p class="marquee-subtitle">Discover amazing experiences happening in your area</p>
+                        <h2 class="carousel-title">✨ Featured Camps & Programs</h2>
+                        <p class="carousel-subtitle">Discover amazing experiences happening in your area</p>
                     </div>
 
-                    <div class="marquee-container">
-                        <div class="marquee-track" id="marqueeTrack">
-                            <!-- Camp cards will be populated by JavaScript -->
+                    <div class="carousel-container">
+                        <!-- Navigation arrows -->
+                        <button class="carousel-nav prev" id="carouselPrev" aria-label="Previous camp">
+                            <span>‹</span>
+                        </button>
+                        <button class="carousel-nav next" id="carouselNext" aria-label="Next camp">
+                            <span>›</span>
+                        </button>
+
+                        <!-- Carousel track -->
+                        <div class="carousel-viewport">
+                            <div class="carousel-track" id="carouselTrack">
+                                <!-- Camp cards will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Dot navigation -->
+                        <div class="carousel-dots" id="carouselDots">
+                            <!-- Dots will be populated by JavaScript -->
                         </div>
                     </div>
                 </section>
