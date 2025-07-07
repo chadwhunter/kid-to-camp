@@ -814,7 +814,11 @@ if (typeof kidToCamp === 'undefined' || !kidToCamp) {
     console.log('🔧 kidToCamp already exists, assigned to window');
 }
 
-// Camp Carousel functionality
+// ========================================
+// 3-CARD CAMP CAROUSEL FUNCTIONALITY
+// ========================================
+
+// Camp Carousel functionality - 3 cards with center focus
 class CampCarousel {
     constructor() {
         this.camps = [];
@@ -864,7 +868,7 @@ class CampCarousel {
             const { data: camps, error } = await window.kidToCamp.supabase
                 .from('camps')
                 .select('*')
-                .limit(8); // Limit to 8 for better carousel experience
+                .limit(8); // Good number for 3-card carousel
 
             if (error) throw error;
 
@@ -887,7 +891,7 @@ class CampCarousel {
             {
                 id: 1,
                 name: "Adventure Quest Summer Camp",
-                description: "Outdoor adventures, hiking, and nature exploration for young adventurers. Join us for an unforgettable week of discovery!",
+                description: "Outdoor adventures, hiking, and nature exploration for young adventurers.",
                 location: "Matthews, NC",
                 min_age: 6,
                 max_age: 12,
@@ -899,7 +903,7 @@ class CampCarousel {
             {
                 id: 2,
                 name: "Tech Innovators Academy",
-                description: "Learn coding, robotics, and digital creativity in our state-of-the-art facility with expert instructors.",
+                description: "Learn coding, robotics, and digital creativity in our state-of-the-art facility.",
                 location: "Charlotte, NC",
                 min_age: 8,
                 max_age: 16,
@@ -911,7 +915,7 @@ class CampCarousel {
             {
                 id: 3,
                 name: "Creative Arts Studio",
-                description: "Painting, sculpting, and mixed media art for budding young artists. Express your creativity!",
+                description: "Painting, sculpting, and mixed media art for budding young artists.",
                 location: "Huntersville, NC",
                 min_age: 5,
                 max_age: 14,
@@ -923,7 +927,7 @@ class CampCarousel {
             {
                 id: 4,
                 name: "Sports Champions Camp",
-                description: "Multi-sport training with professional coaches and team building activities for future athletes.",
+                description: "Multi-sport training with professional coaches and team building activities.",
                 location: "Matthews, NC",
                 min_age: 7,
                 max_age: 15,
@@ -935,7 +939,7 @@ class CampCarousel {
             {
                 id: 5,
                 name: "Junior Chef Academy",
-                description: "Learn cooking basics, nutrition, and culinary creativity in a fun, safe kitchen environment.",
+                description: "Learn cooking basics, nutrition, and culinary creativity in a fun environment.",
                 location: "Charlotte, NC",
                 min_age: 6,
                 max_age: 13,
@@ -947,7 +951,7 @@ class CampCarousel {
             {
                 id: 6,
                 name: "Music & Performance Camp",
-                description: "Singing, instruments, and stage performance for musically inclined children. Find your voice!",
+                description: "Singing, instruments, and stage performance for musically inclined children.",
                 location: "Huntersville, NC",
                 min_age: 5,
                 max_age: 16,
@@ -962,14 +966,22 @@ class CampCarousel {
     renderCarousel() {
         if (!this.carouselTrack || this.camps.length === 0) return;
 
-        // Render camp cards
-        this.carouselTrack.innerHTML = this.camps.map(camp => this.createCampCard(camp)).join('');
+        // Render camp cards - duplicate first and last for seamless infinite loop
+        const extendedCamps = [
+            this.camps[this.camps.length - 1], // Last camp at beginning
+            ...this.camps,
+            this.camps[0] // First camp at end
+        ];
 
-        // Render dots
+        this.carouselTrack.innerHTML = extendedCamps.map((camp, index) =>
+            this.createCampCard(camp, index)
+        ).join('');
+
+        // Render dots (only for actual camps, not duplicates)
         this.renderDots();
 
-        // Show first camp
-        this.showCamp(0);
+        // Show first camp (index 1 because of the duplicate at start)
+        this.showCamp(0, false);
     }
 
     renderDots() {
@@ -980,8 +992,8 @@ class CampCarousel {
         ).join('');
     }
 
-    createCampCard(camp) {
-        const interests = camp.interests?.slice(0, 4) || [];
+    createCampCard(camp, index) {
+        const interests = camp.interests?.slice(0, 3) || [];
         const badgeClass = camp.badge || 'featured';
         const badgeText = {
             'featured': '⭐ Featured',
@@ -990,30 +1002,24 @@ class CampCarousel {
         }[badgeClass] || '⭐ Featured';
 
         return `
-            <div class="carousel-camp-card" onclick="campCarousel.handleCampClick(${camp.id})">
+            <div class="carousel-camp-card" data-index="${index}" onclick="campCarousel.handleCampClick(${camp.id})">
                 <div class="camp-card-content">
-                    <div class="camp-header">
-                        <div class="camp-badge ${badgeClass}">${badgeText}</div>
-                        <h3>${camp.name}</h3>
-                        <p class="camp-description">${camp.description}</p>
-                    </div>
+                    <div class="camp-badge ${badgeClass}">${badgeText}</div>
+                    <h3>${camp.name}</h3>
+                    <p class="camp-description">${camp.description}</p>
                     
-                    <div class="camp-details-grid">
-                        <div class="detail-item">
+                    <div class="camp-details-mini">
+                        <div class="detail-mini">
                             <span class="detail-icon">📍</span>
-                            <span class="detail-text">${camp.location}</span>
+                            <span>${camp.location}</span>
                         </div>
-                        <div class="detail-item">
+                        <div class="detail-mini">
                             <span class="detail-icon">👶</span>
-                            <span class="detail-text">Ages ${camp.min_age}-${camp.max_age}</span>
+                            <span>Ages ${camp.min_age}-${camp.max_age}</span>
                         </div>
-                        <div class="detail-item">
+                        <div class="detail-mini">
                             <span class="detail-icon">📅</span>
-                            <span class="detail-text">${camp.duration} days</span>
-                        </div>
-                        <div class="detail-item price-highlight">
-                            <span class="detail-icon">💰</span>
-                            <span class="detail-text">$${camp.price}</span>
+                            <span>${camp.duration} days</span>
                         </div>
                     </div>
                     
@@ -1021,8 +1027,10 @@ class CampCarousel {
                         ${interests.map(interest => `<span class="interest-tag">${interest}</span>`).join('')}
                     </div>
                     
+                    <div class="camp-price">$${camp.price}</div>
+                    
                     <button class="camp-cta-btn" onclick="event.stopPropagation(); campCarousel.handleBookClick(${camp.id})">
-                        📚 Learn More & Book
+                        Learn More
                     </button>
                 </div>
             </div>
@@ -1052,7 +1060,7 @@ class CampCarousel {
 
     goToSlide(index) {
         this.isUserInteracting = true;
-        this.showCamp(index);
+        this.showCamp(index, true);
         this.restartAutoAdvance();
 
         // Reset user interaction flag after a short delay
@@ -1061,18 +1069,68 @@ class CampCarousel {
         }, 1000);
     }
 
-    showCamp(index) {
+    showCamp(index, animate = true) {
         if (index < 0 || index >= this.camps.length) return;
 
         this.currentIndex = index;
 
-        // Update carousel track position
-        const offset = -index * 100;
+        // Calculate offset for 3-card view with center focus
+        // Add 1 to account for the duplicate card at the beginning
+        const actualIndex = index + 1;
+        const cardWidth = 100 / 3; // Each card takes 33.33% of visible width
+        const offset = -(actualIndex * cardWidth) + cardWidth; // Center the current card
+
+        // Apply transition
+        if (animate) {
+            this.carouselTrack.style.transition = 'transform 0.5s ease-in-out';
+        } else {
+            this.carouselTrack.style.transition = 'none';
+        }
+
         this.carouselTrack.style.transform = `translateX(${offset}%)`;
 
+        // Update card focus states
+        this.updateCardStates();
+
         // Update dots
+        this.updateDots();
+
+        // Handle infinite loop
+        if (animate) {
+            setTimeout(() => {
+                if (index === 0) {
+                    // If we're at the first real camp, instantly jump to the duplicate at the end
+                    this.carouselTrack.style.transition = 'none';
+                    const duplicateOffset = -(this.camps.length + 1) * cardWidth + cardWidth;
+                    this.carouselTrack.style.transform = `translateX(${duplicateOffset}%)`;
+                } else if (index === this.camps.length - 1) {
+                    // If we're at the last real camp, instantly jump to the duplicate at the beginning
+                    this.carouselTrack.style.transition = 'none';
+                    const duplicateOffset = -cardWidth + cardWidth;
+                    this.carouselTrack.style.transform = `translateX(${duplicateOffset}%)`;
+                }
+            }, 500);
+        }
+    }
+
+    updateCardStates() {
+        const cards = document.querySelectorAll('.carousel-camp-card');
+        const centerIndex = this.currentIndex + 1; // Account for duplicate at start
+
+        cards.forEach((card, index) => {
+            card.classList.remove('center', 'side');
+
+            if (index === centerIndex) {
+                card.classList.add('center');
+            } else {
+                card.classList.add('side');
+            }
+        });
+    }
+
+    updateDots() {
         document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
-            dot.classList.toggle('active', i === index);
+            dot.classList.toggle('active', i === this.currentIndex);
         });
     }
 
@@ -1116,7 +1174,7 @@ class CampCarousel {
         this.pauseAutoAdvance();
         const camp = this.camps.find(c => c.id === campId);
         if (camp) {
-            alert(`🏕️ ${camp.name}\n\n📍 ${camp.location}\n💰 $${camp.price} for ${camp.duration} days\n\nFull camp details and booking system coming soon!`);
+            alert(`🏕️ ${camp.name}\n\n📍 ${camp.location}\n💰 $${camp.price} for ${camp.duration} days\n👶 Ages ${camp.min_age}-${camp.max_age}\n\nFull camp details and booking system coming soon!`);
         }
         this.resumeAutoAdvance();
     }

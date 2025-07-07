@@ -2000,7 +2000,7 @@ nav {
 }
 
 /* ========================================
-   FEATURED CAMPS CAROUSEL STYLES
+   3-CARD FEATURED CAMPS CAROUSEL STYLES
 ======================================== */
 
 .featured-camps-carousel {
@@ -2030,49 +2030,74 @@ nav {
 
 .carousel-container {
     position: relative;
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 0 4rem;
 }
 
 .carousel-viewport {
     overflow: hidden;
-    border-radius: 20px;
     position: relative;
+    width: 100%;
 }
 
 .carousel-track {
     display: flex;
     transition: transform 0.5s ease-in-out;
     will-change: transform;
+    width: calc(100% * (6 + 2));
+    /* 6 camps + 2 duplicates for infinite loop */
 }
 
 .carousel-camp-card {
-    min-width: 100%;
-    max-width: 100%;
+    flex: 0 0 calc(100% / 3);
+    /* Each card takes 1/3 of viewport */
     padding: 0 1rem;
     box-sizing: border-box;
+    transition: all 0.5s ease-in-out;
+    transform-origin: center;
+}
+
+/* Center card (in focus) */
+.carousel-camp-card.center {
+    transform: scale(1.05);
+    z-index: 10;
+}
+
+.carousel-camp-card.center .camp-card-content {
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.25);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Side cards (partially visible) */
+.carousel-camp-card.side {
+    transform: scale(0.9);
+    z-index: 5;
+}
+
+.carousel-camp-card.side .camp-card-content {
+    opacity: 0.8;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
 }
 
 .camp-card-content {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 20px;
-    padding: 2.5rem;
+    padding: 2rem;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.3);
-    transition: all 0.3s ease;
+    transition: all 0.5s ease;
     cursor: pointer;
     position: relative;
     overflow: hidden;
-    min-height: 400px;
+    height: 400px;
     display: flex;
     flex-direction: column;
 }
 
 .camp-card-content:hover {
     transform: translateY(-5px);
-    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.2);
 }
 
 .camp-card-content::before {
@@ -2081,30 +2106,26 @@ nav {
     top: 0;
     left: 0;
     right: 0;
-    height: 5px;
+    height: 4px;
     background: linear-gradient(90deg, #4CAF50, #2196F3, #FF9800, #9C27B0);
     transform: translateX(-100%);
     transition: transform 0.3s ease;
 }
 
-.camp-card-content:hover::before {
+.carousel-camp-card.center .camp-card-content::before {
     transform: translateX(0);
-}
-
-.camp-header {
-    text-align: center;
-    margin-bottom: 2rem;
 }
 
 .camp-badge {
     display: inline-block;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    padding: 0.4rem 1rem;
-    border-radius: 25px;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
     margin-bottom: 1rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    align-self: flex-start;
 }
 
 .camp-badge.featured {
@@ -2122,76 +2143,83 @@ nav {
     color: white;
 }
 
-.camp-header h3 {
+.camp-card-content h3 {
     color: #2c3e50;
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     font-weight: 700;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     line-height: 1.3;
 }
 
 .camp-description {
     color: #666;
-    font-size: 1rem;
-    line-height: 1.6;
-    margin-bottom: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex-grow: 1;
 }
 
-.camp-details-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    margin: 2rem 0;
-    padding: 1.5rem;
+.camp-details-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
     background: rgba(103, 126, 234, 0.05);
-    border-radius: 15px;
+    border-radius: 10px;
     border: 1px solid rgba(103, 126, 234, 0.1);
 }
 
-.detail-item {
+.detail-mini {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    font-size: 0.95rem;
+    gap: 0.5rem;
+    font-size: 0.85rem;
     color: #555;
 }
 
-.detail-item.price-highlight {
-    color: #4CAF50;
-    font-weight: 700;
-}
-
 .detail-icon {
-    font-size: 1.2rem;
-    width: 24px;
+    font-size: 1rem;
+    width: 20px;
     text-align: center;
 }
 
 .camp-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 2rem;
-    justify-content: center;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
 }
 
 .interest-tag {
     background: rgba(33, 150, 243, 0.1);
     color: #1976D2;
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
     font-weight: 500;
     border: 1px solid rgba(33, 150, 243, 0.2);
+}
+
+.camp-price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #4CAF50;
+    text-align: center;
+    margin-bottom: 1rem;
 }
 
 .camp-cta-btn {
     background: linear-gradient(45deg, #4CAF50, #45a049);
     color: white;
     border: none;
-    padding: 1rem 2rem;
-    border-radius: 12px;
-    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -2222,7 +2250,7 @@ nav {
     font-weight: bold;
     color: #333;
     transition: all 0.3s ease;
-    z-index: 10;
+    z-index: 20;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
@@ -2233,11 +2261,11 @@ nav {
 }
 
 .carousel-nav.prev {
-    left: 0;
+    left: -25px;
 }
 
 .carousel-nav.next {
-    right: 0;
+    right: -25px;
 }
 
 /* Dot navigation */
@@ -2270,6 +2298,20 @@ nav {
 }
 
 /* Responsive adjustments */
+@media (max-width: 1024px) {
+    .carousel-container {
+        padding: 0 3rem;
+    }
+
+    .carousel-nav.prev {
+        left: -20px;
+    }
+
+    .carousel-nav.next {
+        right: -20px;
+    }
+}
+
 @media (max-width: 768px) {
     .carousel-title {
         font-size: 1.5rem;
@@ -2280,28 +2322,35 @@ nav {
     }
 
     .carousel-container {
-        padding: 0 3rem;
+        padding: 0 2rem;
     }
 
     .camp-card-content {
-        padding: 2rem;
-        min-height: 350px;
+        padding: 1.5rem;
+        height: 350px;
     }
 
-    .camp-header h3 {
-        font-size: 1.5rem;
+    .camp-card-content h3 {
+        font-size: 1.2rem;
     }
 
-    .camp-details-grid {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-        padding: 1rem;
+    .camp-description {
+        font-size: 0.85rem;
+        -webkit-line-clamp: 2;
     }
 
     .carousel-nav {
         width: 40px;
         height: 40px;
         font-size: 1.2rem;
+    }
+
+    .carousel-nav.prev {
+        left: -15px;
+    }
+
+    .carousel-nav.next {
+        right: -15px;
     }
 }
 
@@ -2311,19 +2360,27 @@ nav {
     }
 
     .carousel-container {
-        padding: 0 2rem;
+        padding: 0 1rem;
     }
 
     .camp-card-content {
-        padding: 1.5rem;
-        min-height: 320px;
+        padding: 1rem;
+        height: 320px;
     }
 
-    .camp-header h3 {
-        font-size: 1.3rem;
+    .camp-card-content h3 {
+        font-size: 1.1rem;
     }
 
     .camp-description {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
+    }
+
+    .carousel-nav.prev {
+        left: -10px;
+    }
+
+    .carousel-nav.next {
+        right: -10px;
     }
 }
