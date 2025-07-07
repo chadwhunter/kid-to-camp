@@ -815,7 +815,7 @@ if (typeof kidToCamp === 'undefined' || !kidToCamp) {
 }
 
 // ========================================
-// 3-CARD CAMP CAROUSEL FUNCTIONALITY
+// FIXED 3-CARD CAMP CAROUSEL FUNCTIONALITY
 // ========================================
 
 // Camp Carousel functionality - 3 cards with center focus
@@ -868,7 +868,7 @@ class CampCarousel {
             const { data: camps, error } = await window.kidToCamp.supabase
                 .from('camps')
                 .select('*')
-                .limit(8); // Good number for 3-card carousel
+                .limit(8);
 
             if (error) throw error;
 
@@ -966,22 +966,16 @@ class CampCarousel {
     renderCarousel() {
         if (!this.carouselTrack || this.camps.length === 0) return;
 
-        // Render camp cards - duplicate first and last for seamless infinite loop
-        const extendedCamps = [
-            this.camps[this.camps.length - 1], // Last camp at beginning
-            ...this.camps,
-            this.camps[0] // First camp at end
-        ];
-
-        this.carouselTrack.innerHTML = extendedCamps.map((camp, index) =>
+        // Simple approach: just render all camps without duplicates for now
+        this.carouselTrack.innerHTML = this.camps.map((camp, index) =>
             this.createCampCard(camp, index)
         ).join('');
 
-        // Render dots (only for actual camps, not duplicates)
+        // Render dots
         this.renderDots();
 
-        // Show first camp (index 1 because of the duplicate at start)
-        this.showCamp(0, false);
+        // Show first camp
+        this.showCamp(0);
     }
 
     renderDots() {
@@ -1060,7 +1054,7 @@ class CampCarousel {
 
     goToSlide(index) {
         this.isUserInteracting = true;
-        this.showCamp(index, true);
+        this.showCamp(index);
         this.restartAutoAdvance();
 
         // Reset user interaction flag after a short delay
@@ -1069,24 +1063,17 @@ class CampCarousel {
         }, 1000);
     }
 
-    showCamp(index, animate = true) {
+    showCamp(index) {
         if (index < 0 || index >= this.camps.length) return;
 
         this.currentIndex = index;
 
-        // Calculate offset for 3-card view with center focus
-        // Add 1 to account for the duplicate card at the beginning
-        const actualIndex = index + 1;
-        const cardWidth = 100 / 3; // Each card takes 33.33% of visible width
-        const offset = -(actualIndex * cardWidth) + cardWidth; // Center the current card
+        // Calculate the offset to center the selected card
+        // We want to show 3 cards, with the selected one in the center
+        const cardWidth = 33.333; // Each card is 33.333% wide
+        const offset = -(index * cardWidth) + cardWidth; // Center the current card
 
-        // Apply transition
-        if (animate) {
-            this.carouselTrack.style.transition = 'transform 0.5s ease-in-out';
-        } else {
-            this.carouselTrack.style.transition = 'none';
-        }
-
+        // Apply the transform
         this.carouselTrack.style.transform = `translateX(${offset}%)`;
 
         // Update card focus states
@@ -1094,33 +1081,15 @@ class CampCarousel {
 
         // Update dots
         this.updateDots();
-
-        // Handle infinite loop
-        if (animate) {
-            setTimeout(() => {
-                if (index === 0) {
-                    // If we're at the first real camp, instantly jump to the duplicate at the end
-                    this.carouselTrack.style.transition = 'none';
-                    const duplicateOffset = -(this.camps.length + 1) * cardWidth + cardWidth;
-                    this.carouselTrack.style.transform = `translateX(${duplicateOffset}%)`;
-                } else if (index === this.camps.length - 1) {
-                    // If we're at the last real camp, instantly jump to the duplicate at the beginning
-                    this.carouselTrack.style.transition = 'none';
-                    const duplicateOffset = -cardWidth + cardWidth;
-                    this.carouselTrack.style.transform = `translateX(${duplicateOffset}%)`;
-                }
-            }, 500);
-        }
     }
 
     updateCardStates() {
         const cards = document.querySelectorAll('.carousel-camp-card');
-        const centerIndex = this.currentIndex + 1; // Account for duplicate at start
 
         cards.forEach((card, index) => {
             card.classList.remove('center', 'side');
 
-            if (index === centerIndex) {
+            if (index === this.currentIndex) {
                 card.classList.add('center');
             } else {
                 card.classList.add('side');
