@@ -147,25 +147,9 @@
                     <div id="searchResults" class="search-results"></div>
                 </div>
 
-                <div class="hero-buttons">
-                    <div class="user-card">
-                        <h3>👨‍👩‍👧‍👦 For Parents</h3>
-                        <p>Create child profiles, get personalized recommendations, and book with auto-filled forms</p>
-                        <div class="card-features">
-                            <div class="feature">✅ Multiple child profiles</div>
-                            <div class="feature">✅ Interest-based matching</div>
-                            <div class="feature">✅ Auto-filled registration forms</div>
-                        </div>
-                        <button class="btn" onclick="kidToCamp.ui.openModal('signupModal', 'parent')">Find
-                            Camps</button>
-                    </div>
-
-                    <div class="user-card">
-                        <h3>🏕️ For Camp Owners</h3>
-                        <p>Promote your camp and connect with families in your community</p>
-                        <button class="btn" onclick="kidToCamp.ui.openModal('signupModal', 'admin')">List Your
-                            Camp</button>
-                    </div>
+                <!-- Dynamic Content Section - Shows different content based on login status -->
+                <div id="heroButtons" class="hero-buttons">
+                    <!-- Content will be populated by JavaScript based on auth state -->
                 </div>
             </div>
         </section>

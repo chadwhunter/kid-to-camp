@@ -1,4 +1,4 @@
-// Main application logic
+// Main application logic - UPDATED with Dynamic Hero Content
 class KidToCamp {
     constructor() {
         this.supabase = null;
@@ -338,38 +338,29 @@ class KidToCamp {
     updateUI() {
         const navButtons = document.getElementById('navButtons');
         const searchTitle = document.getElementById('searchTitle');
+        const heroButtons = document.getElementById('heroButtons');
 
-        // Only update if elements exist (we're on the main page)
-        if (!navButtons) return;
-
-        if (this.currentUser) {
-            // Update navigation for logged-in user
-            // Updated navigation for logged-in user
+        // Update navigation if elements exist
+        if (navButtons && this.currentUser) {
             navButtons.innerHTML = `
-            <span style="color: white; margin-right: 1rem;">Welcome, ${this.userProfile?.first_name || this.currentUser.email}!</span>
-            <a href="calendar.html" class="btn btn-outline">📅 Calendar</a>
-            <a href="profile.html" class="btn btn-outline">👤 Profile</a>
-            <button class="btn btn-primary" onclick="kidToCamp.logout()">Sign Out</button>
-        `;
-
-            // Update search title based on user type (only if it exists)
-            if (searchTitle && this.currentUser.user_metadata?.user_type === 'parent') {
-                searchTitle.textContent = '🎯 Find Perfect Camps for Your Children';
-            }
-
-        } else {
-            // Reset to default for non-logged-in users
-            navButtons.innerHTML = `
-            <a href="#" class="btn btn-outline" onclick="kidToCamp.ui.openModal('loginModal')">Sign In</a>
-            <a href="#" class="btn btn-primary" onclick="kidToCamp.ui.openModal('signupModal')">Get Started</a>
-        `;
-
-            if (searchTitle) {
-                searchTitle.textContent = '🗓️ Search Camps by Date';
-            }
+                <span style="color: white; margin-right: 1rem;">Welcome, ${this.userProfile?.first_name || this.currentUser.email}!</span>
+                <a href="calendar.html" class="btn btn-outline">📅 Calendar</a>
+                <a href="profile.html" class="btn btn-outline">👤 Profile</a>
+                <button class="btn btn-primary" onclick="kidToCamp.logout()">Sign Out</button>
+            `;
         }
 
-        // Update enhanced filters visibility (only if elements exist)
+        // Update search title based on user type
+        if (searchTitle && this.currentUser?.user_metadata?.user_type === 'parent') {
+            searchTitle.textContent = '🎯 Find Perfect Camps for Your Children';
+        } else if (searchTitle) {
+            searchTitle.textContent = '🗓️ Search Camps by Date';
+        }
+
+        // **NEW: Update hero buttons based on login status**
+        this.updateHeroButtons();
+
+        // Update enhanced filters visibility
         const enhancedFilters = document.getElementById('enhancedFilters');
         const advancedToggle = document.getElementById('advancedToggle');
 
@@ -380,6 +371,81 @@ class KidToCamp {
             }
         } else if (advancedToggle) {
             advancedToggle.textContent = '🎯 Advanced Filters';
+        }
+    }
+
+    // **NEW METHOD: Dynamic hero content based on login status**
+    updateHeroButtons() {
+        const heroButtons = document.getElementById('heroButtons');
+        if (!heroButtons) return;
+
+        if (this.currentUser) {
+            // User is logged in - show personalized quick actions
+            const userType = this.currentUser.user_metadata?.user_type;
+            const userName = this.userProfile?.first_name || this.currentUser.email.split('@')[0];
+
+            if (userType === 'parent') {
+                heroButtons.innerHTML = `
+                    <div class="user-card">
+                        <h3>👋 Welcome back, ${userName}!</h3>
+                        <p>Ready to find amazing experiences for your children?</p>
+                        <div class="card-features">
+                            <div class="feature">✅ ${this.children.length} child profile${this.children.length !== 1 ? 's' : ''}</div>
+                            <div class="feature">✅ Smart recommendations ready</div>
+                            <div class="feature">✅ Quick booking with saved info</div>
+                        </div>
+                        <a href="/profile.html" class="btn">Manage Children</a>
+                    </div>
+
+                    <div class="user-card">
+                        <h3>📅 Your Dashboard</h3>
+                        <p>View your bookings and upcoming camp adventures</p>
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                            <a href="/calendar.html" class="btn btn-outline">📅 Calendar</a>
+                            <a href="/bookings.html" class="btn btn-outline">📋 Bookings</a>
+                        </div>
+                    </div>
+                `;
+            } else if (userType === 'admin') {
+                heroButtons.innerHTML = `
+                    <div class="user-card">
+                        <h3>🏕️ Camp Owner Dashboard</h3>
+                        <p>Manage your camps and connect with families</p>
+                        <div class="card-features">
+                            <div class="feature">✅ List and manage camps</div>
+                            <div class="feature">✅ View bookings and inquiries</div>
+                            <div class="feature">✅ Connect with families</div>
+                        </div>
+                        <button class="btn" onclick="alert('Camp management coming soon!')">Manage Camps</button>
+                    </div>
+
+                    <div class="user-card">
+                        <h3>📊 Analytics & Reports</h3>
+                        <p>Track your camp performance and bookings</p>
+                        <button class="btn btn-outline" onclick="alert('Analytics coming soon!')">View Reports</button>
+                    </div>
+                `;
+            }
+        } else {
+            // User is NOT logged in - show original signup cards
+            heroButtons.innerHTML = `
+                <div class="user-card">
+                    <h3>👨‍👩‍👧‍👦 For Parents</h3>
+                    <p>Create child profiles, get personalized recommendations, and book with auto-filled forms</p>
+                    <div class="card-features">
+                        <div class="feature">✅ Multiple child profiles</div>
+                        <div class="feature">✅ Interest-based matching</div>
+                        <div class="feature">✅ Auto-filled registration forms</div>
+                    </div>
+                    <button class="btn" onclick="kidToCamp.ui.openModal('signupModal', 'parent')">Find Camps</button>
+                </div>
+
+                <div class="user-card">
+                    <h3>🏕️ For Camp Owners</h3>
+                    <p>Promote your camp and connect with families in your community</p>
+                    <button class="btn" onclick="kidToCamp.ui.openModal('signupModal', 'admin')">List Your Camp</button>
+                </div>
+            `;
         }
     }
 
@@ -400,8 +466,6 @@ class KidToCamp {
             console.error('Logout error:', error);
         }
     }
-
-    // Add these methods to KidToCamp class
 
     clearSearchData() {
         // Clear search results
