@@ -1,4 +1,4 @@
-// js/login.js - Complete Replacement with Multi-Provider OAuth
+// js/login.js - Complete Login Handler with Multi-Provider OAuth
 
 class LoginHandler {
     constructor() {
@@ -343,9 +343,32 @@ class LoginHandler {
 
     redirectAfterLogin() {
         const urlParams = new URLSearchParams(window.location.search);
-        const redirectTo = urlParams.get('redirect') || '/profile.html';
-        console.log('🔄 Redirecting to:', redirectTo);
-        window.location.href = redirectTo;
+        const redirectTo = urlParams.get('redirect');
+
+        // If there's a specific redirect, use it
+        if (redirectTo) {
+            console.log('🔄 Redirecting to specified URL:', redirectTo);
+            window.location.href = decodeURIComponent(redirectTo);
+            return;
+        }
+
+        // Otherwise, check user type and redirect appropriately
+        this.supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session && session.user) {
+                const userType = session.user.user_metadata?.user_type;
+
+                if (userType === 'admin') {
+                    console.log('🔄 Redirecting camp owner to portal');
+                    window.location.href = '/camp-owner-portal.html';
+                } else {
+                    console.log('🔄 Redirecting parent to profile');
+                    window.location.href = '/profile.html';
+                }
+            } else {
+                // Fallback
+                window.location.href = '/profile.html';
+            }
+        });
     }
 
     setSocialLoading(provider, loading) {

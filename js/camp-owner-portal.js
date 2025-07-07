@@ -1,4 +1,4 @@
-// js/camp-owner-portal.js - Camp Owner Portal Management
+// js/camp-owner-portal.js - Complete Camp Owner Portal Management
 
 class CampOwnerPortal {
     constructor() {
@@ -16,37 +16,36 @@ class CampOwnerPortal {
     async init() {
         console.log('🏕️ Initializing Camp Owner Portal...');
 
-        // Wait for dependencies
-        await this.waitForDependencies();
+        try {
+            // Wait for dependencies
+            await this.waitForDependencies();
 
-        if (!this.supabase) {
-            console.error('❌ Camp Owner Portal: Supabase not available');
-            this.showError('Authentication service not available. Please refresh the page.');
-            return;
+            if (!this.supabase) {
+                console.error('❌ Camp Owner Portal: Supabase not available');
+                this.showError('Authentication service not available. Please refresh the page.');
+                return;
+            }
+
+            // Check authentication
+            await this.checkAuth();
+
+            if (!this.currentUser) {
+                console.log('❌ No user found, redirecting to login...');
+                window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+                return;
+            }
+
+            console.log('✅ Camp Owner Portal ready for:', this.currentUser.email);
+
+            // Load initial data safely
+            await this.loadDataSafely();
+            this.setupEventListeners();
+            this.renderDashboard();
+
+        } catch (error) {
+            console.error('❌ Critical error in portal init:', error);
+            this.showError('Portal initialization failed. Please refresh the page.');
         }
-
-        // Check authentication and user type
-        await this.checkAuth();
-
-        if (!this.currentUser) {
-            console.log('❌ No user found, redirecting to login...');
-            window.location.href = '/login.html';
-            return;
-        }
-
-        // Verify user is camp owner/admin
-        if (this.currentUser.user_metadata?.user_type !== 'admin') {
-            console.log('❌ User is not a camp owner, redirecting...');
-            window.location.href = '/index.html';
-            return;
-        }
-
-        console.log('✅ Camp Owner Portal ready for:', this.currentUser.email);
-
-        // Load initial data
-        await this.loadData();
-        this.setupEventListeners();
-        this.renderDashboard();
     }
 
     async waitForDependencies() {
@@ -66,6 +65,8 @@ class CampOwnerPortal {
 
     async checkAuth() {
         try {
+            console.log('🔍 Camp Owner Portal: Checking authentication...');
+
             const { data: { session }, error } = await this.supabase.auth.getSession();
 
             if (error) {
@@ -73,54 +74,160 @@ class CampOwnerPortal {
                 return;
             }
 
-            this.currentUser = session?.user;
+            if (session && session.user) {
+                this.currentUser = session.user;
+                console.log('✅ User authenticated:', this.currentUser.email);
+                console.log('📋 User metadata:', this.currentUser.user_metadata);
+
+                // More flexible user type checking
+                const userType = this.currentUser.user_metadata?.user_type;
+                const isAdmin = userType === 'admin' || userType === 'camp_owner';
+
+                if (!isAdmin) {
+                    console.log('⚠️ User is not a camp owner, checking if they should be redirected...');
+                    // Only redirect if they're clearly a parent
+                    if (userType === 'parent') {
+                        window.location.href = '/index.html';
+                        return;
+                    }
+                    // If user type is unclear, let them stay and set it later
+                }
+
+            } else {
+                console.log('❌ No session found');
+                this.currentUser = null;
+            }
+
         } catch (error) {
             console.error('❌ Auth check failed:', error);
+            this.currentUser = null;
         }
     }
 
-    async loadData() {
-        try {
-            console.log('📊 Loading camp owner data...');
+    async loadDataSafely() {
+        console.log('📊 Loading camp owner data safely...');
 
-            await Promise.all([
-                this.loadOrganization(),
-                this.loadCamps(),
-                this.loadSchedules(),
-                this.loadRegistrations(),
-                this.loadTeamMembers()
-            ]);
+        const loadPromises = [
+            this.loadOrganization().catch(e => console.warn('⚠️ Organization load failed:', e)),
+            this.loadCamps().catch(e => console.warn('⚠️ Camps load failed:', e)),
+            this.loadSchedules().catch(e => console.warn('⚠️ Schedules load failed:', e)),
+            this.loadRegistrations().catch(e => console.warn('⚠️ Registrations load failed:', e)),
+            this.loadTeamMembers().catch(e => console.warn('⚠️ Team members load failed:', e))
+        ];
 
-            console.log('✅ Data loaded successfully');
-        } catch (error) {
-            console.error('❌ Error loading data:', error);
-            this.showError('Failed to load portal data');
-        }
+        await Promise.allSettled(loadPromises);
+        console.log('✅ Data loading completed (some may have failed safely)');
     }
 
     async loadOrganization() {
         try {
-            // Load organization profile for camp owner
-            const { data: org, error } = await this.supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', this.currentUser.id)
-                .single();
+            console.log('📊 Loading organization for user:', this.currentUser.id);
 
-            if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-                throw error;
+            // Try multiple approaches to load the profile
+            let org = null;
+            let error = null;
+
+            // Approach 1: Try normal query first
+            try {
+                const result = await this.supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', this.currentUser.id)
+                    .maybeSingle();
+
+                org = result.data;
+                error = result.error;
+            } catch (e) {
+                console.log('⚠️ First approach failed, trying alternative...');
+                error = e;
+            }
+
+            // Approach 2: If first fails, try with explicit auth
+            if (error || !org) {
+                try {
+                    const { data: session } = await this.supabase.auth.getSession();
+                    if (session.session) {
+                        const result = await this.supabase
+                            .from('profiles')
+                            .select('*')
+                            .eq('id', session.session.user.id)
+                            .limit(1);
+
+                        org = result.data?.[0] || null;
+                        error = result.error;
+                    }
+                } catch (e) {
+                    console.log('⚠️ Second approach failed, creating profile...');
+                    error = e;
+                }
+            }
+
+            // Approach 3: If profile doesn't exist, create it
+            if (!org && !error) {
+                console.log('📝 No profile found, creating one...');
+                org = await this.createInitialProfile();
             }
 
             this.organization = org;
-
-            // Update header with organization name
-            const orgNameElement = document.getElementById('organizationName');
-            if (orgNameElement && org?.first_name) {
-                orgNameElement.textContent = `Welcome to ${org.first_name}'s Camp Management Portal`;
-            }
+            this.updatePortalHeader();
+            console.log('✅ Organization loaded/created:', org);
 
         } catch (error) {
-            console.error('❌ Error loading organization:', error);
+            console.error('❌ Error in loadOrganization:', error);
+            // Don't throw - portal should work even without profile
+            this.organization = null;
+            this.updatePortalHeader();
+        }
+    }
+
+    async createInitialProfile() {
+        try {
+            console.log('🆕 Creating initial profile for user:', this.currentUser.email);
+
+            const profileData = {
+                id: this.currentUser.id,
+                email: this.currentUser.email,
+                user_type: this.currentUser.user_metadata?.user_type || 'admin',
+                first_name: this.currentUser.user_metadata?.name || null,
+                organization_name: null,
+                notify_new_registration: true,
+                notify_cancellation: true,
+                notify_waitlist: true,
+                notify_capacity_warning: true,
+                advance_notice_days: 7,
+                refund_percentage: 100
+            };
+
+            const { data, error } = await this.supabase
+                .from('profiles')
+                .insert(profileData)
+                .select()
+                .single();
+
+            if (error) {
+                console.error('❌ Error creating profile:', error);
+                return null;
+            }
+
+            console.log('✅ Initial profile created:', data);
+            return data;
+
+        } catch (error) {
+            console.error('❌ Failed to create initial profile:', error);
+            return null;
+        }
+    }
+
+    updatePortalHeader() {
+        const orgNameElement = document.getElementById('organizationName');
+        if (orgNameElement) {
+            if (this.organization?.organization_name) {
+                orgNameElement.textContent = `Welcome to ${this.organization.organization_name}`;
+            } else if (this.organization?.first_name) {
+                orgNameElement.textContent = `Welcome to ${this.organization.first_name}'s Camp Management Portal`;
+            } else {
+                orgNameElement.textContent = `Welcome to your Camp Management Portal`;
+            }
         }
     }
 
@@ -145,7 +252,6 @@ class CampOwnerPortal {
 
     async loadSchedules() {
         try {
-            // For now, we'll create a simple query. Later we can join with camps
             const { data: schedules, error } = await this.supabase
                 .from('camp_schedules')
                 .select('*')
@@ -674,7 +780,7 @@ class CampOwnerPortal {
     renderSettings() {
         // Pre-fill organization form if data exists
         if (this.organization) {
-            document.getElementById('orgName').value = this.organization.first_name || '';
+            document.getElementById('orgName').value = this.organization.organization_name || this.organization.first_name || '';
             document.getElementById('orgEmail').value = this.organization.email || this.currentUser.email;
             document.getElementById('orgPhone').value = this.organization.phone || '';
             document.getElementById('orgWebsite').value = this.organization.website || '';
@@ -682,6 +788,18 @@ class CampOwnerPortal {
             document.getElementById('orgCity').value = this.organization.city || '';
             document.getElementById('orgState').value = this.organization.state || 'NC';
             document.getElementById('orgZip').value = this.organization.zip || '';
+
+            // Pre-fill policies
+            document.getElementById('cancellationPolicy').value = this.organization.cancellation_policy || '';
+            document.getElementById('refundPolicy').value = this.organization.refund_policy || '';
+            document.getElementById('advanceNotice').value = this.organization.advance_notice_days || 7;
+            document.getElementById('refundPercentage').value = this.organization.refund_percentage || 100;
+
+            // Pre-fill notification settings
+            document.getElementById('emailNewRegistration').checked = this.organization.notify_new_registration !== false;
+            document.getElementById('emailCancellation').checked = this.organization.notify_cancellation !== false;
+            document.getElementById('emailWaitlist').checked = this.organization.notify_waitlist !== false;
+            document.getElementById('emailCapacityWarning').checked = this.organization.notify_capacity_warning !== false;
         }
     }
 
@@ -707,7 +825,6 @@ class CampOwnerPortal {
                                     <option value="nature">Nature/Outdoors</option>
                                     <option value="academic">Academic</option>
                                     <option value="music">Music</option>
-                                    <option value="theater">Theater/Drama</option>
                                     <option value="cooking">Cooking</option>
                                     <option value="other">Other</option>
                                 </select>
@@ -1013,7 +1130,7 @@ class CampOwnerPortal {
 
     async handleOrganizationUpdate() {
         const orgData = {
-            first_name: document.getElementById('orgName').value,
+            organization_name: document.getElementById('orgName').value,
             email: document.getElementById('orgEmail').value,
             phone: document.getElementById('orgPhone').value,
             website: document.getElementById('orgWebsite').value,
@@ -1035,6 +1152,7 @@ class CampOwnerPortal {
             if (error) throw error;
 
             this.organization = { ...this.organization, ...orgData };
+            this.updatePortalHeader();
             this.showSuccess('Organization information updated successfully!');
 
         } catch (error) {
@@ -1044,8 +1162,6 @@ class CampOwnerPortal {
     }
 
     async handlePoliciesUpdate() {
-        // For now, we'll store policies in the profiles table
-        // Later we might want a separate policies table
         const policiesData = {
             cancellation_policy: document.getElementById('cancellationPolicy').value,
             refund_policy: document.getElementById('refundPolicy').value,
@@ -1061,6 +1177,7 @@ class CampOwnerPortal {
 
             if (error) throw error;
 
+            this.organization = { ...this.organization, ...policiesData };
             this.showSuccess('Policies updated successfully!');
 
         } catch (error) {
@@ -1085,6 +1202,7 @@ class CampOwnerPortal {
 
             if (error) throw error;
 
+            this.organization = { ...this.organization, ...notificationSettings };
             this.showSuccess('Notification settings updated successfully!');
 
         } catch (error) {
