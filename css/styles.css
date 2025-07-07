@@ -1998,3 +1998,239 @@ nav {
 .hero-buttons.updating {
     opacity: 0.7;
 }
+
+/* ========================================
+   FEATURED CAMPS MARQUEE STYLES
+======================================== */
+
+.featured-camps-marquee {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 3rem 0;
+    margin-top: 2rem;
+    overflow: hidden;
+}
+
+.marquee-title {
+    text-align: center;
+    color: white;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.marquee-subtitle {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.marquee-container {
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    height: 280px;
+    mask: linear-gradient(to right,
+            transparent 0%,
+            black 5%,
+            black 95%,
+            transparent 100%);
+    -webkit-mask: linear-gradient(to right,
+            transparent 0%,
+            black 5%,
+            black 95%,
+            transparent 100%);
+}
+
+.marquee-track {
+    display: flex;
+    gap: 2rem;
+    animation: scroll-marquee 60s linear infinite;
+    will-change: transform;
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+.marquee-track:hover {
+    animation-play-state: paused;
+}
+
+@keyframes scroll-marquee {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.marquee-camp-card {
+    min-width: 300px;
+    max-width: 300px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+}
+
+.marquee-camp-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.marquee-camp-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #4CAF50, #2196F3, #FF9800);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+}
+
+.marquee-camp-card:hover::before {
+    transform: translateX(0);
+}
+
+.camp-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.camp-badge.featured {
+    background: linear-gradient(45deg, #FF6B35, #F7931E);
+}
+
+.camp-badge.new {
+    background: linear-gradient(45deg, #4CAF50, #2196F3);
+}
+
+.camp-badge.popular {
+    background: linear-gradient(45deg, #9C27B0, #673AB7);
+}
+
+.marquee-camp-card h3 {
+    color: #2c3e50;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+}
+
+.marquee-camp-card p {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.camp-details-mini {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.detail-mini {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: #666;
+    background: rgba(103, 126, 234, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+}
+
+.camp-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #4CAF50;
+    text-align: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.marquee-camp-card .camp-tags-mini {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+}
+
+.tag-mini {
+    background: rgba(33, 150, 243, 0.1);
+    color: #1976D2;
+    padding: 0.2rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .marquee-title {
+        font-size: 1.5rem;
+    }
+
+    .marquee-subtitle {
+        font-size: 1rem;
+    }
+
+    .marquee-container {
+        height: 260px;
+    }
+
+    .marquee-camp-card {
+        min-width: 280px;
+        max-width: 280px;
+        padding: 1.25rem;
+    }
+
+    .marquee-track {
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .featured-camps-marquee {
+        padding: 2rem 0;
+    }
+
+    .marquee-container {
+        height: 240px;
+    }
+
+    .marquee-camp-card {
+        min-width: 260px;
+        max-width: 260px;
+        padding: 1rem;
+    }
+}

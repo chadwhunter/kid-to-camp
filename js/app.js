@@ -813,3 +813,189 @@ if (typeof kidToCamp === 'undefined' || !kidToCamp) {
     window.kidToCamp = kidToCamp;
     console.log('🔧 kidToCamp already exists, assigned to window');
 }
+
+// Add this at the END of your app.js file, before the final closing brace
+
+// Marquee functionality
+class CampMarquee {
+    constructor() {
+        this.camps = [];
+        this.marqueeTrack = null;
+        this.init();
+    }
+
+    async init() {
+        this.marqueeTrack = document.getElementById('marqueeTrack');
+        if (!this.marqueeTrack) return;
+
+        // Wait for kidToCamp to be available
+        await this.waitForKidToCamp();
+
+        // Load and display camps
+        await this.loadCamps();
+        this.renderMarquee();
+    }
+
+    async waitForKidToCamp() {
+        let attempts = 0;
+        while (!window.kidToCamp?.supabase && attempts < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+    }
+
+    async loadCamps() {
+        try {
+            if (!window.kidToCamp?.supabase) {
+                console.warn('Supabase not available for marquee');
+                this.loadDemoCamps();
+                return;
+            }
+
+            const { data: camps, error } = await window.kidToCamp.supabase
+                .from('camps')
+                .select('*')
+                .limit(10);
+
+            if (error) throw error;
+
+            this.camps = camps || [];
+
+            // If no camps in database, load demo data
+            if (this.camps.length === 0) {
+                this.loadDemoCamps();
+            }
+
+        } catch (error) {
+            console.error('Error loading camps for marquee:', error);
+            this.loadDemoCamps();
+        }
+    }
+
+    loadDemoCamps() {
+        // Demo camps data
+        this.camps = [
+            {
+                id: 1,
+                name: "Adventure Quest Summer Camp",
+                description: "Outdoor adventures, hiking, and nature exploration for young adventurers.",
+                location: "Matthews, NC",
+                min_age: 6,
+                max_age: 12,
+                price: 295,
+                duration: 5,
+                interests: ["nature", "sports"],
+                badge: "featured"
+            },
+            {
+                id: 2,
+                name: "Tech Innovators Academy",
+                description: "Learn coding, robotics, and digital creativity in our state-of-the-art facility.",
+                location: "Charlotte, NC",
+                min_age: 8,
+                max_age: 16,
+                price: 450,
+                duration: 5,
+                interests: ["stem", "academic"],
+                badge: "new"
+            },
+            {
+                id: 3,
+                name: "Creative Arts Studio",
+                description: "Painting, sculpting, and mixed media art for budding young artists.",
+                location: "Huntersville, NC",
+                min_age: 5,
+                max_age: 14,
+                price: 325,
+                duration: 5,
+                interests: ["arts"],
+                badge: "popular"
+            },
+            {
+                id: 4,
+                name: "Sports Champions Camp",
+                description: "Multi-sport training with professional coaches and team building activities.",
+                location: "Matthews, NC",
+                min_age: 7,
+                max_age: 15,
+                price: 375,
+                duration: 5,
+                interests: ["sports"],
+                badge: "featured"
+            },
+            {
+                id: 5,
+                name: "Junior Chef Academy",
+                description: "Learn cooking basics, nutrition, and culinary creativity in a fun environment.",
+                location: "Charlotte, NC",
+                min_age: 6,
+                max_age: 13,
+                price: 285,
+                duration: 3,
+                interests: ["cooking"],
+                badge: "new"
+            },
+            {
+                id: 6,
+                name: "Music & Performance Camp",
+                description: "Singing, instruments, and stage performance for musically inclined children.",
+                location: "Huntersville, NC",
+                min_age: 5,
+                max_age: 16,
+                price: 350,
+                duration: 5,
+                interests: ["music", "theater"],
+                badge: "popular"
+            }
+        ];
+    }
+
+    renderMarquee() {
+        if (!this.marqueeTrack || this.camps.length === 0) return;
+
+        // Create marquee content (duplicate for seamless loop)
+        const marqueeContent = [...this.camps, ...this.camps];
+
+        this.marqueeTrack.innerHTML = marqueeContent.map(camp => this.createCampCard(camp)).join('');
+    }
+
+    createCampCard(camp) {
+        const interests = camp.interests?.slice(0, 3) || [];
+        const badgeClass = camp.badge || 'featured';
+        const badgeText = {
+            'featured': '⭐ Featured',
+            'new': '🆕 New',
+            'popular': '🔥 Popular'
+        }[badgeClass] || '⭐ Featured';
+
+        return `
+            <div class="marquee-camp-card" onclick="campMarquee.handleCampClick(${camp.id})">
+                <div class="camp-badge ${badgeClass}">${badgeText}</div>
+                <h3>${camp.name}</h3>
+                <p>${camp.description}</p>
+                <div class="camp-details-mini">
+                    <div class="detail-mini">📍 ${camp.location}</div>
+                    <div class="detail-mini">👶 ${camp.min_age}-${camp.max_age}y</div>
+                    <div class="detail-mini">📅 ${camp.duration}d</div>
+                </div>
+                <div class="camp-tags-mini">
+                    ${interests.map(interest => `<span class="tag-mini">${interest}</span>`).join('')}
+                </div>
+                <div class="camp-price">$${camp.price}</div>
+            </div>
+        `;
+    }
+
+    handleCampClick(campId) {
+        // For now, just show an alert. Later this could open a camp details modal
+        const camp = this.camps.find(c => c.id === campId);
+        if (camp) {
+            alert(`Learn more about ${camp.name}!\n\nCamp details and booking coming soon!`);
+        }
+    }
+}
+
+// Initialize marquee when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    window.campMarquee = new CampMarquee();
+});
