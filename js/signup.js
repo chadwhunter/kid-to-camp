@@ -274,19 +274,22 @@ class SignupHandler {
         }
     }
 
-    // New method to create user profile
+    // Fixed createUserProfile method for js/signup.js
+    // Replace the existing createUserProfile method with this:
+
     async createUserProfile(user, userType) {
         try {
             console.log('📝 Creating profile for user:', user.id);
 
             const profileData = {
                 id: user.id,
-                email: user.email,
+                // email: user.email,  // ← REMOVED - this column doesn't exist
                 user_type: userType,
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
             };
 
-            // For camp owners, add some default organization fields
+            // For camp owners, add some default organization fields (if these columns exist)
             if (userType === 'admin') {
                 profileData.organization_name = null; // Will be filled in later
                 profileData.notify_new_registration = true;
@@ -297,20 +300,42 @@ class SignupHandler {
                 profileData.refund_percentage = 100;
             }
 
+            // First check what columns actually exist to avoid errors
+            console.log('📊 Attempting to create profile with data:', profileData);
+
             const { error: profileError } = await this.supabase
                 .from('profiles')
                 .insert(profileData);
 
             if (profileError) {
                 console.error('⚠️ Error creating profile:', profileError);
-                // Don't fail the signup process, profile can be created later
+
+                // If error is about missing columns, try with minimal data
+                if (profileError.message.includes('column') && profileError.message.includes('does not exist')) {
+                    console.log('🔄 Retrying with minimal profile data...');
+
+                    const minimalProfileData = {
+                        id: user.id,
+                        user_type: userType
+                    };
+
+                    const { error: retryError } = await this.supabase
+                        .from('profiles')
+                        .insert(minimalProfileData);
+
+                    if (retryError) {
+                        console.error('❌ Even minimal profile creation failed:', retryError);
+                    } else {
+                        console.log('✅ Minimal profile created successfully');
+                    }
+                }
             } else {
-                console.log('✅ Profile created successfully');
+                console.log('✅ Full profile created successfully');
             }
 
         } catch (error) {
             console.error('⚠️ Profile creation failed:', error);
-            // Don't fail the signup process
+            // Don't fail the signup process - profile can be created later
         }
     }
 
