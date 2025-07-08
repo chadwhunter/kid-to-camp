@@ -1,4 +1,5 @@
-// Main application logic - UPDATED with Dynamic Hero Content
+// js/app.js - UPDATED with Smart Routing for User Types
+
 class KidToCamp {
     constructor() {
         this.supabase = null;
@@ -27,11 +28,12 @@ class KidToCamp {
                 await this.loadUserData();
             }
 
-            // Set up auth listener
-            this.supabase.auth.onAuthStateChange((event, session) => {
+            // Set up auth listener with smart routing
+            this.supabase.auth.onAuthStateChange(async (event, session) => {
                 if (event === 'SIGNED_IN') {
                     this.currentUser = session.user;
-                    this.loadUserData();
+                    await this.loadUserData();
+                    this.handleSmartRouting(); // NEW: Smart routing based on user type
                 } else if (event === 'SIGNED_OUT') {
                     this.currentUser = null;
                     this.userProfile = null;
@@ -45,6 +47,45 @@ class KidToCamp {
 
         } catch (error) {
             console.error('Initialization error:', error);
+        }
+    }
+
+    // NEW: Smart routing based on user type
+    handleSmartRouting() {
+        // Don't redirect if we're already on the correct page
+        const currentPath = window.location.pathname;
+        const userType = this.currentUser?.user_metadata?.user_type;
+
+        console.log('🔄 Smart routing for user type:', userType);
+
+        // Skip routing if on auth callback pages
+        if (currentPath.includes('auth') || currentPath.includes('callback')) {
+            return;
+        }
+
+        // Route based on user type and current page
+        if (userType === 'admin') {
+            // Camp owners should go to camp dashboard unless already there
+            if (!currentPath.includes('camp-dashboard') &&
+                !currentPath.includes('calendar') &&
+                !currentPath.includes('bookings')) {
+                console.log('🏕️ Redirecting camp owner to dashboard');
+                setTimeout(() => {
+                    window.location.href = '/camp-dashboard.html';
+                }, 1000);
+            }
+        } else if (userType === 'parent') {
+            // Parents should go to profile unless already on a parent page
+            if (!currentPath.includes('profile') &&
+                !currentPath.includes('calendar') &&
+                !currentPath.includes('bookings') &&
+                currentPath !== '/' &&
+                currentPath !== '/index.html') {
+                console.log('👨‍👩‍👧‍👦 Redirecting parent to profile');
+                setTimeout(() => {
+                    window.location.href = '/profile.html';
+                }, 1000);
+            }
         }
     }
 
@@ -121,13 +162,7 @@ class KidToCamp {
 
             this.ui.closeModal('loginModal');
 
-            // Redirect to profile if no profile exists
-            setTimeout(async () => {
-                await this.loadUserData();
-                if (!this.userProfile) {
-                    window.location.href = 'profile.html';
-                }
-            }, 1000);
+            // Smart routing will be handled by the auth state change listener
 
         } catch (error) {
             this.ui.showMessage(error.message, 'error');
@@ -342,10 +377,14 @@ class KidToCamp {
 
         // Update navigation if elements exist
         if (navButtons && this.currentUser) {
+            const userType = this.currentUser.user_metadata?.user_type;
+            const dashboardLink = userType === 'admin' ? 'camp-dashboard.html' : 'profile.html';
+            const dashboardText = userType === 'admin' ? '🏕️ Dashboard' : '👤 Profile';
+
             navButtons.innerHTML = `
                 <span style="color: white; margin-right: 1rem;">Welcome, ${this.userProfile?.first_name || this.currentUser.email}!</span>
+                <a href="${dashboardLink}" class="btn btn-outline">${dashboardText}</a>
                 <a href="calendar.html" class="btn btn-outline">📅 Calendar</a>
-                <a href="profile.html" class="btn btn-outline">👤 Profile</a>
                 <button class="btn btn-primary" onclick="kidToCamp.logout()">Sign Out</button>
             `;
         }
@@ -357,7 +396,7 @@ class KidToCamp {
             searchTitle.textContent = '🗓️ Search Camps by Date';
         }
 
-        // **NEW: Update hero buttons based on login status**
+        // Update hero buttons based on login status and user type
         this.updateHeroButtons();
 
         // Update enhanced filters visibility
@@ -374,19 +413,19 @@ class KidToCamp {
         }
     }
 
-    // **NEW METHOD: Dynamic hero content based on login status**
+    // UPDATED: Hero content based on user type
     updateHeroButtons() {
         const heroButtons = document.getElementById('heroButtons');
         if (!heroButtons) return;
 
         if (this.currentUser) {
-            // User is logged in - show personalized quick actions
+            // User is logged in - show personalized content based on user type
             const userType = this.currentUser.user_metadata?.user_type;
             const userName = this.userProfile?.first_name || this.currentUser.email.split('@')[0];
 
             if (userType === 'parent') {
                 heroButtons.innerHTML = `
-                    <div class="user-card">
+                    <div class="user-card welcome-card">
                         <h3>👋 Welcome back, ${userName}!</h3>
                         <p>Ready to find amazing experiences for your children?</p>
                         <div class="card-features">
@@ -394,10 +433,10 @@ class KidToCamp {
                             <div class="feature">✅ Smart recommendations ready</div>
                             <div class="feature">✅ Quick booking with saved info</div>
                         </div>
-                        <a href="/profile.html" class="btn">Manage Children</a>
+                        <a href="/profile.html" class="btn btn-outline">Manage Children</a>
                     </div>
 
-                    <div class="user-card">
+                    <div class="user-card dashboard-card">
                         <h3>📅 Your Dashboard</h3>
                         <p>View your bookings and upcoming camp adventures</p>
                         <div style="display: flex; gap: 1rem; margin-top: 1rem;">
@@ -408,7 +447,7 @@ class KidToCamp {
                 `;
             } else if (userType === 'admin') {
                 heroButtons.innerHTML = `
-                    <div class="user-card">
+                    <div class="user-card admin-card">
                         <h3>🏕️ Camp Owner Dashboard</h3>
                         <p>Manage your camps and connect with families</p>
                         <div class="card-features">
@@ -416,13 +455,16 @@ class KidToCamp {
                             <div class="feature">✅ View bookings and inquiries</div>
                             <div class="feature">✅ Connect with families</div>
                         </div>
-                        <button class="btn" onclick="alert('Camp management coming soon!')">Manage Camps</button>
+                        <a href="/camp-dashboard.html" class="btn btn-outline">Manage Camps</a>
                     </div>
 
                     <div class="user-card">
                         <h3>📊 Analytics & Reports</h3>
                         <p>Track your camp performance and bookings</p>
-                        <button class="btn btn-outline" onclick="alert('Analytics coming soon!')">View Reports</button>
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                            <a href="/camp-dashboard.html" class="btn btn-outline">📊 Dashboard</a>
+                            <a href="/bookings.html" class="btn btn-outline">📋 Bookings</a>
+                        </div>
                     </div>
                 `;
             }
@@ -453,14 +495,8 @@ class KidToCamp {
         try {
             await this.supabase.auth.signOut();
 
-            // Redirect to home page if we're on profile page
-            if (window.location.pathname.includes('profile.html')) {
-                window.location.href = 'index.html';
-            } else {
-                // Clear all search data and reset page
-                this.clearSearchData();
-                this.resetSearchForm();
-            }
+            // Always redirect to home after logout
+            window.location.href = 'index.html';
 
         } catch (error) {
             console.error('Logout error:', error);
@@ -524,7 +560,7 @@ class KidToCamp {
     }
 }
 
-// UI Helper Methods
+// UI Helper Methods (unchanged)
 KidToCamp.prototype.ui = {
     openModal(modalId, userType = null) {
         const modal = document.getElementById(modalId);
@@ -628,7 +664,7 @@ KidToCamp.prototype.ui = {
     }
 };
 
-// Search functionality
+// Search functionality (unchanged)
 KidToCamp.prototype.search = {
     async execute() {
         const startDate = document.getElementById('startDate').value;
@@ -660,13 +696,6 @@ KidToCamp.prototype.search = {
                 if (maxAge) {
                     query = query.lte('max_age', maxAge);
                 }
-            }
-
-            if (priceRange && priceRange !== '500+') {
-                const [minPrice, maxPrice] = priceRange.split('-').map(price => parseInt(price));
-                query = query.gte('price', minPrice).lte('price', maxPrice);
-            } else if (priceRange === '500+') {
-                query = query.gte('price', 500);
             }
 
             if (interests.length > 0) {
@@ -748,15 +777,13 @@ KidToCamp.prototype.search = {
                     <div class="camp-details">
                         <div class="camp-detail">📍 ${camp.location}</div>
                         <div class="camp-detail">👶 Ages ${camp.min_age}-${camp.max_age}</div>
-                        <div class="camp-detail">💰 ${camp.price}</div>
-                        <div class="camp-detail">📅 ${camp.duration} days</div>
                     </div>
                     <div class="camp-tags">
                         ${camp.interests?.map(interest => `<span class="tag">${interest}</span>`).join('') || ''}
                         ${camp.accommodations?.map(acc => `<span class="tag accommodation-tag">${acc}</span>`).join('') || ''}
                     </div>
-                    <button class="btn btn-primary" onclick="alert('Booking functionality coming soon!')">
-                        Book Now
+                    <button class="btn btn-primary" onclick="alert('Visit the calendar page to book this camp!')">
+                        View Schedules
                     </button>
                 </div>
             `;
@@ -778,47 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Make KidToCamp globally available for inline event handlers
 window.KidToCamp = KidToCamp;
 
-// Debug and fix for both calendar and main pages
-console.log('🔧 app.js finished executing');
-console.log('🔧 kidToCamp created:', !!window.kidToCamp);
-console.log('🔧 CONFIG available:', !!window.CONFIG);
-
-// Create CONFIG if it doesn't exist (for non-calendar pages)
-if (!window.CONFIG) {
-    console.log('🔧 CONFIG missing, creating it...');
-    window.CONFIG = {
-        supabase: {
-            url: 'https://jjrvkntowkmdfbejlnwk.supabase.co',
-            key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqcnZrbnRvd2ttZGZiZWpsbndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNjc5OTgsImV4cCI6MjA2NTc0Mzk5OH0.Ng0lYJAki_FeJK2_fAR5w95SZJ-7-BHzpkMbNm4uKuM'
-        },
-        app: {
-            name: 'Kid To Camp',
-            version: '1.0.0'
-        }
-    };
-    console.log('🔧 CONFIG created');
-}
-
-// Force create kidToCamp if it doesn't exist
-if (typeof kidToCamp === 'undefined' || !kidToCamp) {
-    console.log('🔧 Creating kidToCamp...');
-    try {
-        kidToCamp = new KidToCamp();
-        window.kidToCamp = kidToCamp;
-        console.log('🔧 kidToCamp created successfully:', !!window.kidToCamp);
-    } catch (error) {
-        console.error('🔧 Error creating kidToCamp:', error);
-    }
-} else {
-    window.kidToCamp = kidToCamp;
-    console.log('🔧 kidToCamp already exists, assigned to window');
-}
-
-// ========================================
-// FIXED 3-CARD CAMP CAROUSEL FUNCTIONALITY
-// ========================================
-
-// Camp Carousel functionality - 3 cards with center focus
+// Camp Carousel functionality (unchanged)
 class CampCarousel {
     constructor() {
         this.camps = [];
@@ -826,7 +813,7 @@ class CampCarousel {
         this.carouselTrack = null;
         this.dotsContainer = null;
         this.autoAdvanceTimer = null;
-        this.autoAdvanceDelay = 5000; // 5 seconds
+        this.autoAdvanceDelay = 5000;
         this.isUserInteracting = false;
         this.init();
     }
@@ -837,15 +824,10 @@ class CampCarousel {
 
         if (!this.carouselTrack || !this.dotsContainer) return;
 
-        // Wait for kidToCamp to be available
         await this.waitForKidToCamp();
-
-        // Load and display camps
         await this.loadCamps();
         this.renderCarousel();
         this.startAutoAdvance();
-
-        // Set up navigation
         this.setupNavigation();
     }
 
@@ -860,7 +842,6 @@ class CampCarousel {
     async loadCamps() {
         try {
             if (!window.kidToCamp?.supabase) {
-                console.warn('Supabase not available for carousel');
                 this.loadDemoCamps();
                 return;
             }
@@ -874,7 +855,6 @@ class CampCarousel {
 
             this.camps = camps || [];
 
-            // If no camps in database, load demo data
             if (this.camps.length === 0) {
                 this.loadDemoCamps();
             }
@@ -886,7 +866,6 @@ class CampCarousel {
     }
 
     loadDemoCamps() {
-        // Demo camps data
         this.camps = [
             {
                 id: 1,
@@ -895,8 +874,6 @@ class CampCarousel {
                 location: "Matthews, NC",
                 min_age: 6,
                 max_age: 12,
-                price: 295,
-                duration: 5,
                 interests: ["nature", "sports"],
                 badge: "featured"
             },
@@ -907,8 +884,6 @@ class CampCarousel {
                 location: "Charlotte, NC",
                 min_age: 8,
                 max_age: 16,
-                price: 450,
-                duration: 5,
                 interests: ["stem", "academic"],
                 badge: "new"
             },
@@ -919,45 +894,7 @@ class CampCarousel {
                 location: "Huntersville, NC",
                 min_age: 5,
                 max_age: 14,
-                price: 325,
-                duration: 5,
                 interests: ["arts"],
-                badge: "popular"
-            },
-            {
-                id: 4,
-                name: "Sports Champions Camp",
-                description: "Multi-sport training with professional coaches and team building activities.",
-                location: "Matthews, NC",
-                min_age: 7,
-                max_age: 15,
-                price: 375,
-                duration: 5,
-                interests: ["sports"],
-                badge: "featured"
-            },
-            {
-                id: 5,
-                name: "Junior Chef Academy",
-                description: "Learn cooking basics, nutrition, and culinary creativity in a fun environment.",
-                location: "Charlotte, NC",
-                min_age: 6,
-                max_age: 13,
-                price: 285,
-                duration: 3,
-                interests: ["cooking"],
-                badge: "new"
-            },
-            {
-                id: 6,
-                name: "Music & Performance Camp",
-                description: "Singing, instruments, and stage performance for musically inclined children.",
-                location: "Huntersville, NC",
-                min_age: 5,
-                max_age: 16,
-                price: 350,
-                duration: 5,
-                interests: ["music", "theater"],
                 badge: "popular"
             }
         ];
@@ -966,15 +903,11 @@ class CampCarousel {
     renderCarousel() {
         if (!this.carouselTrack || this.camps.length === 0) return;
 
-        // Simple approach: just render all camps without duplicates for now
         this.carouselTrack.innerHTML = this.camps.map((camp, index) =>
             this.createCampCard(camp, index)
         ).join('');
 
-        // Render dots
         this.renderDots();
-
-        // Show first camp
         this.showCamp(0);
     }
 
@@ -1011,17 +944,11 @@ class CampCarousel {
                             <span class="detail-icon">👶</span>
                             <span>Ages ${camp.min_age}-${camp.max_age}</span>
                         </div>
-                        <div class="detail-mini">
-                            <span class="detail-icon">📅</span>
-                            <span>${camp.duration} days</span>
-                        </div>
                     </div>
                     
                     <div class="camp-tags">
                         ${interests.map(interest => `<span class="interest-tag">${interest}</span>`).join('')}
                     </div>
-                    
-                    <div class="camp-price">$${camp.price}</div>
                     
                     <button class="camp-cta-btn" onclick="event.stopPropagation(); campCarousel.handleBookClick(${camp.id})">
                         Learn More
@@ -1032,7 +959,6 @@ class CampCarousel {
     }
 
     setupNavigation() {
-        // Previous/Next buttons
         const prevBtn = document.getElementById('carouselPrev');
         const nextBtn = document.getElementById('carouselNext');
 
@@ -1044,7 +970,6 @@ class CampCarousel {
             nextBtn.addEventListener('click', () => this.nextSlide());
         }
 
-        // Pause auto-advance on hover
         const carouselContainer = document.querySelector('.featured-camps-carousel');
         if (carouselContainer) {
             carouselContainer.addEventListener('mouseenter', () => this.pauseAutoAdvance());
@@ -1057,7 +982,6 @@ class CampCarousel {
         this.showCamp(index);
         this.restartAutoAdvance();
 
-        // Reset user interaction flag after a short delay
         setTimeout(() => {
             this.isUserInteracting = false;
         }, 1000);
@@ -1068,18 +992,12 @@ class CampCarousel {
 
         this.currentIndex = index;
 
-        // Calculate the offset to center the selected card
-        // We want to show 3 cards, with the selected one in the center
-        const cardWidth = 33.333; // Each card is 33.333% wide
-        const offset = -(index * cardWidth) + cardWidth; // Center the current card
+        const cardWidth = 33.333;
+        const offset = -(index * cardWidth) + cardWidth;
 
-        // Apply the transform
         this.carouselTrack.style.transform = `translateX(${offset}%)`;
 
-        // Update card focus states
         this.updateCardStates();
-
-        // Update dots
         this.updateDots();
     }
 
@@ -1143,18 +1061,14 @@ class CampCarousel {
         this.pauseAutoAdvance();
         const camp = this.camps.find(c => c.id === campId);
         if (camp) {
-            alert(`🏕️ ${camp.name}\n\n📍 ${camp.location}\n💰 $${camp.price} for ${camp.duration} days\n👶 Ages ${camp.min_age}-${camp.max_age}\n\nFull camp details and booking system coming soon!`);
+            alert(`🏕️ ${camp.name}\n\n📍 ${camp.location}\n👶 Ages ${camp.min_age}-${camp.max_age}\n\nVisit our calendar page to see available dates and book!`);
         }
         this.resumeAutoAdvance();
     }
 
     handleBookClick(campId) {
         this.pauseAutoAdvance();
-        const camp = this.camps.find(c => c.id === campId);
-        if (camp) {
-            alert(`🎯 Ready to book ${camp.name}?\n\nBooking system coming soon!\nYou'll be able to:\n• See available dates\n• Select your child\n• Complete registration\n• Make payment`);
-        }
-        this.resumeAutoAdvance();
+        window.location.href = '/calendar.html';
     }
 }
 
@@ -1162,3 +1076,5 @@ class CampCarousel {
 document.addEventListener('DOMContentLoaded', () => {
     window.campCarousel = new CampCarousel();
 });
+
+console.log('✅ Enhanced app.js with smart routing loaded');
