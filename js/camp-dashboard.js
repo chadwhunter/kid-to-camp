@@ -398,7 +398,7 @@ class CampDashboard {
         try {
             const form = e.target;
 
-            // Get form values using direct element selection
+            // Get form values with correct column names from your database
             const campData = {
                 owner_id: this.currentUser.id,
                 name: form.querySelector('#campName').value,
@@ -408,19 +408,21 @@ class CampDashboard {
                 max_age: parseInt(form.querySelector('#maxAge').value) || 18
             };
 
-            // Handle interests checkboxes
+            // Handle interests (this column exists)
             const interestCheckboxes = form.querySelectorAll('input[name="camp-interests"]:checked');
             const interests = Array.from(interestCheckboxes).map(cb => cb.value);
-            campData.interests = interests;
+            if (interests.length > 0) {
+                campData.interests = interests;
+            }
 
-            // Handle accommodations checkboxes  
+            // Handle accommodations - use the CORRECT column name
             const accommodationCheckboxes = form.querySelectorAll('input[name="camp-accommodations"]:checked');
             const accommodations = Array.from(accommodationCheckboxes).map(cb => cb.value);
-            campData.accommodations = accommodations;
+            if (accommodations.length > 0) {
+                campData.special_needs_accommodations = accommodations; // CORRECT column name!
+            }
 
             console.log('📊 Camp data to submit:', JSON.stringify(campData, null, 2));
-            console.log('🔑 Current user ID:', this.currentUser.id);
-            console.log('📧 Current user email:', this.currentUser.email);
 
             // Validate required fields
             if (!campData.name || !campData.location) {
@@ -428,21 +430,7 @@ class CampDashboard {
                 return;
             }
 
-            // Test database connection first
-            console.log('🔍 Testing database connection...');
-            const { data: testData, error: testError } = await this.supabase
-                .from('camps')
-                .select('count', { count: 'exact', head: true });
-
-            if (testError) {
-                console.error('❌ Database connection test failed:', testError);
-                this.showError('Database connection failed. Please check your internet connection.');
-                return;
-            }
-
-            console.log('✅ Database connection OK');
-
-            // Submit to database with detailed error logging
+            // Submit to database
             console.log('📤 Submitting camp data...');
             const { data, error } = await this.supabase
                 .from('camps')
@@ -451,24 +439,8 @@ class CampDashboard {
                 .single();
 
             if (error) {
-                console.error('❌ Full Database error object:', error);
-                console.error('❌ Error code:', error.code);
-                console.error('❌ Error message:', error.message);
-                console.error('❌ Error details:', error.details);
-                console.error('❌ Error hint:', error.hint);
-
-                // More specific error handling
-                if (error.code === 'PGRST116') {
-                    this.showError('No data found or access denied. Please check your permissions.');
-                } else if (error.code === 'PGRST301') {
-                    this.showError('Row Level Security blocked this action. Please contact support.');
-                } else if (error.message.includes('duplicate')) {
-                    this.showError('A camp with that name already exists.');
-                } else if (error.message.includes('owner_id')) {
-                    this.showError('Authentication error. Please log out and log back in.');
-                } else {
-                    this.showError(`Database error: ${error.message} (Code: ${error.code})`);
-                }
+                console.error('❌ Database error:', error);
+                this.showError(`Failed to create camp: ${error.message}`);
                 return;
             }
 
@@ -486,7 +458,6 @@ class CampDashboard {
 
         } catch (error) {
             console.error('❌ JavaScript exception:', error);
-            console.error('❌ Exception stack:', error.stack);
             this.showError(`Unexpected error: ${error.message}`);
         }
     }

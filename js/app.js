@@ -787,7 +787,7 @@ KidToCamp.prototype.search = {
             }
 
             if (accommodations.length > 0) {
-                query = query.overlaps('accommodations', accommodations);
+                query = query.overlaps('special_needs_accommodations', accommodations);
             }
 
             const { data: camps, error } = await query;
