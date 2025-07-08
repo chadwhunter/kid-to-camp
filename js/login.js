@@ -1,113 +1,84 @@
-// js/login.js - Complete Login Handler with Multi-Provider OAuth
+// js/login.js - ROCK SOLID VERSION - Simple and Reliable
 
 class LoginHandler {
     constructor() {
         this.supabase = null;
         this.isLoading = false;
+        this.retryCount = 0;
+        this.maxRetries = 3;
         this.init();
     }
 
     async init() {
-        console.log('🚀 Initializing enhanced login handler...');
+        console.log('🚀 Initializing rock-solid login handler...');
+
+        // Wait for Supabase to be ready
         await this.waitForSupabase();
 
         if (!this.supabase) {
-            console.error('❌ Supabase not available for login');
-            this.showError('Authentication service not available. Please refresh the page.');
+            console.error('❌ Supabase not available');
+            this.showError('Authentication service unavailable. Please refresh the page.');
             return;
         }
 
-        console.log('✅ Enhanced login handler ready');
+        console.log('✅ Login handler ready');
         this.setupEventListeners();
         this.checkExistingAuth();
-        this.handleOAuthCallback();
     }
 
     async waitForSupabase() {
         let attempts = 0;
-        const maxAttempts = 50;
+        const maxAttempts = 100;
 
         while (attempts < maxAttempts) {
-            if (window.supabase && window.supabase.auth) {
+            if (window.supabase && window.supabase.auth && typeof window.supabase.auth.getSession === 'function') {
                 this.supabase = window.supabase;
+                console.log('✅ Supabase client ready');
                 return;
             }
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
-        console.error('❌ Supabase client not available after waiting');
+        console.error('❌ Timeout waiting for Supabase client');
     }
 
-    async handleOAuthCallback() {
-        // Check if we're returning from OAuth
-        const { data, error } = await this.supabase.auth.getSession();
-
-        if (error) {
-            console.error('❌ OAuth callback error:', error);
-            this.showError('Authentication failed. Please try again.');
-            return;
-        }
-
-        if (data.session) {
-            console.log('✅ OAuth login successful');
-
-            // Extract user data from session
-            const user = data.session.user;
-            console.log('👤 User data:', user);
-
-            // Check if we got enhanced profile data
-            if (user.user_metadata) {
-                console.log('📊 Enhanced profile data available:', user.user_metadata);
-                await this.processEnhancedUserData(user);
-            }
-
-            this.showSuccess('Login successful! Redirecting...');
-            setTimeout(() => {
-                this.redirectAfterLogin();
-            }, 1000);
-        }
-    }
-
-    async processEnhancedUserData(user) {
-        // This will automatically populate user profile with OAuth data
-        const profileData = {
-            email: user.email,
-            first_name: user.user_metadata.given_name || user.user_metadata.name?.split(' ')[0],
-            last_name: user.user_metadata.family_name || user.user_metadata.name?.split(' ').slice(1).join(' '),
-            phone: user.user_metadata.phone_number,
-            profile_picture: user.user_metadata.picture || user.user_metadata.avatar_url,
-            // Address data (if available from Google)
-            address: user.user_metadata.address?.street_address,
-            city: user.user_metadata.address?.locality,
-            state: user.user_metadata.address?.region,
-            zip: user.user_metadata.address?.postal_code,
-        };
-
-        console.log('🔄 Auto-populating profile with OAuth data:', profileData);
-
+    async checkExistingAuth() {
         try {
-            // Create or update profile
-            const { error } = await this.supabase
-                .from('profiles')
-                .upsert({
-                    id: user.id,
-                    ...profileData,
-                    user_type: 'parent', // Default for OAuth users
-                    oauth_provider: user.app_metadata.provider
-                });
+            console.log('🔍 Checking for existing session...');
+            const { data: { session }, error } = await this.supabase.auth.getSession();
 
             if (error) {
-                console.warn('⚠️ Could not auto-populate profile:', error);
+                console.warn('⚠️ Session check error:', error.message);
+                return;
+            }
+
+            if (session && session.user) {
+                console.log('👤 Found existing session:', session.user.email);
+
+                // Check if session is still valid
+                const now = Math.floor(Date.now() / 1000);
+                if (session.expires_at > now) {
+                    console.log('✅ Session valid, redirecting...');
+                    this.redirectAfterLogin();
+                } else {
+                    console.log('⏰ Session expired, refreshing...');
+                    try {
+                        await this.supabase.auth.refreshSession();
+                        this.redirectAfterLogin();
+                    } catch (refreshError) {
+                        console.warn('⚠️ Session refresh failed:', refreshError);
+                    }
+                }
             } else {
-                console.log('✅ Profile auto-populated from OAuth data');
+                console.log('ℹ️ No existing session found');
             }
         } catch (error) {
-            console.warn('⚠️ Profile auto-population failed:', error);
+            console.error('❌ Auth check failed:', error);
         }
     }
 
     setupEventListeners() {
-        // Form submission
+        // Email/Password login form
         const loginForm = document.getElementById('loginForm');
         if (loginForm) {
             loginForm.addEventListener('submit', (e) => {
@@ -116,7 +87,7 @@ class LoginHandler {
             });
         }
 
-        // Forgot password
+        // Forgot password link
         const forgotPasswordLink = document.getElementById('forgotPasswordLink');
         if (forgotPasswordLink) {
             forgotPasswordLink.addEventListener('click', (e) => {
@@ -126,68 +97,146 @@ class LoginHandler {
         }
 
         // Social login buttons
-        this.setupSocialButtons();
-
-        // Auth state listener
-        if (this.supabase) {
-            this.supabase.auth.onAuthStateChange((event, session) => {
-                console.log('🔄 Auth state changed:', event);
-
-                if (event === 'SIGNED_IN' && session) {
-                    console.log('✅ Login successful, redirecting...');
-                    this.showSuccess('Login successful! Redirecting...');
-                    setTimeout(() => {
-                        this.redirectAfterLogin();
-                    }, 1000);
-                }
-            });
-        }
-    }
-
-    setupSocialButtons() {
-        // Google login
         const googleBtn = document.getElementById('googleLoginBtn');
         if (googleBtn) {
             googleBtn.addEventListener('click', () => this.handleSocialLogin('google'));
         }
 
-        // Facebook login
         const facebookBtn = document.getElementById('facebookLoginBtn');
         if (facebookBtn) {
             facebookBtn.addEventListener('click', () => this.handleSocialLogin('facebook'));
         }
 
-        // GitHub login
-        const githubBtn = document.getElementById('githubLoginBtn');
-        if (githubBtn) {
-            githubBtn.addEventListener('click', () => this.handleSocialLogin('github'));
+        // Auth state listener - SIMPLE VERSION
+        this.supabase.auth.onAuthStateChange((event, session) => {
+            console.log(`🔄 Auth event: ${event}`);
+
+            if (event === 'SIGNED_IN' && session) {
+                console.log('✅ Sign in successful:', session.user.email);
+                this.showSuccess('Login successful! Redirecting...');
+
+                // Small delay for user feedback, then redirect
+                setTimeout(() => {
+                    this.redirectAfterLogin();
+                }, 1500);
+
+            } else if (event === 'SIGNED_OUT') {
+                console.log('👋 Sign out completed');
+                this.clearMessages();
+            }
+        });
+    }
+
+    async handleEmailLogin() {
+        if (this.isLoading) {
+            console.log('⏳ Login already in progress');
+            return;
+        }
+
+        const email = document.getElementById('email')?.value?.trim();
+        const password = document.getElementById('password')?.value;
+
+        // Basic validation
+        if (!email || !password) {
+            this.showError('Please enter both email and password');
+            return;
+        }
+
+        if (!this.isValidEmail(email)) {
+            this.showError('Please enter a valid email address');
+            return;
+        }
+
+        this.setLoading(true);
+        this.clearMessages();
+        this.retryCount = 0;
+
+        await this.attemptLogin(email, password);
+    }
+
+    async attemptLogin(email, password) {
+        try {
+            console.log(`📧 Login attempt ${this.retryCount + 1} for: ${email}`);
+
+            const { data, error } = await this.supabase.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (error) {
+                console.error('❌ Login error:', error);
+                this.handleLoginError(error, email, password);
+                return;
+            }
+
+            // Success
+            console.log('✅ Login successful:', data.user.email);
+            // Don't redirect here - let auth state change handler do it
+            this.setLoading(false);
+
+        } catch (error) {
+            console.error('❌ Login exception:', error);
+            this.handleLoginError(error, email, password);
+        }
+    }
+
+    handleLoginError(error, email, password) {
+        const errorMessage = error.message || 'Unknown error';
+
+        // Handle specific error types
+        if (errorMessage.includes('Invalid login credentials')) {
+            this.showError('Invalid email or password. Please check your credentials.');
+            this.setLoading(false);
+        } else if (errorMessage.includes('Email not confirmed')) {
+            this.showError('Please check your email and click the confirmation link before signing in.');
+            this.setLoading(false);
+        } else if (errorMessage.includes('Too many requests') || errorMessage.includes('rate limit')) {
+            // Retry with exponential backoff
+            if (this.retryCount < this.maxRetries) {
+                const delay = Math.pow(2, this.retryCount) * 1000; // 1s, 2s, 4s
+                this.retryCount++;
+                console.log(`⏳ Rate limited, retrying in ${delay}ms... (attempt ${this.retryCount})`);
+
+                setTimeout(() => {
+                    this.attemptLogin(email, password);
+                }, delay);
+            } else {
+                this.showError('Too many login attempts. Please wait a few minutes and try again.');
+                this.setLoading(false);
+            }
+        } else {
+            // Generic error
+            this.showError(`Login failed: ${errorMessage}`);
+            this.setLoading(false);
         }
     }
 
     async handleSocialLogin(provider) {
         if (this.isLoading) return;
 
-        console.log(`🔐 Starting ${provider} OAuth login...`);
+        console.log(`🔐 Starting ${provider} login...`);
         this.setSocialLoading(provider, true);
         this.clearMessages();
 
         try {
-            const options = this.getProviderOptions(provider);
+            const redirectTo = `${window.location.origin}/login.html`;
 
             const { data, error } = await this.supabase.auth.signInWithOAuth({
                 provider: provider,
-                options: options
+                options: {
+                    redirectTo: redirectTo
+                }
             });
 
             if (error) {
                 console.error(`❌ ${provider} login error:`, error);
-                this.showError(`${provider} login failed. Please try again.`);
+                this.showError(`${provider} login failed: ${error.message}`);
                 this.setSocialLoading(provider, false);
                 return;
             }
 
             console.log(`✅ ${provider} OAuth initiated`);
-            // Don't set loading to false - user is being redirected
+            // User will be redirected, don't reset loading state
 
         } catch (error) {
             console.error(`❌ ${provider} login failed:`, error);
@@ -196,124 +245,12 @@ class LoginHandler {
         }
     }
 
-    getProviderOptions(provider) {
-        const baseOptions = {
-            redirectTo: window.location.origin + '/auth/callback',
-        };
-
-        switch (provider) {
-            case 'google':
-                return {
-                    ...baseOptions,
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent',
-                        // Enhanced scopes for additional user data
-                        scope: [
-                            'openid',
-                            'email',
-                            'profile',
-                            'https://www.googleapis.com/auth/user.addresses.read',
-                            'https://www.googleapis.com/auth/user.birthday.read',
-                            'https://www.googleapis.com/auth/user.phonenumbers.read',
-                            'https://www.googleapis.com/auth/calendar.readonly'
-                        ].join(' ')
-                    },
-                };
-
-            case 'facebook':
-                return {
-                    ...baseOptions,
-                    queryParams: {
-                        scope: 'email,public_profile,user_location'
-                    }
-                };
-
-            case 'github':
-                return {
-                    ...baseOptions,
-                    queryParams: {
-                        scope: 'user:email,read:user'
-                    }
-                };
-
-            default:
-                return baseOptions;
-        }
-    }
-
-    async handleEmailLogin() {
-        if (this.isLoading) return;
-
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-
-        if (!email || !password) {
-            this.showError('Please fill in all fields');
-            return;
-        }
-
-        if (!this.isValidEmail(email)) {
-            this.showError('Please enter a valid email address');
-            return;
-        }
-
-        this.setEmailLoading(true);
-        this.clearMessages();
-
-        try {
-            console.log('📧 Attempting email/password login for:', email);
-
-            const { data, error } = await this.supabase.auth.signInWithPassword({
-                email: email,
-                password: password
-            });
-
-            if (error) {
-                console.error('❌ Email login error:', error);
-                this.showError(this.getErrorMessage(error));
-                this.setEmailLoading(false);
-                return;
-            }
-
-            console.log('✅ Email login successful:', data.user.email);
-            this.showSuccess('Login successful! Redirecting...');
-
-            setTimeout(() => {
-                this.redirectAfterLogin();
-            }, 1000);
-
-        } catch (error) {
-            console.error('❌ Email login failed:', error);
-            this.showError('Login failed. Please try again.');
-            this.setEmailLoading(false);
-        }
-    }
-
-    async checkExistingAuth() {
-        try {
-            const { data: { session }, error } = await this.supabase.auth.getSession();
-
-            if (error) {
-                console.error('❌ Error checking existing session:', error);
-                return;
-            }
-
-            if (session && session.user) {
-                console.log('👤 User already logged in, redirecting...');
-                this.redirectAfterLogin();
-            }
-        } catch (error) {
-            console.error('❌ Auth check error:', error);
-        }
-    }
-
     async handleForgotPassword() {
-        const email = document.getElementById('email').value.trim();
+        const email = document.getElementById('email')?.value?.trim();
 
         if (!email) {
-            alert('Please enter your email address first, then click "Forgot Password"');
-            document.getElementById('email').focus();
+            this.showError('Please enter your email address first');
+            document.getElementById('email')?.focus();
             return;
         }
 
@@ -323,8 +260,11 @@ class LoginHandler {
         }
 
         try {
+            this.clearMessages();
+            console.log('📧 Sending password reset to:', email);
+
             const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: window.location.origin + '/reset-password.html'
+                redirectTo: `${window.location.origin}/reset-password.html`
             });
 
             if (error) {
@@ -342,89 +282,82 @@ class LoginHandler {
     }
 
     redirectAfterLogin() {
+        // Get redirect parameter from URL
         const urlParams = new URLSearchParams(window.location.search);
-        const redirectTo = urlParams.get('redirect');
+        const redirectTo = urlParams.get('redirect') || '/profile.html';
 
-        // If there's a specific redirect, use it
-        if (redirectTo) {
-            console.log('🔄 Redirecting to specified URL:', redirectTo);
-            window.location.href = decodeURIComponent(redirectTo);
-            return;
+        console.log('🔄 Redirecting to:', redirectTo);
+
+        // Clean up URL parameters before redirecting
+        if (window.location.search || window.location.hash) {
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
 
-        // Otherwise, check user type and redirect appropriately
-        this.supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session && session.user) {
-                const userType = session.user.user_metadata?.user_type;
-
-                if (userType === 'admin') {
-                    console.log('🔄 Redirecting camp owner to portal');
-                    window.location.href = '/camp-owner-portal.html';
-                } else {
-                    console.log('🔄 Redirecting parent to profile');
-                    window.location.href = '/profile.html';
-                }
-            } else {
-                // Fallback
-                window.location.href = '/profile.html';
-            }
-        });
+        window.location.href = redirectTo;
     }
 
-    setSocialLoading(provider, loading) {
+    setLoading(loading) {
         this.isLoading = loading;
-        const btn = document.getElementById(`${provider}LoginBtn`);
 
-        if (!btn) return;
-
-        if (loading) {
-            btn.disabled = true;
-            const originalText = btn.querySelector('span').textContent;
-            btn.querySelector('span').textContent = `Connecting to ${provider.charAt(0).toUpperCase() + provider.slice(1)}...`;
-            btn.setAttribute('data-original-text', originalText);
-        } else {
-            btn.disabled = false;
-            const originalText = btn.getAttribute('data-original-text');
-            if (originalText) {
-                btn.querySelector('span').textContent = originalText;
-            }
-        }
-    }
-
-    setEmailLoading(loading) {
-        this.isLoading = loading;
         const loginBtn = document.getElementById('loginBtn');
         const loginForm = document.getElementById('loginForm');
-        const loginLoading = document.getElementById('loginLoading');
 
         if (loading) {
             if (loginBtn) {
                 loginBtn.disabled = true;
                 loginBtn.textContent = 'Signing In...';
             }
-            if (loginForm) loginForm.style.opacity = '0.7';
-            if (loginLoading) loginLoading.style.display = 'block';
+            if (loginForm) {
+                loginForm.style.opacity = '0.7';
+            }
         } else {
             if (loginBtn) {
                 loginBtn.disabled = false;
-                loginBtn.textContent = 'Sign In with Email';
+                loginBtn.textContent = 'Sign In';
             }
-            if (loginForm) loginForm.style.opacity = '1';
-            if (loginLoading) loginLoading.style.display = 'none';
+            if (loginForm) {
+                loginForm.style.opacity = '1';
+            }
+        }
+    }
+
+    setSocialLoading(provider, loading) {
+        const btn = document.getElementById(`${provider}LoginBtn`);
+        if (!btn) return;
+
+        if (loading) {
+            btn.disabled = true;
+            const span = btn.querySelector('span');
+            if (span) {
+                btn.setAttribute('data-original-text', span.textContent);
+                span.textContent = `Connecting...`;
+            }
+        } else {
+            btn.disabled = false;
+            const span = btn.querySelector('span');
+            const originalText = btn.getAttribute('data-original-text');
+            if (span && originalText) {
+                span.textContent = originalText;
+            }
         }
     }
 
     showError(message) {
+        console.error('❌ Login Error:', message);
         const errorDiv = document.getElementById('loginError');
         if (errorDiv) {
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
-        } else {
-            alert('Error: ' + message);
+        }
+
+        // Also show in console for debugging
+        if (window.CONFIG?.app?.debug) {
+            alert('Login Error: ' + message);
         }
     }
 
     showSuccess(message) {
+        console.log('✅ Login Success:', message);
         const successDiv = document.getElementById('loginSuccess');
         if (successDiv) {
             successDiv.textContent = message;
@@ -444,30 +377,48 @@ class LoginHandler {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     }
-
-    getErrorMessage(error) {
-        switch (error.message) {
-            case 'Invalid login credentials':
-                return 'Invalid email or password. Please check your credentials and try again.';
-            case 'Email not confirmed':
-                return 'Please check your email and click the confirmation link before signing in.';
-            case 'Too many requests':
-                return 'Too many login attempts. Please wait a moment and try again.';
-            default:
-                return error.message || 'Login failed. Please try again.';
-        }
-    }
 }
 
-// Initialize when DOM is ready
+// Simple, reliable initialization
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 DOM ready, initializing login handler...');
+
+    // Small delay to ensure all scripts are loaded
     setTimeout(() => {
-        console.log('🚀 Initializing login handler...');
         window.loginHandler = new LoginHandler();
-    }, 100);
+    }, 200);
 });
 
-// Export for testing
+// Export for testing/debugging
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = LoginHandler;
 }
+
+// Global debugging helper
+window.testLogin = async function (email = 'test@kidtocamp.com', password = 'testpass123') {
+    console.log('🧪 Testing login with:', email);
+
+    if (!window.loginHandler) {
+        console.error('❌ Login handler not initialized');
+        return false;
+    }
+
+    try {
+        // Fill in the form fields
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+
+        if (emailInput) emailInput.value = email;
+        if (passwordInput) passwordInput.value = password;
+
+        // Trigger login
+        await window.loginHandler.handleEmailLogin();
+        return true;
+    } catch (error) {
+        console.error('❌ Test login failed:', error);
+        return false;
+    }
+};
+
+console.log('✅ Rock-solid login handler loaded');
+console.log('🧪 Use window.testLogin() to test login functionality');
