@@ -290,21 +290,45 @@ class CampDashboard {
         bookingsContainer.innerHTML = bookingsHTML;
     }
 
+    // Also enhance the profile loading to see what's causing the 406 error
     async loadUserProfile() {
         try {
+            console.log('👤 Loading user profile...');
+            console.log('🔑 User ID for profile:', this.currentUser.id);
+
+            // Test profiles table access first
+            const { data: testData, error: testError } = await this.supabase
+                .from('profiles')
+                .select('count', { count: 'exact', head: true });
+
+            if (testError) {
+                console.error('❌ Profiles table access test failed:', testError);
+                return;
+            }
+
+            console.log('✅ Profiles table accessible');
+
             const { data, error } = await this.supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', this.currentUser.id)
-                .single();
+                .maybeSingle();
 
-            if (error && error.code !== 'PGRST116') {
-                console.error('❌ Error loading profile:', error);
+            if (error) {
+                console.error('❌ Profile loading error:', error);
+                console.error('❌ Profile error code:', error.code);
+                console.error('❌ Profile error message:', error.message);
+
+                if (error.code === 'PGRST116') {
+                    console.log('ℹ️ No profile found, will create basic display');
+                }
                 return;
             }
 
             const profile = data || {};
+            console.log('✅ Profile loaded:', profile);
             this.populateProfileDisplay(profile);
+
         } catch (error) {
             console.error('❌ Exception loading profile:', error);
         }
@@ -364,6 +388,8 @@ class CampDashboard {
     // Simplified fix for camp form submission
     // Replace the handleCampSubmit method in js/camp-dashboard.js
 
+    // Replace in js/camp-dashboard.js to get better error details
+
     async handleCampSubmit(e) {
         e.preventDefault();
 
@@ -372,7 +398,7 @@ class CampDashboard {
         try {
             const form = e.target;
 
-            // Get form values using direct element selection (more reliable)
+            // Get form values using direct element selection
             const campData = {
                 owner_id: this.currentUser.id,
                 name: form.querySelector('#campName').value,
@@ -392,7 +418,9 @@ class CampDashboard {
             const accommodations = Array.from(accommodationCheckboxes).map(cb => cb.value);
             campData.accommodations = accommodations;
 
-            console.log('📊 Camp data to submit:', campData);
+            console.log('📊 Camp data to submit:', JSON.stringify(campData, null, 2));
+            console.log('🔑 Current user ID:', this.currentUser.id);
+            console.log('📧 Current user email:', this.currentUser.email);
 
             // Validate required fields
             if (!campData.name || !campData.location) {
@@ -400,7 +428,22 @@ class CampDashboard {
                 return;
             }
 
-            // Submit to database with simpler query
+            // Test database connection first
+            console.log('🔍 Testing database connection...');
+            const { data: testData, error: testError } = await this.supabase
+                .from('camps')
+                .select('count', { count: 'exact', head: true });
+
+            if (testError) {
+                console.error('❌ Database connection test failed:', testError);
+                this.showError('Database connection failed. Please check your internet connection.');
+                return;
+            }
+
+            console.log('✅ Database connection OK');
+
+            // Submit to database with detailed error logging
+            console.log('📤 Submitting camp data...');
             const { data, error } = await this.supabase
                 .from('camps')
                 .insert(campData)
@@ -408,8 +451,24 @@ class CampDashboard {
                 .single();
 
             if (error) {
-                console.error('❌ Database error:', error);
-                this.showError(`Failed to create camp: ${error.message}`);
+                console.error('❌ Full Database error object:', error);
+                console.error('❌ Error code:', error.code);
+                console.error('❌ Error message:', error.message);
+                console.error('❌ Error details:', error.details);
+                console.error('❌ Error hint:', error.hint);
+
+                // More specific error handling
+                if (error.code === 'PGRST116') {
+                    this.showError('No data found or access denied. Please check your permissions.');
+                } else if (error.code === 'PGRST301') {
+                    this.showError('Row Level Security blocked this action. Please contact support.');
+                } else if (error.message.includes('duplicate')) {
+                    this.showError('A camp with that name already exists.');
+                } else if (error.message.includes('owner_id')) {
+                    this.showError('Authentication error. Please log out and log back in.');
+                } else {
+                    this.showError(`Database error: ${error.message} (Code: ${error.code})`);
+                }
                 return;
             }
 
@@ -426,10 +485,12 @@ class CampDashboard {
             this.updateStats();
 
         } catch (error) {
-            console.error('❌ Exception creating camp:', error);
-            this.showError('An unexpected error occurred. Please try again.');
+            console.error('❌ JavaScript exception:', error);
+            console.error('❌ Exception stack:', error.stack);
+            this.showError(`Unexpected error: ${error.message}`);
         }
     }
+
 
     async handleScheduleSubmit(e) {
         e.preventDefault();
