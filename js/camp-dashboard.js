@@ -126,32 +126,42 @@ class CampDashboard {
         }
     }
 
+    // Also fix the loadBookings method to handle empty camps array:
     async loadBookings() {
         try {
+            console.log('📋 Loading bookings...');
+
+            // Only load bookings if we have camps
+            if (!this.camps || this.camps.length === 0) {
+                console.log('ℹ️ No camps found, skipping bookings load');
+                this.bookings = [];
+                return;
+            }
+
+            const campIds = this.camps.map(camp => camp.id);
+
+            // Use a simpler query structure
             const { data, error } = await this.supabase
                 .from('bookings')
-                .select(`
-                    *,
-                    camp:camps(*),
-                    child:children(*)
-                `)
-                .in('camp_id', this.camps.map(camp => camp.id))
+                .select('*')
+                .in('camp_id', campIds)
                 .order('created_at', { ascending: false })
                 .limit(10);
 
             if (error) {
-                console.error('❌ Error loading bookings:', error);
+                console.warn('⚠️ Bookings query failed, using empty array:', error);
+                this.bookings = [];
                 return;
             }
 
             this.bookings = data || [];
             console.log('✅ Loaded bookings:', this.bookings.length);
+
         } catch (error) {
-            console.error('❌ Exception loading bookings:', error);
+            console.warn('⚠️ Exception loading bookings, using empty array:', error);
             this.bookings = [];
         }
     }
-
     async loadStats() {
         try {
             // Calculate basic stats
@@ -351,33 +361,73 @@ class CampDashboard {
         }
     }
 
+    // Simplified fix for camp form submission
+    // Replace the handleCampSubmit method in js/camp-dashboard.js
+
     async handleCampSubmit(e) {
         e.preventDefault();
 
-        const formData = new FormData(e.target);
-        const campData = Object.fromEntries(formData.entries());
-
-        // Add owner_id
-        campData.owner_id = this.currentUser.id;
+        console.log('🏕️ Processing camp form submission...');
 
         try {
-            const { error } = await this.supabase
-                .from('camps')
-                .insert([campData]);
+            const form = e.target;
 
-            if (error) {
-                console.error('❌ Error creating camp:', error);
-                this.showError('Failed to create camp');
+            // Get form values using direct element selection (more reliable)
+            const campData = {
+                owner_id: this.currentUser.id,
+                name: form.querySelector('#campName').value,
+                location: form.querySelector('#campLocation').value,
+                description: form.querySelector('#campDescription').value || '',
+                min_age: parseInt(form.querySelector('#minAge').value) || 3,
+                max_age: parseInt(form.querySelector('#maxAge').value) || 18
+            };
+
+            // Handle interests checkboxes
+            const interestCheckboxes = form.querySelectorAll('input[name="camp-interests"]:checked');
+            const interests = Array.from(interestCheckboxes).map(cb => cb.value);
+            campData.interests = interests;
+
+            // Handle accommodations checkboxes  
+            const accommodationCheckboxes = form.querySelectorAll('input[name="camp-accommodations"]:checked');
+            const accommodations = Array.from(accommodationCheckboxes).map(cb => cb.value);
+            campData.accommodations = accommodations;
+
+            console.log('📊 Camp data to submit:', campData);
+
+            // Validate required fields
+            if (!campData.name || !campData.location) {
+                this.showError('Please fill in camp name and location');
                 return;
             }
 
+            // Submit to database with simpler query
+            const { data, error } = await this.supabase
+                .from('camps')
+                .insert(campData)
+                .select()
+                .single();
+
+            if (error) {
+                console.error('❌ Database error:', error);
+                this.showError(`Failed to create camp: ${error.message}`);
+                return;
+            }
+
+            console.log('✅ Camp created successfully:', data);
             this.showSuccess('Camp created successfully!');
+
+            // Clean up
             this.closeModal('addCampModal');
-            this.loadCamps();
-            e.target.reset();
+            form.reset();
+
+            // Reload data
+            await this.loadCamps();
+            this.renderCamps();
+            this.updateStats();
+
         } catch (error) {
             console.error('❌ Exception creating camp:', error);
-            this.showError('Failed to create camp');
+            this.showError('An unexpected error occurred. Please try again.');
         }
     }
 
