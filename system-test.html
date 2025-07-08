@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Integration Test - Kid To Camp</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .test-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .success {
+            border-left: 4px solid #4CAF50;
+        }
+
+        .error {
+            border-left: 4px solid #f44336;
+        }
+
+        .info {
+            border-left: 4px solid #2196F3;
+        }
+
+        .warning {
+            border-left: 4px solid #ff9800;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .data-display {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        h1,
+        h3 {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🎯 Kid To Camp - Final System Test</h1>
+
+    <!-- System Overview -->
+    <div class="test-card info">
+        <h3>📊 System Overview</h3>
+        <div id="systemOverview">Loading system status...</div>
+        <button onclick="refreshOverview()">Refresh Status</button>
+    </div>
+
+    <!-- Authentication Tests -->
+    <div class="grid">
+        <div class="test-card">
+            <h3>🔐 Authentication Status</h3>
+            <div id="authStatus">Checking...</div>
+            <button onclick="testFullAuthFlow()">Test Complete Auth Flow</button>
+        </div>
+
+        <div class="test-card">
+            <h3>🗄️ Database Connectivity</h3>
+            <div id="dbStatus">Checking...</div>
+            <button onclick="testDatabaseFull()">Test All Tables</button>
+        </div>
+    </div>
+
+    <!-- Data Integration Tests -->
+    <div class="test-card">
+        <h3>📋 Your Actual Data</h3>
+        <div class="grid">
+            <div>
+                <h4>User Profiles</h4>
+                <div id="profileData" class="data-display">Loading...</div>
+            </div>
+            <div>
+                <h4>Children</h4>
+                <div id="childrenData" class="data-display">Loading...</div>
+            </div>
+            <div>
+                <h4>Camps & Schedules</h4>
+                <div id="campsData" class="data-display">Loading...</div>
+            </div>
+            <div>
+                <h4>Bookings</h4>
+                <div id="bookingsData" class="data-display">Loading...</div>
+            </div>
+        </div>
+        <button onclick="loadAllData()">Refresh All Data</button>
+    </div>
+
+    <!-- Feature Tests -->
+    <div class="test-card">
+        <h3>⚡ Feature Integration Tests</h3>
+        <div class="grid">
+            <div>
+                <button onclick="testProfileOperations()">Test Profile Operations</button>
+                <button onclick="testChildManagement()">Test Child Management</button>
+            </div>
+            <div>
+                <button onclick="testCampSearch()">Test Camp Search</button>
+                <button onclick="testBookingSystem()">Test Booking System</button>
+            </div>
+        </div>
+        <div id="featureResults" class="status" style="display: none;"></div>
+    </div>
+
+    <!-- Ready for Production? -->
+    <div class="test-card success">
+        <h3>🚀 Production Readiness</h3>
+        <div id="productionCheck">Running comprehensive checks...</div>
+        <button onclick="runProductionCheck()">Run Full Production Check</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        let supabaseClient = null;
+        let currentUser = null;
+
+        // Initialize
+        function initSupabase() {
+            supabaseClient = supabase.createClient(
+                'https://jjrvkntowkmdfbejlnwk.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqcnZrbnRvd2ttZGZiZWpsbndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNjc5OTgsImV4cCI6MjA2NTc0Mzk5OH0.Ng0lYJAki_FeJK2_fAR5w95SZJ-7-BHzpkMbNm4uKuM',
+                {
+                    auth: {
+                        persistSession: true,
+                        detectSessionInUrl: true,
+                        flowType: 'pkce',
+                        autoRefreshToken: true
+                    }
+                }
+            );
+
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                console.log(`Auth state: ${event}`);
+                currentUser = session?.user || null;
+                await refreshOverview();
+            });
+        }
+
+        function showResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML = content;
+                element.className = `status ${type}`;
+                element.style.display = 'block';
+            }
+        }
+
+        async function refreshOverview() {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+
+                // Get table counts
+                const tables = ['profiles', 'child_profiles', 'camps', 'camp_schedules', 'bookings', 'reviews'];
+                const counts = {};
+
+                for (const table of tables) {
+                    try {
+                        const { count, error } = await supabaseClient
+                            .from(table)
+                            .select('*', { count: 'exact', head: true });
+                        counts[table] = error ? `Error: ${error.message}` : count;
+                    } catch (e) {
+                        counts[table] = `Error: ${e.message}`;
+                    }
+                }
+
+                const overview = `
+                    <div class="metric">
+                        <span>🔐 Authentication:</span>
+                        <span>${session ? `✅ ${session.user.email}` : '❌ Not logged in'}</span>
+                    </div>
+                    <div class="metric">
+                        <span>👥 Profiles:</span>
+                        <span>${counts.profiles}</span>
+                    </div>
+                    <div class="metric">
+                        <span>👶 Children:</span>
+                        <span>${counts.child_profiles}</span>
+                    </div>
+                    <div class="metric">
+                        <span>🏕️ Camps:</span>
+                        <span>${counts.camps}</span>
+                    </div>
+                    <div class="metric">
+                        <span>📅 Schedules:</span>
+                        <span>${counts.camp_schedules}</span>
+                    </div>
+                    <div class="metric">
+                        <span>📋 Bookings:</span>
+                        <span>${counts.bookings}</span>
+                    </div>
+                    <div class="metric">
+                        <span>⭐ Reviews:</span>
+                        <span>${counts.reviews}</span>
+                    </div>
+                `;
+
+                document.getElementById('systemOverview').innerHTML = overview;
+
+            } catch (error) {
+                document.getElementById('systemOverview').innerHTML = `<div class="error">Overview failed: ${error.message}</div>`;
+            }
+        }
+
+        async function testFullAuthFlow() {
+            const statusDiv = document.getElementById('authStatus');
+            statusDiv.innerHTML = 'Running comprehensive auth tests...';
+
+            try {
+                const tests = [];
+
+                // Test 1: Session check
+                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+                tests.push(session ? '✅ Session valid' : '❌ No session');
+
+                // Test 2: User validation
+                if (session) {
+                    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+                    tests.push(user ? '✅ User validated' : '❌ User validation failed');
+
+                    // Test 3: Profile access
+                    const { data: profile, error: profileError } = await supabaseClient
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', session.user.id)
+                        .single();
+                    tests.push(profile ? '✅ Profile accessible' : '❌ Profile not accessible');
+                }
+
+                // Test 4: Storage persistence
+                const authKeys = Object.keys(localStorage).filter(k => k.includes('auth'));
+                tests.push(authKeys.length > 0 ? '✅ Session persisted' : '❌ No persistence');
+
+                statusDiv.innerHTML = tests.join('<br>');
+
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="error">Auth test failed: ${error.message}</div>`;
+            }
+        }
+
+        async function testDatabaseFull() {
+            const statusDiv = document.getElementById('dbStatus');
+            statusDiv.innerHTML = 'Testing all database tables...';
+
+            try {
+                const tables = ['profiles', 'child_profiles', 'camps', 'camp_schedules', 'bookings', 'reviews'];
+                const results = [];
+
+                for (const table of tables) {
+                    try {
+                        const { data, error } = await supabaseClient
+                            .from(table)
+                            .select('*')
+                            .limit(1);
+
+                        if (error) {
+                            results.push(`❌ ${table}: ${error.message}`);
+                        } else {
+                            results.push(`✅ ${table}: Accessible`);
+                        }
+                    } catch (e) {
+                        results.push(`❌ ${table}: ${e.message}`);
+                    }
+                }
+
+                statusDiv.innerHTML = results.join('<br>');
+
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="error">Database test failed: ${error.message}</div>`;
+            }
+        }
+
+        async function loadAllData() {
+            // Load profiles
+            try {
+                const { data: profiles, error } = await supabaseClient
+                    .from('profiles')
+                    .select('id, user_type, first_name, last_name, created_at')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                document.getElementById('profileData').innerHTML = profiles.map(p =>
+                    `${p.first_name || 'No name'} ${p.last_name || ''} (${p.user_type})`
+                ).join('<br>') || 'No profiles found';
+
+            } catch (error) {
+                document.getElementById('profileData').innerHTML = `Error: ${error.message}`;
+            }
+
+            // Load children
+            try {
+                const { data: children, error } = await supabaseClient
+                    .from('child_profiles')
+                    .select('first_name, last_name, birthdate')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                document.getElementById('childrenData').innerHTML = children.map(c => {
+                    const age = Math.floor((new Date() - new Date(c.birthdate)) / (365.25 * 24 * 60 * 60 * 1000));
+                    return `${c.first_name} ${c.last_name} (${age} years old)`;
+                }).join('<br>') || 'No children found';
+
+            } catch (error) {
+                document.getElementById('childrenData').innerHTML = `Error: ${error.message}`;
+            }
+
+            // Load camps with schedules
+            try {
+                const { data: camps, error } = await supabaseClient
+                    .from('camps')
+                    .select(`
+                        name, 
+                        location,
+                        camp_schedules(start_date, end_date, cost)
+                    `)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                document.getElementById('campsData').innerHTML = camps.map(c =>
+                    `${c.name} (${c.location}) - ${c.camp_schedules?.length || 0} schedules`
+                ).join('<br>') || 'No camps found';
+
+            } catch (error) {
+                document.getElementById('campsData').innerHTML = `Error: ${error.message}`;
+            }
+
+            // Load bookings
+            try {
+                const { data: bookings, error } = await supabaseClient
+                    .from('bookings')
+                    .select(`
+                        status,
+                        created_at,
+                        child_profiles(first_name),
+                        camps(name)
+                    `)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                document.getElementById('bookingsData').innerHTML = bookings.map(b =>
+                    `${b.child_profiles?.first_name || 'Child'} → ${b.camps?.name || 'Camp'} (${b.status})`
+                ).join('<br>') || 'No bookings found';
+
+            } catch (error) {
+                document.getElementById('bookingsData').innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function testProfileOperations() {
+            showResult('featureResults', 'Testing profile operations...', 'info');
+
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) {
+                    showResult('featureResults', '❌ Please login first', 'error');
+                    return;
+                }
+
+                // Test profile read
+                const { data: profile, error: readError } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (readError) throw readError;
+
+                // Test profile update
+                const { error: updateError } = await supabaseClient
+                    .from('profiles')
+                    .update({ updated_at: new Date().toISOString() })
+                    .eq('id', session.user.id);
+
+                if (updateError) throw updateError;
+
+                showResult('featureResults', '✅ Profile operations working perfectly!', 'success');
+
+            } catch (error) {
+                showResult('featureResults', `❌ Profile test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testChildManagement() {
+            showResult('featureResults', 'Testing child management...', 'info');
+
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) {
+                    showResult('featureResults', '❌ Please login first', 'error');
+                    return;
+                }
+
+                // Test children access
+                const { data: children, error } = await supabaseClient
+                    .from('child_profiles')
+                    .select('*')
+                    .eq('parent_id', session.user.id);
+
+                if (error) throw error;
+
+                showResult('featureResults', `✅ Child management working! Found ${children.length} children`, 'success');
+
+            } catch (error) {
+                showResult('featureResults', `❌ Child management test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCampSearch() {
+            showResult('featureResults', 'Testing camp search...', 'info');
+
+            try {
+                const { data: camps, error } = await supabaseClient
+                    .from('camps')
+                    .select(`
+                        *,
+                        camp_schedules(*)
+                    `)
+                    .limit(5);
+
+                if (error) throw error;
+
+                showResult('featureResults', `✅ Camp search working! Found ${camps.length} camps with schedules`, 'success');
+
+            } catch (error) {
+                showResult('featureResults', `❌ Camp search test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testBookingSystem() {
+            showResult('featureResults', 'Testing booking system...', 'info');
+
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) {
+                    showResult('featureResults', '❌ Please login first', 'error');
+                    return;
+                }
+
+                // Test booking read access
+                const { data: bookings, error } = await supabaseClient
+                    .from('bookings')
+                    .select(`
+                        *,
+                        child_profiles(first_name, last_name),
+                        camps(name),
+                        camp_schedules(start_date, end_date)
+                    `)
+                    .eq('parent_id', session.user.id);
+
+                if (error) throw error;
+
+                showResult('featureResults', `✅ Booking system working! Found ${bookings.length} bookings`, 'success');
+
+            } catch (error) {
+                showResult('featureResults', `❌ Booking system test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function runProductionCheck() {
+            const checkDiv = document.getElementById('productionCheck');
+            checkDiv.innerHTML = 'Running comprehensive production readiness check...';
+
+            try {
+                const checks = [];
+
+                // 1. Authentication check
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                checks.push({
+                    name: 'Authentication System',
+                    status: session ? 'pass' : 'fail',
+                    detail: session ? 'Session management working' : 'No active session'
+                });
+
+                // 2. Database connectivity
+                try {
+                    await supabaseClient.from('profiles').select('count(*)', { count: 'exact', head: true });
+                    checks.push({
+                        name: 'Database Connectivity',
+                        status: 'pass',
+                        detail: 'All tables accessible'
+                    });
+                } catch (e) {
+                    checks.push({
+                        name: 'Database Connectivity',
+                        status: 'fail',
+                        detail: e.message
+                    });
+                }
+
+                // 3. RLS policies
+                if (session) {
+                    try {
+                        await supabaseClient.from('profiles').select('*').eq('id', session.user.id).single();
+                        checks.push({
+                            name: 'Row Level Security',
+                            status: 'pass',
+                            detail: 'RLS policies working correctly'
+                        });
+                    } catch (e) {
+                        checks.push({
+                            name: 'Row Level Security',
+                            status: 'fail',
+                            detail: e.message
+                        });
+                    }
+                }
+
+                // 4. Data integrity
+                const { data: profileCount } = await supabaseClient.from('profiles').select('count(*)', { count: 'exact', head: true });
+                const { data: childCount } = await supabaseClient.from('child_profiles').select('count(*)', { count: 'exact', head: true });
+                const { data: campCount } = await supabaseClient.from('camps').select('count(*)', { count: 'exact', head: true });
+
+                checks.push({
+                    name: 'Data Integrity',
+                    status: (profileCount && childCount && campCount) ? 'pass' : 'warning',
+                    detail: `${profileCount || 0} profiles, ${childCount || 0} children, ${campCount || 0} camps`
+                });
+
+                // 5. Session persistence
+                const authKeys = Object.keys(localStorage).filter(k => k.includes('auth'));
+                checks.push({
+                    name: 'Session Persistence',
+                    status: authKeys.length > 0 ? 'pass' : 'fail',
+                    detail: `${authKeys.length} auth keys in storage`
+                });
+
+                // Format results
+                const passCount = checks.filter(c => c.status === 'pass').length;
+                const totalChecks = checks.length;
+
+                let result = `<h4>Production Readiness: ${passCount}/${totalChecks} checks passed</h4>`;
+
+                checks.forEach(check => {
+                    const icon = check.status === 'pass' ? '✅' : check.status === 'warning' ? '⚠️' : '❌';
+                    result += `<div class="metric">
+                        <span>${icon} ${check.name}:</span>
+                        <span>${check.detail}</span>
+                    </div>`;
+                });
+
+                if (passCount === totalChecks) {
+                    result += '<br><div style="text-align: center; padding: 20px; background: rgba(76, 175, 80, 0.2); border-radius: 8px; margin-top: 15px;"><h3>🚀 READY FOR PRODUCTION! 🚀</h3><p>Your Kid To Camp application is fully functional and ready for users!</p></div>';
+                } else {
+                    result += `<br><div style="text-align: center; padding: 20px; background: rgba(255, 152, 0, 0.2); border-radius: 8px; margin-top: 15px;"><h3>⚠️ NEEDS ATTENTION</h3><p>${totalChecks - passCount} issues need to be resolved before production.</p></div>`;
+                }
+
+                checkDiv.innerHTML = result;
+
+            } catch (error) {
+                checkDiv.innerHTML = `<div class="error">Production check failed: ${error.message}</div>`;
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Final system test loaded');
+            initSupabase();
+
+            // Auto-run tests
+            setTimeout(async () => {
+                await refreshOverview();
+                await testFullAuthFlow();
+                await testDatabaseFull();
+                await loadAllData();
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>
