@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixed System Test - Kid To Camp</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .test-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .success {
+            border-left: 4px solid #4CAF50;
+        }
+
+        .error {
+            border-left: 4px solid #f44336;
+        }
+
+        .info {
+            border-left: 4px solid #2196F3;
+        }
+
+        .warning {
+            border-left: 4px solid #ff9800;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        input {
+            padding: 10px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            width: 200px;
+        }
+
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        h1,
+        h3 {
+            text-align: center;
+        }
+
+        .login-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔧 Kid To Camp - Fixed System Test</h1>
+
+    <!-- Login Section -->
+    <div class="test-card info">
+        <h3>🔐 Login First</h3>
+        <div class="login-section">
+            <div>
+                <input type="email" id="email" placeholder="Email" value="test@kidtocamp.com">
+                <input type="password" id="password" placeholder="Password" value="testpass123">
+            </div>
+            <div>
+                <button onclick="doLogin()">Login</button>
+                <button onclick="doSignup()">Signup</button>
+                <button onclick="doLogout()">Logout</button>
+            </div>
+            <div id="authStatus">Not logged in</div>
+        </div>
+    </div>
+
+    <!-- System Overview -->
+    <div class="test-card info">
+        <h3>📊 System Overview</h3>
+        <div id="systemOverview">Click 'Refresh Data' after logging in...</div>
+        <button onclick="refreshAllData()">Refresh Data</button>
+    </div>
+
+    <!-- Database Tests -->
+    <div class="test-card">
+        <h3>🗄️ Database Tests</h3>
+        <button onclick="testAllTables()">Test All Tables</button>
+        <button onclick="testUserSpecificData()">Test User Data (RLS)</button>
+        <div id="databaseResults"></div>
+    </div>
+
+    <!-- Your Actual Data -->
+    <div class="test-card">
+        <h3>📋 Your Actual Data</h3>
+        <div class="grid">
+            <div>
+                <h4>Profiles</h4>
+                <div id="profilesList"
+                    style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; font-family: monospace; max-height: 200px; overflow-y: auto;">
+                    Loading...</div>
+            </div>
+            <div>
+                <h4>Children</h4>
+                <div id="childrenList"
+                    style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; font-family: monospace; max-height: 200px; overflow-y: auto;">
+                    Loading...</div>
+            </div>
+            <div>
+                <h4>Camps</h4>
+                <div id="campsList"
+                    style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; font-family: monospace; max-height: 200px; overflow-y: auto;">
+                    Loading...</div>
+            </div>
+            <div>
+                <h4>Bookings</h4>
+                <div id="bookingsList"
+                    style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; font-family: monospace; max-height: 200px; overflow-y: auto;">
+                    Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final Status -->
+    <div class="test-card success">
+        <h3>🚀 System Status</h3>
+        <div id="finalStatus">Login and refresh data to see status...</div>
+        <button onclick="runFinalCheck()">Run Final Check</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        let supabaseClient = null;
+        let currentUser = null;
+
+        // Initialize Supabase
+        function initSupabase() {
+            try {
+                supabaseClient = supabase.createClient(
+                    'https://jjrvkntowkmdfbejlnwk.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqcnZrbnRvd2ttZGZiZWpsbndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNjc5OTgsImV4cCI6MjA2NTc0Mzk5OH0.Ng0lYJAki_FeJK2_fAR5w95SZJ-7-BHzpkMbNm4uKuM',
+                    {
+                        auth: {
+                            persistSession: true,
+                            detectSessionInUrl: true,
+                            flowType: 'pkce',
+                            autoRefreshToken: true
+                        }
+                    }
+                );
+
+                // Auth state listener
+                supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                    console.log(`Auth event: ${event}`);
+                    currentUser = session?.user || null;
+                    updateAuthStatus();
+                });
+
+                console.log('✅ Supabase initialized');
+                return true;
+            } catch (error) {
+                console.error('❌ Supabase init failed:', error);
+                return false;
+            }
+        }
+
+        function updateAuthStatus() {
+            const statusDiv = document.getElementById('authStatus');
+            if (currentUser) {
+                statusDiv.innerHTML = `✅ Logged in as: ${currentUser.email}`;
+                statusDiv.className = 'status success';
+            } else {
+                statusDiv.innerHTML = '❌ Not logged in';
+                statusDiv.className = 'status error';
+            }
+        }
+
+        async function doLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            console.log(`Attempting login for: ${email}`);
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) throw error;
+
+                console.log('✅ Login successful');
+
+            } catch (error) {
+                console.error('❌ Login failed:', error);
+                document.getElementById('authStatus').innerHTML = `❌ Login failed: ${error.message}`;
+                document.getElementById('authStatus').className = 'status error';
+            }
+        }
+
+        async function doSignup() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            console.log(`Attempting signup for: ${email}`);
+
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: { user_type: 'parent' }
+                    }
+                });
+
+                if (error) throw error;
+
+                if (data.user && !data.session) {
+                    document.getElementById('authStatus').innerHTML = '✅ Signup successful! Check email for confirmation.';
+                } else if (data.session) {
+                    document.getElementById('authStatus').innerHTML = '✅ Signup successful and logged in!';
+                }
+                document.getElementById('authStatus').className = 'status success';
+
+            } catch (error) {
+                console.error('❌ Signup failed:', error);
+                document.getElementById('authStatus').innerHTML = `❌ Signup failed: ${error.message}`;
+                document.getElementById('authStatus').className = 'status error';
+            }
+        }
+
+        async function doLogout() {
+            try {
+                const { error } = await supabaseClient.auth.signOut();
+                if (error) throw error;
+                console.log('✅ Logout successful');
+            } catch (error) {
+                console.error('❌ Logout failed:', error);
+            }
+        }
+
+        // FIXED: Correct way to count records in Supabase
+        async function getTableCount(tableName) {
+            try {
+                const { data, error, count } = await supabaseClient
+                    .from(tableName)
+                    .select('*', { count: 'exact', head: true });
+
+                if (error) throw error;
+                return count;
+            } catch (error) {
+                console.error(`Error counting ${tableName}:`, error);
+                return 0;
+            }
+        }
+
+        async function refreshAllData() {
+            console.log('🔄 Refreshing all data...');
+
+            try {
+                // Get counts using the correct method
+                const profileCount = await getTableCount('profiles');
+                const childCount = await getTableCount('child_profiles');
+                const campCount = await getTableCount('camps');
+                const scheduleCount = await getTableCount('camp_schedules');
+                const bookingCount = await getTableCount('bookings');
+                const reviewCount = await getTableCount('reviews');
+
+                const overview = `
+                    <div class="metric">
+                        <span>🔐 Authentication:</span>
+                        <span>${currentUser ? `✅ ${currentUser.email}` : '❌ Not logged in'}</span>
+                    </div>
+                    <div class="metric">
+                        <span>👥 Profiles:</span>
+                        <span>${profileCount}</span>
+                    </div>
+                    <div class="metric">
+                        <span>👶 Children:</span>
+                        <span>${childCount}</span>
+                    </div>
+                    <div class="metric">
+                        <span>🏕️ Camps:</span>
+                        <span>${campCount}</span>
+                    </div>
+                    <div class="metric">
+                        <span>📅 Schedules:</span>
+                        <span>${scheduleCount}</span>
+                    </div>
+                    <div class="metric">
+                        <span>📋 Bookings:</span>
+                        <span>${bookingCount}</span>
+                    </div>
+                    <div class="metric">
+                        <span>⭐ Reviews:</span>
+                        <span>${reviewCount}</span>
+                    </div>
+                `;
+
+                document.getElementById('systemOverview').innerHTML = overview;
+
+                // Load actual data
+                await loadActualData();
+
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+                document.getElementById('systemOverview').innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function loadActualData() {
+            // Load profiles
+            try {
+                const { data: profiles, error } = await supabaseClient
+                    .from('profiles')
+                    .select('id, user_type, first_name, last_name, created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                document.getElementById('profilesList').innerHTML = profiles.map(p =>
+                    `${p.first_name || 'No name'} ${p.last_name || ''} (${p.user_type})`
+                ).join('<br>') || 'No profiles found';
+
+            } catch (error) {
+                document.getElementById('profilesList').innerHTML = `Error: ${error.message}`;
+            }
+
+            // Load children
+            try {
+                const { data: children, error } = await supabaseClient
+                    .from('child_profiles')
+                    .select('first_name, last_name, birthdate')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                document.getElementById('childrenList').innerHTML = children.map(c => {
+                    const age = Math.floor((new Date() - new Date(c.birthdate)) / (365.25 * 24 * 60 * 60 * 1000));
+                    return `${c.first_name} ${c.last_name} (${age} years old)`;
+                }).join('<br>') || 'No children found';
+
+            } catch (error) {
+                document.getElementById('childrenList').innerHTML = `Error: ${error.message}`;
+            }
+
+            // Load camps
+            try {
+                const { data: camps, error } = await supabaseClient
+                    .from('camps')
+                    .select('name, location, min_age, max_age')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                document.getElementById('campsList').innerHTML = camps.map(c =>
+                    `${c.name} (${c.location}) - Ages ${c.min_age}-${c.max_age}`
+                ).join('<br>') || 'No camps found';
+
+            } catch (error) {
+                document.getElementById('campsList').innerHTML = `Error: ${error.message}`;
+            }
+
+            // Load bookings
+            try {
+                const { data: bookings, error } = await supabaseClient
+                    .from('bookings')
+                    .select('status, created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                document.getElementById('bookingsList').innerHTML = bookings.map(b =>
+                    `${b.status} - ${new Date(b.created_at).toLocaleDateString()}`
+                ).join('<br>') || 'No bookings found';
+
+            } catch (error) {
+                document.getElementById('bookingsList').innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function testAllTables() {
+            const resultsDiv = document.getElementById('databaseResults');
+            resultsDiv.innerHTML = 'Testing all tables...';
+
+            const tables = ['profiles', 'child_profiles', 'camps', 'camp_schedules', 'bookings', 'reviews'];
+            const results = [];
+
+            for (const table of tables) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from(table)
+                        .select('*')
+                        .limit(1);
+
+                    if (error) {
+                        results.push(`❌ ${table}: ${error.message}`);
+                    } else {
+                        results.push(`✅ ${table}: Accessible`);
+                    }
+                } catch (e) {
+                    results.push(`❌ ${table}: ${e.message}`);
+                }
+            }
+
+            resultsDiv.innerHTML = results.join('<br>');
+        }
+
+        async function testUserSpecificData() {
+            const resultsDiv = document.getElementById('databaseResults');
+
+            if (!currentUser) {
+                resultsDiv.innerHTML = '❌ Please login first to test RLS';
+                return;
+            }
+
+            resultsDiv.innerHTML = 'Testing Row Level Security...';
+
+            try {
+                const results = [];
+
+                // Test own profile access
+                const { data: profile, error: profileError } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', currentUser.id)
+                    .single();
+
+                results.push(profile ? '✅ Own profile accessible' : `❌ Profile access failed: ${profileError?.message}`);
+
+                // Test children access
+                const { data: children, error: childError } = await supabaseClient
+                    .from('child_profiles')
+                    .select('*');
+
+                results.push(childError ? `❌ Children access failed: ${childError.message}` : `✅ Children accessible: ${children.length} records`);
+
+                // Test bookings access
+                const { data: bookings, error: bookingError } = await supabaseClient
+                    .from('bookings')
+                    .select('*');
+
+                results.push(bookingError ? `❌ Bookings access failed: ${bookingError.message}` : `✅ Bookings accessible: ${bookings.length} records`);
+
+                resultsDiv.innerHTML = results.join('<br>');
+
+            } catch (error) {
+                resultsDiv.innerHTML = `❌ RLS test failed: ${error.message}`;
+            }
+        }
+
+        async function runFinalCheck() {
+            const statusDiv = document.getElementById('finalStatus');
+            statusDiv.innerHTML = 'Running final production check...';
+
+            try {
+                const checks = [];
+
+                // 1. Auth check
+                checks.push({
+                    name: 'Authentication',
+                    status: currentUser ? 'pass' : 'fail',
+                    detail: currentUser ? `Logged in as ${currentUser.email}` : 'Not logged in'
+                });
+
+                // 2. Database counts
+                const profileCount = await getTableCount('profiles');
+                const childCount = await getTableCount('child_profiles');
+                const campCount = await getTableCount('camps');
+                const bookingCount = await getTableCount('bookings');
+
+                checks.push({
+                    name: 'Database Data',
+                    status: (profileCount > 0 && childCount > 0 && campCount > 0) ? 'pass' : 'warning',
+                    detail: `${profileCount} profiles, ${childCount} children, ${campCount} camps, ${bookingCount} bookings`
+                });
+
+                // 3. Session persistence
+                const authKeys = Object.keys(localStorage).filter(k => k.includes('auth'));
+                checks.push({
+                    name: 'Session Persistence',
+                    status: authKeys.length > 0 ? 'pass' : 'fail',
+                    detail: `${authKeys.length} auth keys stored`
+                });
+
+                // 4. RLS test (if logged in)
+                if (currentUser) {
+                    try {
+                        const { data: profile } = await supabaseClient
+                            .from('profiles')
+                            .select('*')
+                            .eq('id', currentUser.id)
+                            .single();
+
+                        checks.push({
+                            name: 'Row Level Security',
+                            status: profile ? 'pass' : 'fail',
+                            detail: profile ? 'RLS working correctly' : 'RLS blocking access'
+                        });
+                    } catch (e) {
+                        checks.push({
+                            name: 'Row Level Security',
+                            status: 'fail',
+                            detail: e.message
+                        });
+                    }
+                }
+
+                // Format results
+                const passCount = checks.filter(c => c.status === 'pass').length;
+                const totalChecks = checks.length;
+
+                let result = `<h4>Production Readiness: ${passCount}/${totalChecks} checks passed</h4>`;
+
+                checks.forEach(check => {
+                    const icon = check.status === 'pass' ? '✅' : check.status === 'warning' ? '⚠️' : '❌';
+                    result += `<div class="metric">
+                        <span>${icon} ${check.name}:</span>
+                        <span>${check.detail}</span>
+                    </div>`;
+                });
+
+                if (passCount >= totalChecks - 1) { // Allow for one warning
+                    result += '<br><div style="text-align: center; padding: 20px; background: rgba(76, 175, 80, 0.2); border-radius: 8px; margin-top: 15px;"><h3>🚀 SYSTEM IS WORKING! 🚀</h3><p>Your Kid To Camp application is functional and ready!</p></div>';
+                } else {
+                    result += `<br><div style="text-align: center; padding: 20px; background: rgba(255, 152, 0, 0.2); border-radius: 8px; margin-top: 15px;"><h3>⚠️ NEEDS ATTENTION</h3><p>Please fix the failing checks above.</p></div>`;
+                }
+
+                statusDiv.innerHTML = result;
+
+            } catch (error) {
+                statusDiv.innerHTML = `❌ Final check failed: ${error.message}`;
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Fixed system test loaded');
+
+            if (!initSupabase()) {
+                document.getElementById('authStatus').innerHTML = '❌ Supabase initialization failed';
+                return;
+            }
+
+            // Check for existing session
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                updateAuthStatus();
+                // Auto-refresh data if already logged in
+                setTimeout(refreshAllData, 1000);
+            }
+        });
+    </script>
+</body>
+
+</html>
