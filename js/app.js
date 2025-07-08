@@ -51,43 +51,127 @@ class KidToCamp {
     }
 
     // NEW: Smart routing based on user type
+
+    // Replace the existing handleSmartRouting method with this version
+
     handleSmartRouting() {
         // Don't redirect if we're already on the correct page
         const currentPath = window.location.pathname;
         const userType = this.currentUser?.user_metadata?.user_type;
 
-        console.log('🔄 Smart routing for user type:', userType);
+        console.log('🔄 Smart routing for user type:', userType, 'current path:', currentPath);
 
         // Skip routing if on auth callback pages
         if (currentPath.includes('auth') || currentPath.includes('callback')) {
+            console.log('⏭️ Skipping routing - on auth callback page');
             return;
+        }
+
+        // Skip routing if user just logged in and we're still on login/signup pages
+        if (currentPath.includes('login') || currentPath.includes('signup')) {
+            console.log('⏭️ Allowing routing from login/signup pages');
+            // Continue with routing logic
         }
 
         // Route based on user type and current page
         if (userType === 'admin') {
-            // Camp owners should go to camp dashboard unless already there
-            if (!currentPath.includes('camp-dashboard') &&
-                !currentPath.includes('calendar') &&
-                !currentPath.includes('bookings')) {
-                console.log('🏕️ Redirecting camp owner to dashboard');
+            console.log('🏕️ Processing admin/camp owner routing...');
+
+            // Camp owners should go to camp dashboard unless already on appropriate pages
+            const validAdminPages = [
+                '/camp-dashboard.html',
+                '/camp-owner-portal.html',
+                '/calendar.html',
+                '/bookings.html'
+            ];
+
+            const isOnValidAdminPage = validAdminPages.some(page => currentPath.includes(page.replace('.html', '')));
+
+            if (!isOnValidAdminPage && currentPath !== '/' && currentPath !== '/index.html') {
+                console.log('🏕️ Redirecting camp owner to dashboard from:', currentPath);
                 setTimeout(() => {
                     window.location.href = '/camp-dashboard.html';
-                }, 1000);
+                }, 500); // Reduced delay for faster redirect
+            } else if (currentPath === '/' || currentPath === '/index.html') {
+                console.log('🏠 Camp owner on home page - staying put');
+                // Let them stay on home page
+            } else {
+                console.log('✅ Camp owner already on valid page:', currentPath);
             }
+
         } else if (userType === 'parent') {
-            // Parents should go to profile unless already on a parent page
-            if (!currentPath.includes('profile') &&
-                !currentPath.includes('calendar') &&
-                !currentPath.includes('bookings') &&
+            console.log('👨‍👩‍👧‍👦 Processing parent routing...');
+
+            // Parents should go to profile unless already on appropriate parent pages
+            const validParentPages = [
+                '/profile.html',
+                '/calendar.html',
+                '/bookings.html'
+            ];
+
+            const isOnValidParentPage = validParentPages.some(page => currentPath.includes(page.replace('.html', '')));
+
+            if (!isOnValidParentPage &&
                 currentPath !== '/' &&
-                currentPath !== '/index.html') {
-                console.log('👨‍👩‍👧‍👦 Redirecting parent to profile');
+                currentPath !== '/index.html' &&
+                !currentPath.includes('camp-dashboard') &&
+                !currentPath.includes('camp-owner-portal')) {
+                console.log('👨‍👩‍👧‍👦 Redirecting parent to profile from:', currentPath);
                 setTimeout(() => {
                     window.location.href = '/profile.html';
-                }, 1000);
+                }, 500); // Reduced delay for faster redirect
+            } else if (currentPath === '/' || currentPath === '/index.html') {
+                console.log('🏠 Parent on home page - staying put');
+                // Let them stay on home page
+            } else {
+                console.log('✅ Parent already on valid page:', currentPath);
             }
+
+        } else {
+            console.log('❓ Unknown user type or no user type set:', userType);
+            // For users without a clear user_type, don't redirect them
+            // They can navigate manually
         }
     }
+
+    // Also add this helper method to your App class to check routing on auth state changes
+    handleAuthStateChange(event, session) {
+        console.log('🔄 Auth state change:', event);
+
+        if (event === 'SIGNED_IN' && session) {
+            console.log('✅ User signed in:', session.user.email);
+            this.currentUser = session.user;
+
+            // Update UI immediately
+            this.updateUI();
+
+            // Handle smart routing after a brief delay to ensure everything is loaded
+            setTimeout(() => {
+                this.handleSmartRouting();
+            }, 1000);
+
+        } else if (event === 'SIGNED_OUT') {
+            console.log('👋 User signed out');
+            this.currentUser = null;
+            this.updateUI();
+
+            // Redirect to home page if not already there
+            if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
+                window.location.href = '/';
+            }
+
+        } else if (event === 'INITIAL_SESSION' && session) {
+            console.log('📋 Initial session found for:', session.user.email);
+            this.currentUser = session.user;
+            this.updateUI();
+
+            // For initial session, check if we need to route
+            setTimeout(() => {
+                this.handleSmartRouting();
+            }, 500);
+        }
+    }
+
 
     setupEventListeners() {
         // Form submissions
@@ -818,17 +902,37 @@ class CampCarousel {
         this.init();
     }
 
+    // Update your init method to use this new auth state handler
     async init() {
-        this.carouselTrack = document.getElementById('carouselTrack');
-        this.dotsContainer = document.getElementById('carouselDots');
+        console.log('🚀 Initializing Kid To Camp App...');
 
-        if (!this.carouselTrack || !this.dotsContainer) return;
+        try {
+            // Wait for dependencies to be ready
+            await this.waitForDependencies();
 
-        await this.waitForKidToCamp();
-        await this.loadCamps();
-        this.renderCarousel();
-        this.startAutoAdvance();
-        this.setupNavigation();
+            if (!this.supabase) {
+                console.error('❌ App: Supabase not available');
+                return;
+            }
+
+            console.log('✅ App: Dependencies ready');
+
+            // Check initial session
+            await this.checkInitialSession();
+
+            // Set up auth listener with new handler
+            this.supabase.auth.onAuthStateChange((event, session) => {
+                this.handleAuthStateChange(event, session);
+            });
+
+            // Update UI
+            this.updateUI();
+
+            console.log('✅ App initialization complete');
+
+        } catch (error) {
+            console.error('❌ App initialization error:', error);
+        }
     }
 
     async waitForKidToCamp() {

@@ -1,296 +1,502 @@
-< !DOCTYPE html >
-    <html lang="en">
+// js/camp-dashboard.js - Fixed version with all required functions
 
-        <head>
-            <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Camp Owner Dashboard - Kid To Camp</title>
-                    <link rel="stylesheet" href="css/styles.css">
-                    </head>
+class CampDashboard {
+    constructor() {
+        this.supabase = null;
+        this.currentUser = null;
+        this.camps = [];
+        this.bookings = [];
+        this.stats = {};
+        this.init();
+    }
 
-                    <body>
-                        <!-- Navigation -->
-                        <nav class="navbar">
-                            <div class="nav-container">
-                                <a href="/" class="logo">Kid To Camp</a>
+    async init() {
+        console.log('🏕️ Initializing Camp Dashboard...');
 
-                                <ul class="nav-links">
-                                    <li><a href="/">Home</a></li>
-                                    <li><a href="/camp-dashboard.html" class="active">Dashboard</a></li>
-                                    <li><a href="/calendar.html">Calendar</a></li>
-                                    <li><a href="/bookings.html">Bookings</a></li>
-                                </ul>
+        try {
+            // Wait for dependencies
+            await this.waitForDependencies();
 
-                                <div id="navAuth">
-                                    <!-- Will be populated by navigation.js -->
-                                </div>
-                            </div>
-                        </nav>
+            if (!this.supabase) {
+                console.error('❌ Camp Dashboard: Supabase not available');
+                return;
+            }
 
-                        <!-- Main Content -->
-                        <div class="container">
-                            <div class="page-header">
-                                <h1>🏕️ Camp Owner Dashboard</h1>
-                                <p>Manage your camps, schedules, and bookings</p>
-                            </div>
+            // Check authentication
+            await this.checkAuth();
 
-                            <!-- Quick Stats -->
-                            <div class="profile-section">
-                                <div class="section-header">
-                                    <h2>📊 Quick Stats</h2>
-                                    <button class="btn btn-outline" onclick="refreshStats()">Refresh</button>
-                                </div>
-                                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                                    <div class="action-card">
-                                        <h3 id="campCount">-</h3>
-                                        <p>Total Camps</p>
-                                    </div>
-                                    <div class="action-card">
-                                        <h3 id="scheduleCount">-</h3>
-                                        <p>Active Schedules</p>
-                                    </div>
-                                    <div class="action-card">
-                                        <h3 id="bookingCount">-</h3>
-                                        <p>Total Bookings</p>
-                                    </div>
-                                    <div class="action-card">
-                                        <h3 id="revenueCount">$-</h3>
-                                        <p>Total Revenue</p>
-                                    </div>
-                                </div>
-                            </div>
+            if (!this.currentUser) {
+                console.log('❌ No user found, redirecting to login...');
+                window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+                return;
+            }
 
-                            <!-- My Camps -->
-                            <div class="profile-section">
-                                <div class="section-header">
-                                    <h2>🏕️ My Camps</h2>
-                                    <button class="btn btn-primary" onclick="showAddCamp()">+ Add New Camp</button>
-                                </div>
-                                <div id="campsList">
-                                    <!-- Camps will be loaded here -->
-                                </div>
-                            </div>
+            // Verify user is admin/camp owner
+            const userType = this.currentUser.user_metadata?.user_type;
+            if (userType !== 'admin' && userType !== 'camp_owner') {
+                console.log('⚠️ User is not a camp owner, redirecting...');
+                window.location.href = '/index.html';
+                return;
+            }
 
-                            <!-- Recent Bookings -->
-                            <div class="profile-section">
-                                <div class="section-header">
-                                    <h2>📋 Recent Bookings</h2>
-                                    <a href="/bookings.html" class="btn btn-outline">View All</a>
-                                </div>
-                                <div id="recentBookings">
-                                    <!-- Recent bookings will be loaded here -->
-                                </div>
-                            </div>
+            console.log('✅ Camp Dashboard ready for:', this.currentUser.email);
 
-                            <!-- Profile Section -->
-                            <div class="profile-section">
-                                <div class="section-header">
-                                    <h2>👤 My Profile</h2>
-                                    <button class="btn btn-outline" id="editProfileBtn" onclick="toggleProfileEdit()">
-                                        Edit Profile
-                                    </button>
-                                </div>
+            // Load initial data
+            await this.loadDashboardData();
+            this.setupEventListeners();
+            this.renderDashboard();
 
-                                <!-- Profile Display -->
-                                <div id="profileDisplay" class="profile-display">
-                                    <div class="profile-grid">
-                                        <div class="profile-item">
-                                            <label>Name:</label>
-                                            <span id="displayName">-</span>
-                                        </div>
-                                        <div class="profile-item">
-                                            <label>Email:</label>
-                                            <span id="displayEmail">-</span>
-                                        </div>
-                                        <div class="profile-item">
-                                            <label>Phone:</label>
-                                            <span id="displayPhone">-</span>
-                                        </div>
-                                        <div class="profile-item">
-                                            <label>Business Address:</label>
-                                            <span id="displayAddress">-</span>
-                                        </div>
-                                        <div class="profile-item">
-                                            <label>City:</label>
-                                            <span id="displayCity">-</span>
-                                        </div>
-                                        <div class="profile-item">
-                                            <label>State:</label>
-                                            <span id="displayState">-</span>
-                                        </div>
-                                        <div class="profile-item">
-                                            <label>ZIP:</label>
-                                            <span id="displayZip">-</span>
-                                        </div>
-                                    </div>
-                                </div>
+        } catch (error) {
+            console.error('❌ Critical error in dashboard init:', error);
+            this.showError('Dashboard initialization failed. Please refresh the page.');
+        }
+    }
 
-                                <!-- Profile Edit Form -->
-                                <div id="profileEdit" class="profile-edit" style="display: none;">
-                                    <form id="profileForm">
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label>First Name</label>
-                                                <input type="text" id="firstName" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Last Name</label>
-                                                <input type="text" id="lastName" required>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Phone</label>
-                                            <input type="tel" id="phone">
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Business Address</label>
-                                            <input type="text" id="address">
-                                        </div>
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label>City</label>
-                                                <input type="text" id="city">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>State</label>
-                                                <input type="text" id="state" value="NC">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>ZIP</label>
-                                                <input type="text" id="zip">
-                                            </div>
-                                        </div>
-                                        <div class="form-buttons">
-                                            <button type="button" class="btn btn-outline" onclick="cancelProfileEdit()">Cancel</button>
-                                            <button type="submit" class="btn btn-primary">Save Profile</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
+    async waitForDependencies() {
+        let attempts = 0;
+        const maxAttempts = 50;
 
-                        <!-- Add Camp Modal -->
-                        <div id="addCampModal" class="modal">
-                            <div class="modal-content wide">
-                                <span class="close" onclick="closeModal('addCampModal')">&times;</span>
-                                <h2 id="campModalTitle">Add New Camp</h2>
-                                <form id="campForm">
-                                    <input type="hidden" id="campId" value="">
+        while (attempts < maxAttempts) {
+            if (window.supabase && window.supabase.auth) {
+                this.supabase = window.supabase;
+                return;
+            }
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        console.error('❌ Timeout waiting for dependencies');
+    }
 
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label>Camp Name</label>
-                                                <input type="text" id="campName" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Location</label>
-                                                <input type="text" id="campLocation" required>
-                                            </div>
-                                        </div>
+    async checkAuth() {
+        try {
+            console.log('🔍 Camp Dashboard: Checking authentication...');
+            const { data: { session }, error } = await this.supabase.auth.getSession();
 
-                                        <div class="form-group">
-                                            <label>Description</label>
-                                            <textarea id="campDescription" rows="3" placeholder="Describe your camp..."></textarea>
-                                        </div>
+            if (error) {
+                console.error('❌ Error getting session:', error);
+                return;
+            }
 
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label>Minimum Age</label>
-                                                <input type="number" id="minAge" min="3" max="18" value="5">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Maximum Age</label>
-                                                <input type="number" id="maxAge" min="3" max="18" value="12">
-                                            </div>
-                                        </div>
+            if (session && session.user) {
+                this.currentUser = session.user;
+                console.log('✅ User authenticated:', this.currentUser.email);
+            } else {
+                console.log('❌ No session found');
+                this.currentUser = null;
+            }
+        } catch (error) {
+            console.error('❌ Auth check failed:', error);
+            this.currentUser = null;
+        }
+    }
 
-                                        <div class="form-group">
-                                            <label>Interests/Activities (Select all that apply)</label>
-                                            <div class="checkbox-grid">
-                                                <label><input type="checkbox" name="camp-interests" value="sports"> Sports</label>
-                                                <label><input type="checkbox" name="camp-interests" value="arts"> Arts & Crafts</label>
-                                                <label><input type="checkbox" name="camp-interests" value="stem"> STEM/Science</label>
-                                                <label><input type="checkbox" name="camp-interests" value="nature"> Nature/Outdoors</label>
-                                                <label><input type="checkbox" name="camp-interests" value="academic"> Academic</label>
-                                                <label><input type="checkbox" name="camp-interests" value="music"> Music</label>
-                                                <label><input type="checkbox" name="camp-interests" value="theater"> Theater/Drama</label>
-                                                <label><input type="checkbox" name="camp-interests" value="cooking"> Cooking</label>
-                                            </div>
-                                        </div>
+    async loadDashboardData() {
+        console.log('📊 Loading dashboard data...');
 
-                                        <div class="form-group">
-                                            <label>Accommodations Available</label>
-                                            <div class="checkbox-grid">
-                                                <label><input type="checkbox" name="camp-accommodations" value="wheelchair_accessible"> Wheelchair accessible</label>
-                                                <label><input type="checkbox" name="camp-accommodations" value="nut_free_environment"> Nut-free environment</label>
-                                                <label><input type="checkbox" name="camp-accommodations" value="adhd_support"> ADHD support</label>
-                                                <label><input type="checkbox" name="camp-accommodations" value="autism_support"> Autism spectrum support</label>
-                                                <label><input type="checkbox" name="camp-accommodations" value="medical_needs"> Medical needs support</label>
-                                            </div>
-                                        </div>
+        try {
+            // Load camps, bookings, and stats
+            await Promise.all([
+                this.loadCamps(),
+                this.loadBookings(),
+                this.loadStats()
+            ]);
+        } catch (error) {
+            console.error('❌ Error loading dashboard data:', error);
+        }
+    }
 
-                                        <div class="form-buttons">
-                                            <button type="button" class="btn btn-outline" onclick="closeModal('addCampModal')">Cancel</button>
-                                            <button type="submit" class="btn btn-primary">Save Camp</button>
-                                        </div>
-                                </form>
-                            </div>
-                        </div>
+    async loadCamps() {
+        try {
+            const { data, error } = await this.supabase
+                .from('camps')
+                .select('*')
+                .eq('owner_id', this.currentUser.id)
+                .order('created_at', { ascending: false });
 
-                        <!-- Add Schedule Modal -->
-                        <div id="addScheduleModal" class="modal">
-                            <div class="modal-content">
-                                <span class="close" onclick="closeModal('addScheduleModal')">&times;</span>
-                                <h2>Add Camp Schedule</h2>
-                                <form id="scheduleForm">
-                                    <input type="hidden" id="scheduleCampId" value="">
+            if (error) {
+                console.error('❌ Error loading camps:', error);
+                return;
+            }
 
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label>Start Date</label>
-                                                <input type="date" id="startDate" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label>End Date</label>
-                                                <input type="date" id="endDate" required>
-                                            </div>
-                                        </div>
+            this.camps = data || [];
+            console.log('✅ Loaded camps:', this.camps.length);
+        } catch (error) {
+            console.error('❌ Exception loading camps:', error);
+            this.camps = [];
+        }
+    }
 
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label>Start Time</label>
-                                                <input type="time" id="startTime" value="09:00">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>End Time</label>
-                                                <input type="time" id="endTime" value="15:00">
-                                            </div>
-                                        </div>
+    async loadBookings() {
+        try {
+            const { data, error } = await this.supabase
+                .from('bookings')
+                .select(`
+                    *,
+                    camp:camps(*),
+                    child:children(*)
+                `)
+                .in('camp_id', this.camps.map(camp => camp.id))
+                .order('created_at', { ascending: false })
+                .limit(10);
 
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label>Cost ($)</label>
-                                                <input type="number" id="cost" min="0" step="0.01" placeholder="0.00">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Available Spots</label>
-                                                <input type="number" id="availableSpots" min="1" value="20">
-                                            </div>
-                                        </div>
+            if (error) {
+                console.error('❌ Error loading bookings:', error);
+                return;
+            }
 
-                                        <div class="form-buttons">
-                                            <button type="button" class="btn btn-outline" onclick="closeModal('addScheduleModal')">Cancel</button>
-                                            <button type="submit" class="btn btn-primary">Add Schedule</button>
-                                        </div>
-                                </form>
-                            </div>
-                        </div>
+            this.bookings = data || [];
+            console.log('✅ Loaded bookings:', this.bookings.length);
+        } catch (error) {
+            console.error('❌ Exception loading bookings:', error);
+            this.bookings = [];
+        }
+    }
 
-                        <!-- Scripts -->
-                        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-                        <script src="js/config.js"></script>
-                        <script src="js/navigation.js"></script>
-                        <script src="js/camp-dashboard.js"></script>
-                    </body>
+    async loadStats() {
+        try {
+            // Calculate basic stats
+            this.stats = {
+                totalCamps: this.camps.length,
+                activeSchedules: 0, // Will be calculated from schedules
+                totalBookings: this.bookings.length,
+                totalRevenue: this.bookings.reduce((sum, booking) => {
+                    return sum + (parseFloat(booking.amount) || 0);
+                }, 0)
+            };
 
-                </html>
+            console.log('✅ Stats calculated:', this.stats);
+        } catch (error) {
+            console.error('❌ Error calculating stats:', error);
+            this.stats = { totalCamps: 0, activeSchedules: 0, totalBookings: 0, totalRevenue: 0 };
+        }
+    }
+
+    setupEventListeners() {
+        console.log('🔧 Setting up event listeners...');
+
+        // Profile form
+        const profileForm = document.getElementById('profileForm');
+        if (profileForm) {
+            profileForm.addEventListener('submit', (e) => this.handleProfileUpdate(e));
+        }
+
+        // Camp form
+        const campForm = document.getElementById('campForm');
+        if (campForm) {
+            campForm.addEventListener('submit', (e) => this.handleCampSubmit(e));
+        }
+
+        // Schedule form
+        const scheduleForm = document.getElementById('scheduleForm');
+        if (scheduleForm) {
+            scheduleForm.addEventListener('submit', (e) => this.handleScheduleSubmit(e));
+        }
+    }
+
+    renderDashboard() {
+        console.log('🎨 Rendering dashboard...');
+
+        this.updateStats();
+        this.renderCamps();
+        this.renderRecentBookings();
+        this.loadUserProfile();
+    }
+
+    updateStats() {
+        const campCountEl = document.getElementById('campCount');
+        const scheduleCountEl = document.getElementById('scheduleCount');
+        const bookingCountEl = document.getElementById('bookingCount');
+        const revenueCountEl = document.getElementById('revenueCount');
+
+        if (campCountEl) campCountEl.textContent = this.stats.totalCamps;
+        if (scheduleCountEl) scheduleCountEl.textContent = this.stats.activeSchedules;
+        if (bookingCountEl) bookingCountEl.textContent = this.stats.totalBookings;
+        if (revenueCountEl) revenueCountEl.textContent = `$${this.stats.totalRevenue.toFixed(2)}`;
+    }
+
+    renderCamps() {
+        const campsContainer = document.getElementById('campsList');
+        if (!campsContainer) return;
+
+        if (this.camps.length === 0) {
+            campsContainer.innerHTML = `
+                <div class="empty-state">
+                    <h3>No camps created yet</h3>
+                    <p>Create your first camp to start accepting registrations</p>
+                    <button class="btn btn-primary" onclick="showAddCamp()">
+                        + Create Your First Camp
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        const campsHTML = this.camps.map(camp => `
+            <div class="camp-card">
+                <div class="camp-header">
+                    <h3>${camp.name}</h3>
+                    <div class="camp-actions">
+                        <button class="btn btn-sm btn-outline" onclick="editCamp('${camp.id}')">Edit</button>
+                        <button class="btn btn-sm btn-outline" onclick="viewCampDetails('${camp.id}')">View</button>
+                    </div>
+                </div>
+                <div class="camp-details">
+                    <p><strong>Location:</strong> ${camp.location || 'Not specified'}</p>
+                    <p><strong>Ages:</strong> ${camp.min_age || 0}-${camp.max_age || 18}</p>
+                    <p><strong>Description:</strong> ${camp.description || 'No description'}</p>
+                </div>
+            </div>
+        `).join('');
+
+        campsContainer.innerHTML = campsHTML;
+    }
+
+    renderRecentBookings() {
+        const bookingsContainer = document.getElementById('recentBookings');
+        if (!bookingsContainer) return;
+
+        if (this.bookings.length === 0) {
+            bookingsContainer.innerHTML = `
+                <div class="empty-state">
+                    <p>No recent bookings</p>
+                </div>
+            `;
+            return;
+        }
+
+        const bookingsHTML = this.bookings.slice(0, 5).map(booking => `
+            <div class="booking-card">
+                <div class="booking-info">
+                    <h4>${booking.child?.first_name || 'Unknown'} ${booking.child?.last_name || ''}</h4>
+                    <p>${booking.camp?.name || 'Unknown Camp'}</p>
+                    <small>Booked: ${new Date(booking.created_at).toLocaleDateString()}</small>
+                </div>
+                <div class="booking-amount">
+                    $${parseFloat(booking.amount || 0).toFixed(2)}
+                </div>
+            </div>
+        `).join('');
+
+        bookingsContainer.innerHTML = bookingsHTML;
+    }
+
+    async loadUserProfile() {
+        try {
+            const { data, error } = await this.supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', this.currentUser.id)
+                .single();
+
+            if (error && error.code !== 'PGRST116') {
+                console.error('❌ Error loading profile:', error);
+                return;
+            }
+
+            const profile = data || {};
+            this.populateProfileDisplay(profile);
+        } catch (error) {
+            console.error('❌ Exception loading profile:', error);
+        }
+    }
+
+    populateProfileDisplay(profile) {
+        const fields = {
+            'displayName': profile.full_name || 'Not provided',
+            'displayEmail': this.currentUser.email,
+            'displayPhone': profile.phone || 'Not provided',
+            'displayAddress': profile.business_address || 'Not provided',
+            'displayCity': profile.city || 'Not provided',
+            'displayState': profile.state || 'Not provided',
+            'displayZip': profile.zip_code || 'Not provided',
+            'displayWebsite': profile.website || 'Not provided'
+        };
+
+        for (const [elementId, value] of Object.entries(fields)) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = value;
+            }
+        }
+    }
+
+    // Event Handlers
+    async handleProfileUpdate(e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const profileData = Object.fromEntries(formData.entries());
+
+        try {
+            const { error } = await this.supabase
+                .from('profiles')
+                .upsert({
+                    id: this.currentUser.id,
+                    ...profileData,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (error) {
+                console.error('❌ Error updating profile:', error);
+                this.showError('Failed to update profile');
+                return;
+            }
+
+            this.showSuccess('Profile updated successfully!');
+            this.loadUserProfile();
+            this.toggleProfileEdit();
+        } catch (error) {
+            console.error('❌ Exception updating profile:', error);
+            this.showError('Failed to update profile');
+        }
+    }
+
+    async handleCampSubmit(e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const campData = Object.fromEntries(formData.entries());
+
+        // Add owner_id
+        campData.owner_id = this.currentUser.id;
+
+        try {
+            const { error } = await this.supabase
+                .from('camps')
+                .insert([campData]);
+
+            if (error) {
+                console.error('❌ Error creating camp:', error);
+                this.showError('Failed to create camp');
+                return;
+            }
+
+            this.showSuccess('Camp created successfully!');
+            this.closeModal('addCampModal');
+            this.loadCamps();
+            e.target.reset();
+        } catch (error) {
+            console.error('❌ Exception creating camp:', error);
+            this.showError('Failed to create camp');
+        }
+    }
+
+    async handleScheduleSubmit(e) {
+        e.preventDefault();
+        // Schedule handling implementation
+        this.showError('Schedule creation coming soon!');
+    }
+
+    // UI Helper Functions
+    showError(message) {
+        // Create or update error message display
+        let errorDiv = document.getElementById('errorMessage');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.id = 'errorMessage';
+            errorDiv.className = 'error-message';
+            document.body.appendChild(errorDiv);
+        }
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 5000);
+    }
+
+    showSuccess(message) {
+        // Create or update success message display
+        let successDiv = document.getElementById('successMessage');
+        if (!successDiv) {
+            successDiv = document.createElement('div');
+            successDiv.id = 'successMessage';
+            successDiv.className = 'success-message';
+            document.body.appendChild(successDiv);
+        }
+        successDiv.textContent = message;
+        successDiv.style.display = 'block';
+
+        setTimeout(() => {
+            successDiv.style.display = 'none';
+        }, 3000);
+    }
+
+    toggleProfileEdit() {
+        const displayDiv = document.getElementById('profileDisplay');
+        const editDiv = document.getElementById('profileEdit');
+
+        if (displayDiv && editDiv) {
+            if (displayDiv.style.display === 'none') {
+                displayDiv.style.display = 'block';
+                editDiv.style.display = 'none';
+            } else {
+                displayDiv.style.display = 'none';
+                editDiv.style.display = 'block';
+            }
+        }
+    }
+
+    closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+}
+
+// Global functions for onclick handlers
+function showAddCamp() {
+    const modal = document.getElementById('addCampModal');
+    if (modal) {
+        modal.style.display = 'block';
+    } else {
+        console.error('❌ Add camp modal not found');
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function toggleProfileEdit() {
+    if (window.campDashboard) {
+        window.campDashboard.toggleProfileEdit();
+    }
+}
+
+function editCamp(campId) {
+    console.log('Edit camp:', campId);
+    // Implementation coming soon
+}
+
+function viewCampDetails(campId) {
+    console.log('View camp details:', campId);
+    // Implementation coming soon
+}
+
+function refreshStats() {
+    if (window.campDashboard) {
+        window.campDashboard.loadDashboardData().then(() => {
+            window.campDashboard.renderDashboard();
+        });
+    }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🏕️ Camp Dashboard script loaded');
+    window.campDashboard = new CampDashboard();
+});
+
+// Also try to initialize immediately if DOM is already ready
+if (document.readyState === 'loading') {
+    // DOM is still loading, event listener above will handle it
+} else {
+    // DOM is already ready
+    console.log('🏕️ Camp Dashboard script loaded (DOM already ready)');
+    window.campDashboard = new CampDashboard();
+}
