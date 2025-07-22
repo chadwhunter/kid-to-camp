@@ -33,28 +33,40 @@ class SignupHandler {
         console.log('⏳ Waiting for dependencies...');
 
         while (attempts < maxAttempts) {
-            // Check multiple possible locations for Supabase
+            // Primary check: Look for the global Supabase client created by config.js
+            if (window.supabase && window.supabase.auth && typeof window.supabase.auth.getSession === 'function') {
+                console.log('✅ Found global Supabase client from config.js');
+                this.supabase = window.supabase;
+                return true;
+            }
+
+            // Secondary check: Look for kidToCamp instance
             if (window.kidToCamp?.supabase) {
                 console.log('✅ Found Supabase via kidToCamp');
                 this.supabase = window.kidToCamp.supabase;
                 return true;
             }
 
-            if (window.supabase && window.CONFIG) {
-                console.log('✅ Found global Supabase, creating client...');
-                this.supabase = window.supabase.createClient(
-                    window.CONFIG.SUPABASE_URL,
-                    window.CONFIG.SUPABASE_ANON_KEY
-                );
+            // Tertiary check: Look for supabaseClient global
+            if (window.supabaseClient && window.supabaseClient.auth) {
+                console.log('✅ Found global supabaseClient');
+                this.supabase = window.supabaseClient;
                 return true;
             }
 
-            console.log(`⏳ Attempt ${attempts + 1}/${maxAttempts} - waiting for Supabase...`);
+            console.log(`⏳ Attempt ${attempts + 1}/${maxAttempts} - waiting for Supabase client...`);
+            console.log('Available:', {
+                'window.supabase': !!window.supabase,
+                'window.supabase.auth': !!window.supabase?.auth,
+                'window.kidToCamp': !!window.kidToCamp,
+                'window.CONFIG': !!window.CONFIG
+            });
+
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
 
-        console.error('❌ Timeout waiting for Supabase dependencies');
+        console.error('❌ Timeout waiting for Supabase client');
         return false;
     }
 
