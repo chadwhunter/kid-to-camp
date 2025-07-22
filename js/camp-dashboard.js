@@ -608,6 +608,11 @@ class CampDashboard {
             modal.style.display = 'none';
         }
     }
+
+    // Camp management methods
+    showAddCampModal() {
+        showModal('addCampModal');
+    }
 }
 
 // Global functions for HTML onclick handlers
@@ -622,6 +627,14 @@ function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'none';
+    }
+}
+
+function showAddCamp() {
+    if (window.campDashboard) {
+        window.campDashboard.showAddCampModal();
+    } else {
+        showModal('addCampModal');
     }
 }
 

@@ -14,11 +14,12 @@
         <div class="nav-container">
             <a href="/" class="logo">Kid To Camp</a>
 
+            <!-- FIXED: Remove "Bookings" from camp owner navigation -->
             <ul class="nav-links">
                 <li><a href="/">Home</a></li>
                 <li><a href="/camp-dashboard.html" class="active">Dashboard</a></li>
-                <li><a href="/calendar.html">Calendar</a></li>
-                <li><a href="/bookings.html">Bookings</a></li>
+                <li><a href="/camp-owner-portal.html">Camp Portal</a></li>
+                <!-- Removed "/bookings.html" - camp owners don't book camps, they manage them -->
             </ul>
 
             <div id="navAuth">
@@ -31,7 +32,7 @@
     <div class="container">
         <div class="page-header">
             <h1>🏕️ Camp Owner Dashboard</h1>
-            <p>Manage your camps, schedules, and bookings</p>
+            <p>Manage your camps, schedules, and registrations</p>
         </div>
 
         <!-- Quick Stats -->
@@ -51,7 +52,7 @@
                 </div>
                 <div class="action-card">
                     <h3 id="bookingCount">-</h3>
-                    <p>Total Bookings</p>
+                    <p>Total Registrations</p>
                 </div>
                 <div class="action-card">
                     <h3 id="revenueCount">$-</h3>
@@ -64,105 +65,111 @@
         <div class="profile-section">
             <div class="section-header">
                 <h2>🏕️ My Camps</h2>
-                <button class="btn btn-primary" onclick="showAddCamp()">+ Add New Camp</button>
+                <!-- FIXED: Use correct function name -->
+                <button class="btn btn-primary" onclick="showAddCamp()">Add New Camp</button>
             </div>
-            <div id="campsList">
-                <!-- Camps will be loaded here -->
+            <div id="myCamps">
+                <!-- Will be populated by JavaScript -->
             </div>
         </div>
 
-        <!-- Recent Bookings -->
+        <!-- Recent Registrations (not "Bookings" for camp owners) -->
         <div class="profile-section">
             <div class="section-header">
-                <h2>📋 Recent Bookings</h2>
-                <a href="/bookings.html" class="btn btn-outline">View All</a>
+                <h2>📋 Recent Registrations</h2>
+                <a href="/camp-owner-portal.html" class="btn btn-outline">View All Registrations</a>
             </div>
             <div id="recentBookings">
-                <!-- Recent bookings will be loaded here -->
+                <!-- Will be populated by JavaScript -->
             </div>
         </div>
 
-        <!-- Profile Section -->
+        <!-- Profile Management -->
         <div class="profile-section">
             <div class="section-header">
-                <h2>👤 My Profile</h2>
-                <button class="btn btn-outline" id="editProfileBtn" onclick="toggleProfileEdit()">
-                    Edit Profile
-                </button>
+                <h2>👤 Organization Profile</h2>
+                <button class="btn btn-outline" onclick="toggleProfileEdit()">Edit Profile</button>
             </div>
 
             <!-- Profile Display -->
-            <div id="profileDisplay" class="profile-display">
-                <div class="profile-grid">
-                    <div class="profile-item">
-                        <label>Name:</label>
-                        <span id="displayName">-</span>
+            <div id="profileDisplay">
+                <div class="profile-info grid"
+                    style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div>
+                        <strong>Organization Name:</strong>
+                        <span id="displayName">Not provided</span>
                     </div>
-                    <div class="profile-item">
-                        <label>Email:</label>
+                    <div>
+                        <strong>Email:</strong>
                         <span id="displayEmail">-</span>
                     </div>
-                    <div class="profile-item">
-                        <label>Phone:</label>
-                        <span id="displayPhone">-</span>
+                    <div>
+                        <strong>Phone:</strong>
+                        <span id="displayPhone">Not provided</span>
                     </div>
-                    <div class="profile-item">
-                        <label>Business Address:</label>
-                        <span id="displayAddress">-</span>
+                    <div>
+                        <strong>Address:</strong>
+                        <span id="displayAddress">Not provided</span>
                     </div>
-                    <div class="profile-item">
-                        <label>City:</label>
-                        <span id="displayCity">-</span>
+                    <div>
+                        <strong>City:</strong>
+                        <span id="displayCity">Not provided</span>
                     </div>
-                    <div class="profile-item">
-                        <label>State:</label>
-                        <span id="displayState">-</span>
+                    <div>
+                        <strong>State:</strong>
+                        <span id="displayState">Not provided</span>
                     </div>
-                    <div class="profile-item">
-                        <label>ZIP:</label>
-                        <span id="displayZip">-</span>
+                    <div>
+                        <strong>Zip Code:</strong>
+                        <span id="displayZip">Not provided</span>
+                    </div>
+                    <div>
+                        <strong>Website:</strong>
+                        <span id="displayWebsite">Not provided</span>
                     </div>
                 </div>
             </div>
 
             <!-- Profile Edit Form -->
-            <div id="profileEdit" class="profile-edit" style="display: none;">
+            <div id="profileEdit" style="display: none;">
                 <form id="profileForm">
                     <div class="form-row">
                         <div class="form-group">
-                            <label>First Name</label>
-                            <input type="text" id="firstName" required>
+                            <label for="profileName">Organization/Camp Name</label>
+                            <input type="text" id="profileName" name="full_name">
                         </div>
                         <div class="form-group">
-                            <label>Last Name</label>
-                            <input type="text" id="lastName" required>
+                            <label for="profilePhone">Phone Number</label>
+                            <input type="tel" id="profilePhone" name="phone">
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Phone</label>
-                        <input type="tel" id="phone">
-                    </div>
-                    <div class="form-group">
-                        <label>Business Address</label>
-                        <input type="text" id="address">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>City</label>
-                            <input type="text" id="city">
+                            <label for="profileAddress">Business Address</label>
+                            <input type="text" id="profileAddress" name="business_address">
                         </div>
                         <div class="form-group">
-                            <label>State</label>
-                            <input type="text" id="state" value="NC">
-                        </div>
-                        <div class="form-group">
-                            <label>ZIP</label>
-                            <input type="text" id="zip">
+                            <label for="profileCity">City</label>
+                            <input type="text" id="profileCity" name="city">
                         </div>
                     </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="profileState">State</label>
+                            <input type="text" id="profileState" name="state">
+                        </div>
+                        <div class="form-group">
+                            <label for="profileZip">Zip Code</label>
+                            <input type="text" id="profileZip" name="zip_code">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="profileWebsite">Website</label>
+                        <input type="url" id="profileWebsite" name="website">
+                    </div>
                     <div class="form-buttons">
-                        <button type="button" class="btn btn-outline" onclick="cancelProfileEdit()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Profile</button>
+                        <button type="button" class="btn btn-outline" onclick="toggleProfileEdit()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
                     </div>
                 </form>
             </div>
@@ -171,45 +178,42 @@
 
     <!-- Add Camp Modal -->
     <div id="addCampModal" class="modal">
-        <div class="modal-content wide">
+        <div class="modal-content">
             <span class="close" onclick="closeModal('addCampModal')">&times;</span>
-            <h2 id="campModalTitle">Add New Camp</h2>
+            <h2>Add New Camp</h2>
             <form id="campForm">
-                <input type="hidden" id="campId" value="">
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Camp Name</label>
-                        <input type="text" id="campName" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Location</label>
-                        <input type="text" id="campLocation" required>
-                    </div>
+                <div class="form-group">
+                    <label for="campName">Camp Name</label>
+                    <input type="text" id="campName" name="name" required>
                 </div>
 
                 <div class="form-group">
-                    <label>Description</label>
-                    <textarea id="campDescription" rows="3" placeholder="Describe your camp..."></textarea>
+                    <label for="campLocation">Location</label>
+                    <input type="text" id="campLocation" name="location" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="campDescription">Description</label>
+                    <textarea id="campDescription" name="description" rows="3"></textarea>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Minimum Age</label>
-                        <input type="number" id="minAge" min="3" max="18" value="5">
+                        <label for="minAge">Minimum Age</label>
+                        <input type="number" id="minAge" name="min_age" min="0" max="18" value="3">
                     </div>
                     <div class="form-group">
-                        <label>Maximum Age</label>
-                        <input type="number" id="maxAge" min="3" max="18" value="12">
+                        <label for="maxAge">Maximum Age</label>
+                        <input type="number" id="maxAge" name="max_age" min="0" max="18" value="18">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Interests/Activities (Select all that apply)</label>
+                    <label>Camp Activities & Interests</label>
                     <div class="checkbox-grid">
-                        <label><input type="checkbox" name="camp-interests" value="sports"> Sports</label>
+                        <label><input type="checkbox" name="camp-interests" value="sports"> Sports & Athletics</label>
                         <label><input type="checkbox" name="camp-interests" value="arts"> Arts & Crafts</label>
-                        <label><input type="checkbox" name="camp-interests" value="stem"> STEM/Science</label>
+                        <label><input type="checkbox" name="camp-interests" value="science"> Science & STEM</label>
                         <label><input type="checkbox" name="camp-interests" value="nature"> Nature/Outdoors</label>
                         <label><input type="checkbox" name="camp-interests" value="academic"> Academic</label>
                         <label><input type="checkbox" name="camp-interests" value="music"> Music</label>
@@ -237,56 +241,6 @@
                 <div class="form-buttons">
                     <button type="button" class="btn btn-outline" onclick="closeModal('addCampModal')">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Camp</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Add Schedule Modal -->
-    <div id="addScheduleModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('addScheduleModal')">&times;</span>
-            <h2>Add Camp Schedule</h2>
-            <form id="scheduleForm">
-                <input type="hidden" id="scheduleCampId" value="">
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Start Date</label>
-                        <input type="date" id="startDate" required>
-                    </div>
-                    <div class="form-group">
-                        <label>End Date</label>
-                        <input type="date" id="endDate" required>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Start Time</label>
-                        <input type="time" id="startTime" value="09:00">
-                    </div>
-                    <div class="form-group">
-                        <label>End Time</label>
-                        <input type="time" id="endTime" value="15:00">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Cost ($)</label>
-                        <input type="number" id="cost" min="0" step="0.01" placeholder="0.00">
-                    </div>
-                    <div class="form-group">
-                        <label>Available Spots</label>
-                        <input type="number" id="availableSpots" min="1" value="20">
-                    </div>
-                </div>
-
-                <div class="form-buttons">
-                    <button type="button" class="btn btn-outline"
-                        onclick="closeModal('addScheduleModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Schedule</button>
                 </div>
             </form>
         </div>
