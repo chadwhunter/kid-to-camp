@@ -10,33 +10,51 @@ class SignupHandler {
     async init() {
         console.log('🚀 Initializing signup handler...');
 
-        // Wait for KidToCamp to be ready
-        await this.waitForDependencies();
+        // Wait for dependencies with better logging
+        const dependenciesReady = await this.waitForDependencies();
 
-        if (!this.supabase) {
-            console.error('❌ Supabase not available for signup');
-            this.showError('System not ready. Please refresh the page.');
+        if (!dependenciesReady || !this.supabase) {
+            console.error('❌ Failed to initialize Supabase for signup');
+            this.showError('System initialization failed. Please refresh the page and try again.');
+
+            // Try to set up listeners anyway in case user refreshes
+            setTimeout(() => this.setupEventListeners(), 1000);
             return;
         }
 
-        console.log('✅ Signup handler ready');
+        console.log('✅ Signup handler ready with Supabase client');
         this.setupEventListeners();
     }
 
     async waitForDependencies() {
         let attempts = 0;
-        const maxAttempts = 50;
+        const maxAttempts = 100; // Increased timeout to 10 seconds
 
-        while (!window.kidToCamp?.supabase && attempts < maxAttempts) {
+        console.log('⏳ Waiting for dependencies...');
+
+        while (attempts < maxAttempts) {
+            // Check multiple possible locations for Supabase
+            if (window.kidToCamp?.supabase) {
+                console.log('✅ Found Supabase via kidToCamp');
+                this.supabase = window.kidToCamp.supabase;
+                return true;
+            }
+
+            if (window.supabase && window.CONFIG) {
+                console.log('✅ Found global Supabase, creating client...');
+                this.supabase = window.supabase.createClient(
+                    window.CONFIG.SUPABASE_URL,
+                    window.CONFIG.SUPABASE_ANON_KEY
+                );
+                return true;
+            }
+
+            console.log(`⏳ Attempt ${attempts + 1}/${maxAttempts} - waiting for Supabase...`);
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
 
-        if (window.kidToCamp?.supabase) {
-            this.supabase = window.kidToCamp.supabase;
-            return true;
-        }
-
+        console.error('❌ Timeout waiting for Supabase dependencies');
         return false;
     }
 
@@ -406,7 +424,9 @@ class SignupHandler {
 
 // Initialize signup handler when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🔐 Signup script loaded');
+    console.log('🔐 Signup script loaded - DOM ready');
+
+    // Try immediate initialization
     window.signupHandler = new SignupHandler();
 });
 
@@ -415,3 +435,11 @@ if (document.readyState !== 'loading') {
     console.log('🔐 Signup script loaded (DOM already ready)');
     window.signupHandler = new SignupHandler();
 }
+
+// Additional fallback - try again after a short delay
+setTimeout(() => {
+    if (!window.signupHandler?.supabase) {
+        console.log('🔄 Retrying signup handler initialization...');
+        window.signupHandler = new SignupHandler();
+    }
+}, 2000);
