@@ -1,22 +1,22 @@
-// js/camp-dashboard.js - Fixed version with robust error handling and correct column names
+// Updated camp-dashboard.js for organization-based structure
 
 class CampDashboard {
     constructor() {
         this.supabase = null;
         this.currentUser = null;
+        this.userOrganizations = [];
+        this.currentOrganization = null;
         this.camps = [];
         this.bookings = [];
-        this.schedules = [];
         this.stats = {};
         this.profile = null;
         this.init();
     }
 
     async init() {
-        console.log('🏕️ Initializing Camp Dashboard...');
+        console.log('🏕️ Initializing Organization-Aware Camp Dashboard...');
 
         try {
-            // Wait for dependencies
             await this.waitForDependencies();
 
             if (!this.supabase) {
@@ -25,7 +25,6 @@ class CampDashboard {
                 return;
             }
 
-            // Check authentication
             await this.checkAuth();
 
             if (!this.currentUser) {
@@ -34,18 +33,19 @@ class CampDashboard {
                 return;
             }
 
-            // Verify user is admin/camp owner
-            const userType = this.currentUser.user_metadata?.user_type;
-            if (userType !== 'admin' && userType !== 'camp_owner') {
-                console.log('⚠️ User is not a camp owner, redirecting...');
-                this.showError('Access denied. This dashboard is for camp owners only.');
-                setTimeout(() => window.location.href = '/index.html', 2000);
+            // Load user's organizations
+            await this.loadUserOrganizations();
+
+            if (this.userOrganizations.length === 0) {
+                console.log('⚠️ User has no organizations, redirecting...');
+                this.showError('No organizations found. Please contact support.');
                 return;
             }
 
-            console.log('✅ Camp Dashboard ready for:', this.currentUser.email);
+            // Set current organization (first one for now)
+            this.currentOrganization = this.userOrganizations[0];
+            console.log('✅ Camp Dashboard ready for organization:', this.currentOrganization.name);
 
-            // Load initial data with error handling
             await this.loadDashboardData();
             this.setupEventListeners();
             this.renderDashboard();
@@ -58,19 +58,17 @@ class CampDashboard {
 
     async waitForDependencies() {
         let attempts = 0;
-        const maxAttempts = 50; // 5 seconds max
+        const maxAttempts = 50;
 
         console.log('⏳ Waiting for dependencies...');
 
         while (attempts < maxAttempts) {
-            // Primary check: Look for the global Supabase client created by config.js
             if (window.supabase && window.supabase.auth && typeof window.supabase.auth.getSession === 'function') {
                 console.log('✅ Found global Supabase client from config.js');
                 this.supabase = window.supabase;
                 return true;
             }
 
-            // Secondary check: Look for kidToCamp instance (fallback)
             if (window.kidToCamp?.supabase) {
                 console.log('✅ Found Supabase via kidToCamp');
                 this.supabase = window.kidToCamp.supabase;
@@ -83,12 +81,6 @@ class CampDashboard {
         }
 
         console.error('❌ Dependencies timeout');
-        console.log('Available globals:', {
-            'window.supabase': !!window.supabase,
-            'window.supabase.auth': !!window.supabase?.auth,
-            'window.kidToCamp': !!window.kidToCamp,
-            'window.CONFIG': !!window.CONFIG
-        });
         return false;
     }
 
@@ -108,11 +100,47 @@ class CampDashboard {
         }
     }
 
-    async loadDashboardData() {
-        console.log('📊 Loading dashboard data...');
+    async loadUserOrganizations() {
+        try {
+            console.log('🏢 Loading user organizations...');
 
-        // Load in sequence with error handling for each
-        await this.loadUserProfile();
+            const { data, error } = await this.supabase
+                .from('organization_members')
+                .select(`
+                    role,
+                    organizations (
+                        id,
+                        name,
+                        description,
+                        email,
+                        phone,
+                        website
+                    )
+                `)
+                .eq('user_id', this.currentUser.id);
+
+            if (error) {
+                console.warn('⚠️ Error loading organizations:', error);
+                this.userOrganizations = [];
+                return;
+            }
+
+            this.userOrganizations = data.map(item => ({
+                ...item.organizations,
+                role: item.role
+            }));
+
+            console.log('✅ Organizations loaded:', this.userOrganizations.length);
+
+        } catch (error) {
+            console.warn('⚠️ Exception loading organizations:', error);
+            this.userOrganizations = [];
+        }
+    }
+
+    async loadDashboardData() {
+        console.log('📊 Loading dashboard data for organization:', this.currentOrganization.name);
+
         await this.loadCamps();
         await this.loadBookings();
         await this.loadSchedules();
@@ -121,42 +149,14 @@ class CampDashboard {
         console.log('✅ Dashboard data loaded');
     }
 
-    async loadUserProfile() {
-        try {
-            console.log('👤 Loading user profile...');
-
-            // Use maybeSingle to avoid errors if profile doesn't exist
-            const { data, error } = await this.supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', this.currentUser.id)
-                .maybeSingle();
-
-            if (error && error.code !== 'PGRST116') {
-                console.warn('⚠️ Profile loading error:', error);
-                // Don't fail completely - dashboard can work without profile
-            }
-
-            this.profile = data || {};
-            console.log('✅ Profile loaded:', this.profile.id ? 'Found' : 'Using defaults');
-
-            this.populateProfileDisplay();
-
-        } catch (error) {
-            console.warn('⚠️ Exception loading profile, using defaults:', error);
-            this.profile = {};
-            this.populateProfileDisplay();
-        }
-    }
-
     async loadCamps() {
         try {
-            console.log('🏕️ Loading camps...');
+            console.log('🏕️ Loading camps for organization...');
 
             const { data, error } = await this.supabase
                 .from('camps')
                 .select('*')
-                .eq('owner_id', this.currentUser.id)
+                .eq('organization_id', this.currentOrganization.id)
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -169,25 +169,15 @@ class CampDashboard {
             console.log('✅ Camps loaded:', this.camps.length);
 
         } catch (error) {
-            console.warn('⚠️ Exception loading camps, using empty array:', error);
+            console.warn('⚠️ Exception loading camps:', error);
             this.camps = [];
         }
     }
 
     async loadBookings() {
         try {
-            console.log('📋 Loading bookings...');
+            console.log('📋 Loading bookings for organization...');
 
-            // Only load bookings if we have camps
-            if (!this.camps || this.camps.length === 0) {
-                console.log('ℹ️ No camps found, skipping bookings load');
-                this.bookings = [];
-                return;
-            }
-
-            const campIds = this.camps.map(camp => camp.id);
-
-            // Simple query - avoid complex joins for now
             const { data, error } = await this.supabase
                 .from('bookings')
                 .select(`
@@ -195,18 +185,17 @@ class CampDashboard {
                     child_profiles!inner(first_name, last_name),
                     camps!inner(name)
                 `)
-                .in('camp_id', campIds)
+                .eq('organization_id', this.currentOrganization.id)
                 .order('created_at', { ascending: false })
                 .limit(20);
 
             if (error) {
-                console.warn('⚠️ Bookings query with joins failed, trying simple query:', error);
+                console.warn('⚠️ Bookings query failed, trying simple query:', error);
 
-                // Fallback to simple query
                 const { data: simpleData, error: simpleError } = await this.supabase
                     .from('bookings')
                     .select('*')
-                    .in('camp_id', campIds)
+                    .eq('organization_id', this.currentOrganization.id)
                     .order('created_at', { ascending: false })
                     .limit(20);
 
@@ -225,7 +214,7 @@ class CampDashboard {
             console.log('✅ Bookings loaded (with joins):', this.bookings.length);
 
         } catch (error) {
-            console.warn('⚠️ Exception loading bookings, using empty array:', error);
+            console.warn('⚠️ Exception loading bookings:', error);
             this.bookings = [];
         }
     }
@@ -234,8 +223,7 @@ class CampDashboard {
         try {
             console.log('📅 Loading schedules...');
 
-            if (!this.camps || this.camps.length === 0) {
-                console.log('ℹ️ No camps found, skipping schedules load');
+            if (this.camps.length === 0) {
                 this.schedules = [];
                 return;
             }
@@ -258,19 +246,18 @@ class CampDashboard {
             console.log('✅ Schedules loaded:', this.schedules.length);
 
         } catch (error) {
-            console.warn('⚠️ Exception loading schedules, using empty array:', error);
+            console.warn('⚠️ Exception loading schedules:', error);
             this.schedules = [];
         }
     }
 
     async calculateStats() {
         try {
-            // Calculate stats from loaded data
-            const activeSchedules = this.schedules.filter(schedule => {
+            const activeSchedules = this.schedules?.filter(schedule => {
                 const now = new Date();
                 const endDate = new Date(schedule.end_date);
                 return endDate >= now;
-            }).length;
+            }).length || 0;
 
             const totalRevenue = this.bookings.reduce((sum, booking) => {
                 return sum + (parseFloat(booking.amount) || 0);
@@ -290,36 +277,28 @@ class CampDashboard {
         }
     }
 
-    populateProfileDisplay() {
-        const profile = this.profile || {};
-
-        const fields = {
-            'displayName': profile.full_name || profile.first_name || 'Not provided',
-            'displayEmail': this.currentUser.email,
-            'displayPhone': profile.phone || 'Not provided',
-            'displayAddress': profile.business_address || profile.address || 'Not provided',
-            'displayCity': profile.city || 'Not provided',
-            'displayState': profile.state || 'Not provided',
-            'displayZip': profile.zip_code || profile.zip || 'Not provided',
-            'displayWebsite': profile.website || 'Not provided'
-        };
-
-        for (const [elementId, value] of Object.entries(fields)) {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.textContent = value;
-            }
-        }
-    }
-
     renderDashboard() {
-        console.log('🎨 Rendering dashboard...');
+        console.log('🎨 Rendering organization dashboard...');
 
+        this.renderOrganizationHeader();
         this.renderStats();
         this.renderCamps();
         this.renderRecentBookings();
 
         console.log('✅ Dashboard rendered');
+    }
+
+    renderOrganizationHeader() {
+        // Update page header with organization info
+        const pageHeader = document.querySelector('.page-header h1');
+        if (pageHeader) {
+            pageHeader.textContent = `🏢 ${this.currentOrganization.name} Dashboard`;
+        }
+
+        const pageSubtitle = document.querySelector('.page-header p');
+        if (pageSubtitle) {
+            pageSubtitle.textContent = `Manage camps and registrations for ${this.currentOrganization.name}`;
+        }
     }
 
     renderStats() {
@@ -345,8 +324,8 @@ class CampDashboard {
         if (this.camps.length === 0) {
             campsContainer.innerHTML = `
                 <div class="empty-state">
-                    <p>No camps created yet</p>
-                    <button class="btn btn-primary" onclick="showModal('addCampModal')">Add Your First Camp</button>
+                    <p>No camps created yet for ${this.currentOrganization.name}</p>
+                    <button class="btn btn-primary" onclick="showAddCamp()">Add Your First Camp</button>
                 </div>
             `;
             return;
@@ -381,7 +360,7 @@ class CampDashboard {
         if (this.bookings.length === 0) {
             bookingsContainer.innerHTML = `
                 <div class="empty-state">
-                    <p>No bookings yet</p>
+                    <p>No registrations yet</p>
                 </div>
             `;
             return;
@@ -395,7 +374,7 @@ class CampDashboard {
                         ${booking.child_profiles?.last_name || ''}
                     </h4>
                     <p>${booking.camps?.name || 'Unknown Camp'}</p>
-                    <small>Booked: ${new Date(booking.created_at).toLocaleDateString()}</small>
+                    <small>Registered: ${new Date(booking.created_at).toLocaleDateString()}</small>
                 </div>
                 <div class="booking-amount">
                     $${parseFloat(booking.amount || 0).toFixed(2)}
@@ -406,35 +385,18 @@ class CampDashboard {
         bookingsContainer.innerHTML = bookingsHTML;
     }
 
-    setupEventListeners() {
-        console.log('🔧 Setting up event listeners...');
-
-        // Profile form
-        const profileForm = document.getElementById('profileForm');
-        if (profileForm) {
-            profileForm.addEventListener('submit', (e) => this.handleProfileUpdate(e));
-        }
-
-        // Camp form - with correct column names
-        const campForm = document.getElementById('campForm');
-        if (campForm) {
-            campForm.addEventListener('submit', (e) => this.handleCampSubmit(e));
-        }
-
-        console.log('✅ Event listeners set up');
-    }
-
     async handleCampSubmit(e) {
         e.preventDefault();
+        e.stopPropagation();
 
-        console.log('🏕️ Processing camp form submission...');
+        console.log('🏕️ Processing camp form submission for organization:', this.currentOrganization.name);
 
         try {
             const form = e.target;
 
-            // Get form values with CORRECT column names from database schema
+            // Include organization_id in camp data
             const campData = {
-                owner_id: this.currentUser.id,
+                organization_id: this.currentOrganization.id, // NEW: Required for organization-based camps
                 name: form.querySelector('#campName').value,
                 location: form.querySelector('#campLocation').value,
                 description: form.querySelector('#campDescription').value || '',
@@ -449,7 +411,7 @@ class CampDashboard {
                 campData.interests = interests;
             }
 
-            // Handle accommodations - use CORRECT column name: special_needs_accommodations
+            // Handle accommodations
             const accommodationCheckboxes = form.querySelectorAll('input[name="camp-accommodations"]:checked');
             const accommodations = Array.from(accommodationCheckboxes).map(cb => cb.value);
             if (accommodations.length > 0) {
@@ -474,16 +436,28 @@ class CampDashboard {
 
             if (error) {
                 console.error('❌ Database error:', error);
-                this.showError(`Failed to create camp: ${error.message}`);
+                console.error('❌ Error details:', {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint
+                });
+
+                if (error.code === '23505') {
+                    this.showError('A camp with this name already exists. Please choose a different name.');
+                } else if (error.message.includes('duplicate key')) {
+                    this.showError('A camp with this information already exists. Please modify the details.');
+                } else {
+                    this.showError(`Failed to create camp: ${error.message}`);
+                }
                 return;
             }
 
             console.log('✅ Camp created successfully:', data);
-            this.showSuccess('Camp created successfully!');
+            this.showSuccess(`Camp "${data.name}" created successfully for ${this.currentOrganization.name}!`);
 
-            // Refresh camps list
-            await this.loadCamps();
-            await this.calculateStats();
+            // Refresh dashboard
+            await this.loadDashboardData();
             this.renderDashboard();
 
             // Close modal and reset form
@@ -496,45 +470,19 @@ class CampDashboard {
         }
     }
 
-    async handleProfileUpdate(e) {
-        e.preventDefault();
+    setupEventListeners() {
+        console.log('🔧 Setting up event listeners...');
 
-        const formData = new FormData(e.target);
-        const profileData = {
-            id: this.currentUser.id,
-            user_type: this.currentUser.user_metadata?.user_type || 'admin',
-            updated_at: new Date().toISOString()
-        };
-
-        // Add form fields
-        for (const [key, value] of formData.entries()) {
-            profileData[key] = value;
+        // Camp form
+        const campForm = document.getElementById('campForm');
+        if (campForm) {
+            campForm.addEventListener('submit', (e) => this.handleCampSubmit(e));
         }
 
-        try {
-            const { error } = await this.supabase
-                .from('profiles')
-                .upsert(profileData);
-
-            if (error) {
-                console.error('❌ Error updating profile:', error);
-                this.showError(`Failed to update profile: ${error.message}`);
-                return;
-            }
-
-            this.showSuccess('Profile updated successfully!');
-
-            // Reload profile and update display
-            await this.loadUserProfile();
-            this.toggleProfileEdit();
-
-        } catch (error) {
-            console.error('❌ Exception updating profile:', error);
-            this.showError('Failed to update profile');
-        }
+        console.log('✅ Event listeners set up');
     }
 
-    // UI Helper Methods
+    // UI Helper methods (same as before)
     showError(message) {
         this.showMessage(message, 'error');
     }
@@ -544,7 +492,6 @@ class CampDashboard {
     }
 
     showMessage(message, type = 'info') {
-        // Create message element
         const messageEl = document.createElement('div');
         messageEl.className = `message message-${type}`;
         messageEl.innerHTML = `
@@ -552,54 +499,14 @@ class CampDashboard {
             <button onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; float: right; cursor: pointer;">&times;</button>
         `;
 
-        // Add to page
         const container = document.querySelector('.container') || document.body;
         container.insertBefore(messageEl, container.firstChild);
 
-        // Auto-remove after 5 seconds
         setTimeout(() => {
             if (messageEl.parentElement) {
                 messageEl.remove();
             }
         }, 5000);
-    }
-
-    toggleProfileEdit() {
-        const display = document.getElementById('profileDisplay');
-        const edit = document.getElementById('profileEdit');
-
-        if (display && edit) {
-            const isEditing = display.style.display === 'none';
-
-            display.style.display = isEditing ? 'block' : 'none';
-            edit.style.display = isEditing ? 'none' : 'block';
-
-            // If switching to edit mode, populate form
-            if (!isEditing && this.profile) {
-                this.populateProfileForm();
-            }
-        }
-    }
-
-    populateProfileForm() {
-        const profile = this.profile || {};
-
-        const fields = {
-            'profileName': profile.full_name || profile.first_name || '',
-            'profilePhone': profile.phone || '',
-            'profileAddress': profile.business_address || profile.address || '',
-            'profileCity': profile.city || '',
-            'profileState': profile.state || '',
-            'profileZip': profile.zip_code || profile.zip || '',
-            'profileWebsite': profile.website || ''
-        };
-
-        for (const [elementId, value] of Object.entries(fields)) {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.value = value;
-            }
-        }
     }
 
     closeModal(modalId) {
@@ -609,7 +516,6 @@ class CampDashboard {
         }
     }
 
-    // Camp management methods
     showAddCampModal() {
         showModal('addCampModal');
     }
@@ -638,21 +544,13 @@ function showAddCamp() {
     }
 }
 
-function toggleProfileEdit() {
-    if (window.campDashboard) {
-        window.campDashboard.toggleProfileEdit();
-    }
-}
-
 function editCamp(campId) {
     console.log('Edit camp:', campId);
-    // TODO: Implement camp editing
     alert('Camp editing coming soon!');
 }
 
 function viewCampDetails(campId) {
     console.log('View camp details:', campId);
-    // TODO: Implement camp details view
     alert('Camp details view coming soon!');
 }
 
@@ -666,12 +564,11 @@ function refreshStats() {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🏕️ Camp Dashboard script loaded');
+    console.log('🏢 Organization-Aware Camp Dashboard script loaded');
     window.campDashboard = new CampDashboard();
 });
 
-// Also try to initialize immediately if DOM is already ready
 if (document.readyState !== 'loading') {
-    console.log('🏕️ Camp Dashboard script loaded (DOM already ready)');
+    console.log('🏢 Organization-Aware Camp Dashboard script loaded (DOM already ready)');
     window.campDashboard = new CampDashboard();
 }
