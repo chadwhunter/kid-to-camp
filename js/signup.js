@@ -1,4 +1,4 @@
-// js/signup.js - Complete Signup Page Handler
+// Fixed signup.js - Handles database errors during user creation
 
 class SignupHandler {
     constructor() {
@@ -9,259 +9,122 @@ class SignupHandler {
 
     async init() {
         console.log('🚀 Initializing signup handler...');
-        await this.waitForSupabase();
+
+        // Wait for KidToCamp to be ready
+        await this.waitForDependencies();
 
         if (!this.supabase) {
             console.error('❌ Supabase not available for signup');
-            this.showError('Authentication service not available. Please refresh the page.');
+            this.showError('System not ready. Please refresh the page.');
             return;
         }
 
         console.log('✅ Signup handler ready');
         this.setupEventListeners();
-        this.checkExistingAuth();
     }
 
-    async waitForSupabase() {
+    async waitForDependencies() {
         let attempts = 0;
         const maxAttempts = 50;
 
-        while (attempts < maxAttempts) {
-            if (window.supabase && window.supabase.auth) {
-                this.supabase = window.supabase;
-                return;
-            }
+        while (!window.kidToCamp?.supabase && attempts < maxAttempts) {
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
-        console.error('❌ Supabase client not available after waiting');
-    }
 
-    async checkExistingAuth() {
-        try {
-            const { data: { session }, error } = await this.supabase.auth.getSession();
-
-            if (error) {
-                console.error('❌ Error checking existing session:', error);
-                return;
-            }
-
-            if (session && session.user) {
-                console.log('👤 User already logged in, redirecting...');
-                const userType = session.user.user_metadata?.user_type;
-                if (userType === 'admin') {
-                    window.location.href = '/camp-owner-portal.html';
-                } else {
-                    window.location.href = '/profile.html';
-                }
-            }
-        } catch (error) {
-            console.error('❌ Auth check error:', error);
+        if (window.kidToCamp?.supabase) {
+            this.supabase = window.kidToCamp.supabase;
+            return true;
         }
+
+        return false;
     }
 
     setupEventListeners() {
-        // Form submission
-        const signupForm = document.getElementById('signupForm');
-        if (signupForm) {
-            signupForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.handleEmailSignup();
-            });
+        // Email signup form
+        const emailForm = document.getElementById('emailSignupForm');
+        if (emailForm) {
+            emailForm.addEventListener('submit', (e) => this.handleEmailSignup(e));
         }
 
-        // Social signup buttons (reuse social login methods)
-        this.setupSocialButtons();
-
-        // Enhanced auth state listener
-        this.setupAuthListener();
-    }
-
-    setupSocialButtons() {
-        // Google signup
+        // Social signup buttons
         const googleBtn = document.getElementById('googleSignupBtn');
         if (googleBtn) {
             googleBtn.addEventListener('click', () => this.handleSocialSignup('google'));
         }
-
-        // Facebook signup
-        const facebookBtn = document.getElementById('facebookSignupBtn');
-        if (facebookBtn) {
-            facebookBtn.addEventListener('click', () => this.handleSocialSignup('facebook'));
-        }
     }
 
-    setupAuthListener() {
-        if (!this.supabase || !this.supabase.auth) {
-            console.warn('⚠️ Cannot setup auth listener - Supabase not ready');
-            return;
-        }
+    async handleEmailSignup(e) {
+        e.preventDefault();
 
-        this.supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log('🔄 Auth state changed:', event);
-
-            if (event === 'SIGNED_UP' || (event === 'SIGNED_IN' && session)) {
-                console.log('✅ Signup/signin successful');
-
-                // Check user type and redirect appropriately
-                const userType = session.user.user_metadata?.user_type;
-
-                this.showSuccess('Account ready! Redirecting...');
-
-                setTimeout(() => {
-                    if (userType === 'admin') {
-                        window.location.href = '/camp-owner-portal.html';
-                    } else {
-                        window.location.href = '/profile.html';
-                    }
-                }, 2000);
-            }
-        });
-    }
-
-    async handleSocialSignup(provider) {
         if (this.isLoading) return;
 
-        console.log(`🔐 Starting ${provider} OAuth signup...`);
-        this.setSocialLoading(provider, true);
-        this.clearMessages();
-
-        try {
-            const options = this.getProviderOptions(provider);
-
-            const { data, error } = await this.supabase.auth.signInWithOAuth({
-                provider: provider,
-                options: options
-            });
-
-            if (error) {
-                console.error(`❌ ${provider} signup error:`, error);
-                this.showError(`${provider} signup failed. Please try again.`);
-                this.setSocialLoading(provider, false);
-                return;
-            }
-
-            console.log(`✅ ${provider} OAuth initiated`);
-            // Don't set loading to false - user is being redirected
-
-        } catch (error) {
-            console.error(`❌ ${provider} signup failed:`, error);
-            this.showError(`${provider} signup failed. Please try again.`);
-            this.setSocialLoading(provider, false);
-        }
-    }
-
-    getProviderOptions(provider) {
-        const baseOptions = {
-            redirectTo: window.location.origin + '/auth/callback',
-        };
-
-        switch (provider) {
-            case 'google':
-                return {
-                    ...baseOptions,
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent',
-                        scope: [
-                            'openid',
-                            'email',
-                            'profile',
-                            'https://www.googleapis.com/auth/user.addresses.read',
-                            'https://www.googleapis.com/auth/user.birthday.read',
-                            'https://www.googleapis.com/auth/user.phonenumbers.read',
-                            'https://www.googleapis.com/auth/calendar.readonly'
-                        ].join(' ')
-                    },
-                };
-
-            case 'facebook':
-                return {
-                    ...baseOptions,
-                    queryParams: {
-                        scope: 'email,public_profile,user_location'
-                    }
-                };
-
-            default:
-                return baseOptions;
-        }
-    }
-
-    async handleEmailSignup() {
-        if (this.isLoading) return;
-
-        const email = document.getElementById('signupEmail').value.trim();
-        const password = document.getElementById('signupPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        const userType = document.getElementById('userType').value;
+        const formData = new FormData(e.target);
+        const email = formData.get('email')?.trim();
+        const password = formData.get('password');
+        const confirmPassword = formData.get('confirmPassword');
+        const userType = formData.get('userType');
 
         // Validation
-        if (!email || !password || !confirmPassword || !userType) {
-            this.showError('Please fill in all fields');
-            return;
-        }
-
-        if (!this.isValidEmail(email)) {
-            this.showError('Please enter a valid email address');
-            return;
-        }
-
-        if (password.length < 6) {
-            this.showError('Password must be at least 6 characters long');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            this.showError('Passwords do not match');
+        if (!this.validateSignupData(email, password, confirmPassword, userType)) {
             return;
         }
 
         this.setEmailLoading(true);
-        this.clearMessages();
 
         try {
             console.log('📧 Attempting email signup for:', email, 'as:', userType);
 
-            // Step 1: Sign up the user
+            // Step 1: Sign up the user WITHOUT automatic profile creation
             const { data, error } = await this.supabase.auth.signUp({
                 email: email,
                 password: password,
                 options: {
                     data: {
                         user_type: userType,
-                        email: email // Include email in metadata
+                        email: email
                     }
                 }
             });
 
             if (error) {
                 console.error('❌ Email signup error:', error);
-                this.showError(this.getErrorMessage(error));
+
+                // Handle specific error types
+                if (error.message.includes('Database error saving new user')) {
+                    this.showError('Account creation failed due to a database issue. This is usually temporary - please try again in a moment.');
+                } else {
+                    this.showError(this.getErrorMessage(error));
+                }
+
                 this.setEmailLoading(false);
                 return;
             }
 
             console.log('✅ Email signup successful:', data);
 
-            // Step 2: Create profile entry if user was created
-            if (data.user && data.session) {
-                console.log('👤 Creating profile for new user');
-                await this.createUserProfile(data.user, userType);
-            }
-
+            // Step 2: Handle different signup outcomes
             if (data.user && !data.session) {
-                // Email confirmation required
+                // Email confirmation required - don't try to create profile yet
+                console.log('📧 Email confirmation required');
                 this.showSuccess('Account created! Please check your email and click the confirmation link to activate your account.');
-            } else {
-                // Auto-signed in, redirect based on user type
+
+            } else if (data.user && data.session) {
+                // Auto-signed in - try to create profile
+                console.log('👤 User auto-signed in, attempting to create profile...');
+
+                // Try to create profile, but don't fail the signup if it doesn't work
+                try {
+                    await this.createUserProfile(data.user, userType);
+                    console.log('✅ Profile created successfully');
+                } catch (profileError) {
+                    console.warn('⚠️ Profile creation failed, but signup succeeded:', profileError);
+                    // Don't show error to user - they can complete profile later
+                }
+
                 this.showSuccess('Account created successfully! Redirecting...');
                 setTimeout(() => {
-                    if (userType === 'admin') {
-                        window.location.href = '/camp-owner-portal.html';
-                    } else {
-                        window.location.href = '/profile.html';
-                    }
+                    this.redirectAfterSignup(userType);
                 }, 2000);
             }
 
@@ -274,69 +137,245 @@ class SignupHandler {
         }
     }
 
-    // Fixed createUserProfile method for js/signup.js
-    // Replace the existing createUserProfile method with this:
-
     async createUserProfile(user, userType) {
+        console.log('📝 Creating profile for user:', user.id);
+
+        // Try different approaches in order of preference
+        const approaches = [
+            () => this.createFullProfile(user, userType),
+            () => this.createMinimalProfile(user, userType),
+            () => this.createBasicProfile(user, userType)
+        ];
+
+        for (const approach of approaches) {
+            try {
+                await approach();
+                console.log('✅ Profile created successfully');
+                return;
+            } catch (error) {
+                console.warn('⚠️ Profile creation approach failed:', error.message);
+                continue;
+            }
+        }
+
+        // If all approaches fail, log but don't throw
+        console.warn('⚠️ All profile creation approaches failed - user will need to complete profile later');
+    }
+
+    async createFullProfile(user, userType) {
+        const profileData = {
+            id: user.id,
+            user_type: userType,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+
+        // Add optional fields for camp owners
+        if (userType === 'admin') {
+            profileData.organization_name = null;
+            profileData.notify_new_registration = true;
+            profileData.notify_cancellation = true;
+            profileData.notify_waitlist = true;
+            profileData.notify_capacity_warning = true;
+            profileData.advance_notice_days = 7;
+            profileData.refund_percentage = 100;
+        }
+
+        const { error } = await this.supabase
+            .from('profiles')
+            .insert(profileData);
+
+        if (error) throw error;
+    }
+
+    async createMinimalProfile(user, userType) {
+        const profileData = {
+            id: user.id,
+            user_type: userType
+        };
+
+        const { error } = await this.supabase
+            .from('profiles')
+            .insert(profileData);
+
+        if (error) throw error;
+    }
+
+    async createBasicProfile(user, userType) {
+        // Most minimal approach - just ID
+        const profileData = {
+            id: user.id
+        };
+
+        const { error } = await this.supabase
+            .from('profiles')
+            .insert(profileData);
+
+        if (error) throw error;
+    }
+
+    validateSignupData(email, password, confirmPassword, userType) {
+        if (!email || !password || !confirmPassword || !userType) {
+            this.showError('Please fill in all fields');
+            return false;
+        }
+
+        if (!this.isValidEmail(email)) {
+            this.showError('Please enter a valid email address');
+            return false;
+        }
+
+        if (password.length < 6) {
+            this.showError('Password must be at least 6 characters long');
+            return false;
+        }
+
+        if (password !== confirmPassword) {
+            this.showError('Passwords do not match');
+            return false;
+        }
+
+        return true;
+    }
+
+    isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    async handleSocialSignup(provider) {
+        if (this.isLoading) return;
+
+        this.setSocialLoading(provider, true);
+
         try {
-            console.log('📝 Creating profile for user:', user.id);
+            console.log(`🔐 Attempting ${provider} signup...`);
 
-            const profileData = {
-                id: user.id,
-                // email: user.email,  // ← REMOVED - this column doesn't exist
-                user_type: userType,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            };
-
-            // For camp owners, add some default organization fields (if these columns exist)
-            if (userType === 'admin') {
-                profileData.organization_name = null; // Will be filled in later
-                profileData.notify_new_registration = true;
-                profileData.notify_cancellation = true;
-                profileData.notify_waitlist = true;
-                profileData.notify_capacity_warning = true;
-                profileData.advance_notice_days = 7;
-                profileData.refund_percentage = 100;
-            }
-
-            // First check what columns actually exist to avoid errors
-            console.log('📊 Attempting to create profile with data:', profileData);
-
-            const { error: profileError } = await this.supabase
-                .from('profiles')
-                .insert(profileData);
-
-            if (profileError) {
-                console.error('⚠️ Error creating profile:', profileError);
-
-                // If error is about missing columns, try with minimal data
-                if (profileError.message.includes('column') && profileError.message.includes('does not exist')) {
-                    console.log('🔄 Retrying with minimal profile data...');
-
-                    const minimalProfileData = {
-                        id: user.id,
-                        user_type: userType
-                    };
-
-                    const { error: retryError } = await this.supabase
-                        .from('profiles')
-                        .insert(minimalProfileData);
-
-                    if (retryError) {
-                        console.error('❌ Even minimal profile creation failed:', retryError);
-                    } else {
-                        console.log('✅ Minimal profile created successfully');
-                    }
+            const { data, error } = await this.supabase.auth.signInWithOAuth({
+                provider: provider,
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`
                 }
-            } else {
-                console.log('✅ Full profile created successfully');
+            });
+
+            if (error) {
+                console.error(`❌ ${provider} signup error:`, error);
+                this.showError(`${provider} signup failed. Please try again.`);
+                this.setSocialLoading(provider, false);
+                return;
             }
+
+            console.log(`✅ ${provider} signup initiated`);
+            // User will be redirected to OAuth provider
 
         } catch (error) {
-            console.error('⚠️ Profile creation failed:', error);
-            // Don't fail the signup process - profile can be created later
+            console.error(`❌ ${provider} signup failed:`, error);
+            this.showError(`${provider} signup failed. Please try again.`);
+            this.setSocialLoading(provider, false);
         }
+    }
+
+    redirectAfterSignup(userType) {
+        if (userType === 'admin') {
+            window.location.href = '/camp-dashboard.html';
+        } else {
+            window.location.href = '/profile.html';
+        }
+    }
+
+    getErrorMessage(error) {
+        const errorMessages = {
+            'User already registered': 'An account with this email already exists. Please try logging in instead.',
+            'Password should be at least 6 characters': 'Password must be at least 6 characters long.',
+            'Invalid email': 'Please enter a valid email address.',
+            'weak_password': 'Please choose a stronger password.',
+            'email_address_invalid': 'Please enter a valid email address.',
+            'signup_disabled': 'New account registration is temporarily disabled.',
+            'Database error saving new user': 'Account creation failed due to a system issue. Please try again.'
+        };
+
+        for (const [key, message] of Object.entries(errorMessages)) {
+            if (error.message.includes(key)) {
+                return message;
+            }
+        }
+
+        return 'Signup failed. Please try again or contact support if the problem persists.';
+    }
+
+    // UI Helper Methods
+    showError(message) {
+        this.showMessage(message, 'error');
+    }
+
+    showSuccess(message) {
+        this.showMessage(message, 'success');
+    }
+
+    showMessage(message, type = 'info') {
+        // Remove existing messages
+        const existingMessages = document.querySelectorAll('.signup-message');
+        existingMessages.forEach(msg => msg.remove());
+
+        // Create new message
+        const messageEl = document.createElement('div');
+        messageEl.className = `signup-message signup-${type}`;
+        messageEl.innerHTML = `
+            <div style="
+                padding: 12px 16px;
+                margin: 16px 0;
+                border-radius: 8px;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                ${type === 'error' ? 'background: #fee; border: 1px solid #fcc; color: #c33;' : ''}
+                ${type === 'success' ? 'background: #efe; border: 1px solid #cfc; color: #363;' : ''}
+                ${type === 'info' ? 'background: #eef; border: 1px solid #ccf; color: #336;' : ''}
+            ">
+                <span>${message}</span>
+                <button onclick="this.parentElement.parentElement.remove()" style="
+                    background: none; 
+                    border: none; 
+                    color: inherit; 
+                    cursor: pointer;
+                    padding: 0 0 0 12px;
+                    font-size: 18px;
+                ">&times;</button>
+            </div>
+        `;
+
+        // Insert at the top of the form container
+        const container = document.querySelector('.signup-container') || document.body;
+        container.insertBefore(messageEl, container.firstChild);
+
+        // Auto-remove after 8 seconds for errors, 5 for success
+        const timeout = type === 'error' ? 8000 : 5000;
+        setTimeout(() => {
+            if (messageEl.parentElement) {
+                messageEl.remove();
+            }
+        }, timeout);
+
+        // Scroll to message
+        messageEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    setEmailLoading(loading) {
+        this.isLoading = loading;
+        const submitBtn = document.querySelector('#emailSignupForm button[type="submit"]');
+        const emailInput = document.querySelector('#emailSignupForm input[name="email"]');
+        const passwordInput = document.querySelector('#emailSignupForm input[name="password"]');
+
+        if (submitBtn) {
+            submitBtn.disabled = loading;
+            submitBtn.textContent = loading ? 'Creating Account...' : 'Create Account';
+        }
+
+        // Disable form inputs during loading
+        [emailInput, passwordInput].forEach(input => {
+            if (input) input.disabled = loading;
+        });
     }
 
     setSocialLoading(provider, loading) {
@@ -347,99 +386,32 @@ class SignupHandler {
 
         if (loading) {
             btn.disabled = true;
-            const originalText = btn.querySelector('span').textContent;
-            btn.querySelector('span').textContent = `Connecting to ${provider.charAt(0).toUpperCase() + provider.slice(1)}...`;
-            btn.setAttribute('data-original-text', originalText);
+            const span = btn.querySelector('span');
+            if (span) {
+                btn.setAttribute('data-original-text', span.textContent);
+                span.textContent = `Connecting to ${provider.charAt(0).toUpperCase() + provider.slice(1)}...`;
+            }
         } else {
             btn.disabled = false;
-            const originalText = btn.getAttribute('data-original-text');
-            if (originalText) {
-                btn.querySelector('span').textContent = originalText;
+            const span = btn.querySelector('span');
+            if (span) {
+                const originalText = btn.getAttribute('data-original-text');
+                if (originalText) {
+                    span.textContent = originalText;
+                }
             }
-        }
-    }
-
-    setEmailLoading(loading) {
-        this.isLoading = loading;
-        const signupBtn = document.getElementById('signupBtn');
-        const signupForm = document.getElementById('signupForm');
-        const signupLoading = document.getElementById('signupLoading');
-
-        if (loading) {
-            if (signupBtn) {
-                signupBtn.disabled = true;
-                signupBtn.textContent = 'Creating Account...';
-            }
-            if (signupForm) signupForm.style.opacity = '0.7';
-            if (signupLoading) signupLoading.style.display = 'block';
-        } else {
-            if (signupBtn) {
-                signupBtn.disabled = false;
-                signupBtn.textContent = 'Create Account';
-            }
-            if (signupForm) signupForm.style.opacity = '1';
-            if (signupLoading) signupLoading.style.display = 'none';
-        }
-    }
-
-    showError(message) {
-        const errorDiv = document.getElementById('signupError');
-        if (errorDiv) {
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-        } else {
-            alert('Error: ' + message);
-        }
-    }
-
-    showSuccess(message) {
-        const successDiv = document.getElementById('signupSuccess');
-        if (successDiv) {
-            successDiv.textContent = message;
-            successDiv.style.display = 'block';
-        }
-    }
-
-    clearMessages() {
-        const errorDiv = document.getElementById('signupError');
-        const successDiv = document.getElementById('signupSuccess');
-
-        if (errorDiv) errorDiv.style.display = 'none';
-        if (successDiv) successDiv.style.display = 'none';
-    }
-
-    isValidEmail(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    }
-
-    getErrorMessage(error) {
-        console.log('🔍 Error details:', error);
-
-        switch (error.message) {
-            case 'User already registered':
-                return 'An account with this email already exists. Please sign in instead.';
-            case 'Password should be at least 6 characters':
-                return 'Password must be at least 6 characters long.';
-            case 'Invalid email':
-                return 'Please enter a valid email address.';
-            case 'Signup disabled':
-                return 'Account creation is currently disabled. Please contact support.';
-            default:
-                return error.message || 'Signup failed. Please try again.';
         }
     }
 }
 
-// Initialize when DOM is ready
+// Initialize signup handler when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        console.log('🚀 Initializing signup handler...');
-        window.signupHandler = new SignupHandler();
-    }, 100);
+    console.log('🔐 Signup script loaded');
+    window.signupHandler = new SignupHandler();
 });
 
-// Export for testing
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = SignupHandler;
+// Also initialize immediately if DOM is already ready
+if (document.readyState !== 'loading') {
+    console.log('🔐 Signup script loaded (DOM already ready)');
+    window.signupHandler = new SignupHandler();
 }
