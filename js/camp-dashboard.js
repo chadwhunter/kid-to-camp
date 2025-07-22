@@ -1,4 +1,4 @@
-// js/camp-dashboard.js - Fixed version with all required functions
+// js/camp-dashboard.js - Fixed version with robust error handling and correct column names
 
 class CampDashboard {
     constructor() {
@@ -6,7 +6,9 @@ class CampDashboard {
         this.currentUser = null;
         this.camps = [];
         this.bookings = [];
+        this.schedules = [];
         this.stats = {};
+        this.profile = null;
         this.init();
     }
 
@@ -19,6 +21,7 @@ class CampDashboard {
 
             if (!this.supabase) {
                 console.error('❌ Camp Dashboard: Supabase not available');
+                this.showError('System initialization failed. Please refresh the page.');
                 return;
             }
 
@@ -35,13 +38,14 @@ class CampDashboard {
             const userType = this.currentUser.user_metadata?.user_type;
             if (userType !== 'admin' && userType !== 'camp_owner') {
                 console.log('⚠️ User is not a camp owner, redirecting...');
-                window.location.href = '/index.html';
+                this.showError('Access denied. This dashboard is for camp owners only.');
+                setTimeout(() => window.location.href = '/index.html', 2000);
                 return;
             }
 
             console.log('✅ Camp Dashboard ready for:', this.currentUser.email);
 
-            // Load initial data
+            // Load initial data with error handling
             await this.loadDashboardData();
             this.setupEventListeners();
             this.renderDashboard();
@@ -54,59 +58,85 @@ class CampDashboard {
 
     async waitForDependencies() {
         let attempts = 0;
-        const maxAttempts = 50;
+        const maxAttempts = 50; // 5 seconds max
 
-        while (attempts < maxAttempts) {
-            if (window.supabase && window.supabase.auth) {
-                this.supabase = window.supabase;
-                return;
-            }
+        while (!window.kidToCamp?.supabase && attempts < maxAttempts) {
+            console.log('⏳ Waiting for KidToCamp dependencies...');
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
-        console.error('❌ Timeout waiting for dependencies');
+
+        if (window.kidToCamp?.supabase) {
+            this.supabase = window.kidToCamp.supabase;
+            console.log('✅ Dependencies loaded');
+            return true;
+        } else {
+            console.error('❌ Dependencies timeout');
+            return false;
+        }
     }
 
     async checkAuth() {
         try {
-            console.log('🔍 Camp Dashboard: Checking authentication...');
-            const { data: { session }, error } = await this.supabase.auth.getSession();
+            const { data: { session } } = await this.supabase.auth.getSession();
+            this.currentUser = session?.user || null;
 
-            if (error) {
-                console.error('❌ Error getting session:', error);
-                return;
-            }
-
-            if (session && session.user) {
-                this.currentUser = session.user;
+            if (this.currentUser) {
                 console.log('✅ User authenticated:', this.currentUser.email);
-            } else {
-                console.log('❌ No session found');
-                this.currentUser = null;
             }
+
+            return this.currentUser;
         } catch (error) {
             console.error('❌ Auth check failed:', error);
-            this.currentUser = null;
+            return null;
         }
     }
 
     async loadDashboardData() {
         console.log('📊 Loading dashboard data...');
 
+        // Load in sequence with error handling for each
+        await this.loadUserProfile();
+        await this.loadCamps();
+        await this.loadBookings();
+        await this.loadSchedules();
+        await this.calculateStats();
+
+        console.log('✅ Dashboard data loaded');
+    }
+
+    async loadUserProfile() {
         try {
-            // Load camps, bookings, and stats
-            await Promise.all([
-                this.loadCamps(),
-                this.loadBookings(),
-                this.loadStats()
-            ]);
+            console.log('👤 Loading user profile...');
+
+            // Use maybeSingle to avoid errors if profile doesn't exist
+            const { data, error } = await this.supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', this.currentUser.id)
+                .maybeSingle();
+
+            if (error && error.code !== 'PGRST116') {
+                console.warn('⚠️ Profile loading error:', error);
+                // Don't fail completely - dashboard can work without profile
+            }
+
+            this.profile = data || {};
+            console.log('✅ Profile loaded:', this.profile.id ? 'Found' : 'Using defaults');
+
+            this.populateProfileDisplay();
+
         } catch (error) {
-            console.error('❌ Error loading dashboard data:', error);
+            console.warn('⚠️ Exception loading profile, using defaults:', error);
+            this.profile = {};
+            this.populateProfileDisplay();
         }
     }
 
     async loadCamps() {
         try {
+            console.log('🏕️ Loading camps...');
+
             const { data, error } = await this.supabase
                 .from('camps')
                 .select('*')
@@ -114,19 +144,20 @@ class CampDashboard {
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.error('❌ Error loading camps:', error);
+                console.warn('⚠️ Camps loading error:', error);
+                this.camps = [];
                 return;
             }
 
             this.camps = data || [];
-            console.log('✅ Loaded camps:', this.camps.length);
+            console.log('✅ Camps loaded:', this.camps.length);
+
         } catch (error) {
-            console.error('❌ Exception loading camps:', error);
+            console.warn('⚠️ Exception loading camps, using empty array:', error);
             this.camps = [];
         }
     }
 
-    // Also fix the loadBookings method to handle empty camps array:
     async loadBookings() {
         try {
             console.log('📋 Loading bookings...');
@@ -140,38 +171,100 @@ class CampDashboard {
 
             const campIds = this.camps.map(camp => camp.id);
 
-            // Use a simpler query structure
+            // Simple query - avoid complex joins for now
             const { data, error } = await this.supabase
                 .from('bookings')
-                .select('*')
+                .select(`
+                    *,
+                    child_profiles!inner(first_name, last_name),
+                    camps!inner(name)
+                `)
                 .in('camp_id', campIds)
                 .order('created_at', { ascending: false })
-                .limit(10);
+                .limit(20);
 
             if (error) {
-                console.warn('⚠️ Bookings query failed, using empty array:', error);
-                this.bookings = [];
+                console.warn('⚠️ Bookings query with joins failed, trying simple query:', error);
+
+                // Fallback to simple query
+                const { data: simpleData, error: simpleError } = await this.supabase
+                    .from('bookings')
+                    .select('*')
+                    .in('camp_id', campIds)
+                    .order('created_at', { ascending: false })
+                    .limit(20);
+
+                if (simpleError) {
+                    console.warn('⚠️ Simple bookings query also failed:', simpleError);
+                    this.bookings = [];
+                    return;
+                }
+
+                this.bookings = simpleData || [];
+                console.log('✅ Bookings loaded (simple query):', this.bookings.length);
                 return;
             }
 
             this.bookings = data || [];
-            console.log('✅ Loaded bookings:', this.bookings.length);
+            console.log('✅ Bookings loaded (with joins):', this.bookings.length);
 
         } catch (error) {
             console.warn('⚠️ Exception loading bookings, using empty array:', error);
             this.bookings = [];
         }
     }
-    async loadStats() {
+
+    async loadSchedules() {
         try {
-            // Calculate basic stats
+            console.log('📅 Loading schedules...');
+
+            if (!this.camps || this.camps.length === 0) {
+                console.log('ℹ️ No camps found, skipping schedules load');
+                this.schedules = [];
+                return;
+            }
+
+            const campIds = this.camps.map(camp => camp.id);
+
+            const { data, error } = await this.supabase
+                .from('camp_schedules')
+                .select('*')
+                .in('camp_id', campIds)
+                .order('start_date', { ascending: true });
+
+            if (error) {
+                console.warn('⚠️ Schedules loading error:', error);
+                this.schedules = [];
+                return;
+            }
+
+            this.schedules = data || [];
+            console.log('✅ Schedules loaded:', this.schedules.length);
+
+        } catch (error) {
+            console.warn('⚠️ Exception loading schedules, using empty array:', error);
+            this.schedules = [];
+        }
+    }
+
+    async calculateStats() {
+        try {
+            // Calculate stats from loaded data
+            const activeSchedules = this.schedules.filter(schedule => {
+                const now = new Date();
+                const endDate = new Date(schedule.end_date);
+                return endDate >= now;
+            }).length;
+
+            const totalRevenue = this.bookings.reduce((sum, booking) => {
+                return sum + (parseFloat(booking.amount) || 0);
+            }, 0);
+
             this.stats = {
                 totalCamps: this.camps.length,
-                activeSchedules: 0, // Will be calculated from schedules
+                activeSchedules: activeSchedules,
                 totalBookings: this.bookings.length,
-                totalRevenue: this.bookings.reduce((sum, booking) => {
-                    return sum + (parseFloat(booking.amount) || 0);
-                }, 0)
+                totalRevenue: totalRevenue
             };
 
             console.log('✅ Stats calculated:', this.stats);
@@ -181,61 +274,63 @@ class CampDashboard {
         }
     }
 
-    setupEventListeners() {
-        console.log('🔧 Setting up event listeners...');
+    populateProfileDisplay() {
+        const profile = this.profile || {};
 
-        // Profile form
-        const profileForm = document.getElementById('profileForm');
-        if (profileForm) {
-            profileForm.addEventListener('submit', (e) => this.handleProfileUpdate(e));
-        }
+        const fields = {
+            'displayName': profile.full_name || profile.first_name || 'Not provided',
+            'displayEmail': this.currentUser.email,
+            'displayPhone': profile.phone || 'Not provided',
+            'displayAddress': profile.business_address || profile.address || 'Not provided',
+            'displayCity': profile.city || 'Not provided',
+            'displayState': profile.state || 'Not provided',
+            'displayZip': profile.zip_code || profile.zip || 'Not provided',
+            'displayWebsite': profile.website || 'Not provided'
+        };
 
-        // Camp form
-        const campForm = document.getElementById('campForm');
-        if (campForm) {
-            campForm.addEventListener('submit', (e) => this.handleCampSubmit(e));
-        }
-
-        // Schedule form
-        const scheduleForm = document.getElementById('scheduleForm');
-        if (scheduleForm) {
-            scheduleForm.addEventListener('submit', (e) => this.handleScheduleSubmit(e));
+        for (const [elementId, value] of Object.entries(fields)) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = value;
+            }
         }
     }
 
     renderDashboard() {
         console.log('🎨 Rendering dashboard...');
 
-        this.updateStats();
+        this.renderStats();
         this.renderCamps();
         this.renderRecentBookings();
-        this.loadUserProfile();
+
+        console.log('✅ Dashboard rendered');
     }
 
-    updateStats() {
-        const campCountEl = document.getElementById('campCount');
-        const scheduleCountEl = document.getElementById('scheduleCount');
-        const bookingCountEl = document.getElementById('bookingCount');
-        const revenueCountEl = document.getElementById('revenueCount');
+    renderStats() {
+        const statElements = {
+            'campCount': this.stats.totalCamps,
+            'scheduleCount': this.stats.activeSchedules,
+            'bookingCount': this.stats.totalBookings,
+            'revenueCount': `$${this.stats.totalRevenue.toFixed(2)}`
+        };
 
-        if (campCountEl) campCountEl.textContent = this.stats.totalCamps;
-        if (scheduleCountEl) scheduleCountEl.textContent = this.stats.activeSchedules;
-        if (bookingCountEl) bookingCountEl.textContent = this.stats.totalBookings;
-        if (revenueCountEl) revenueCountEl.textContent = `$${this.stats.totalRevenue.toFixed(2)}`;
+        for (const [elementId, value] of Object.entries(statElements)) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = value;
+            }
+        }
     }
 
     renderCamps() {
-        const campsContainer = document.getElementById('campsList');
+        const campsContainer = document.getElementById('myCamps');
         if (!campsContainer) return;
 
         if (this.camps.length === 0) {
             campsContainer.innerHTML = `
                 <div class="empty-state">
-                    <h3>No camps created yet</h3>
-                    <p>Create your first camp to start accepting registrations</p>
-                    <button class="btn btn-primary" onclick="showAddCamp()">
-                        + Create Your First Camp
-                    </button>
+                    <p>No camps created yet</p>
+                    <button class="btn btn-primary" onclick="showModal('addCampModal')">Add Your First Camp</button>
                 </div>
             `;
             return;
@@ -244,16 +339,18 @@ class CampDashboard {
         const campsHTML = this.camps.map(camp => `
             <div class="camp-card">
                 <div class="camp-header">
-                    <h3>${camp.name}</h3>
+                    <h4>${camp.name}</h4>
                     <div class="camp-actions">
-                        <button class="btn btn-sm btn-outline" onclick="editCamp('${camp.id}')">Edit</button>
-                        <button class="btn btn-sm btn-outline" onclick="viewCampDetails('${camp.id}')">View</button>
+                        <button class="btn btn-sm btn-outline" onclick="editCamp(${camp.id})">Edit</button>
+                        <button class="btn btn-sm btn-primary" onclick="viewCampDetails(${camp.id})">View</button>
                     </div>
                 </div>
                 <div class="camp-details">
                     <p><strong>Location:</strong> ${camp.location || 'Not specified'}</p>
                     <p><strong>Ages:</strong> ${camp.min_age || 0}-${camp.max_age || 18}</p>
                     <p><strong>Description:</strong> ${camp.description || 'No description'}</p>
+                    <p><strong>Interests:</strong> ${camp.interests?.join(', ') || 'None specified'}</p>
+                    <p><strong>Accommodations:</strong> ${camp.special_needs_accommodations?.join(', ') || 'None specified'}</p>
                 </div>
             </div>
         `).join('');
@@ -268,7 +365,7 @@ class CampDashboard {
         if (this.bookings.length === 0) {
             bookingsContainer.innerHTML = `
                 <div class="empty-state">
-                    <p>No recent bookings</p>
+                    <p>No bookings yet</p>
                 </div>
             `;
             return;
@@ -277,8 +374,11 @@ class CampDashboard {
         const bookingsHTML = this.bookings.slice(0, 5).map(booking => `
             <div class="booking-card">
                 <div class="booking-info">
-                    <h4>${booking.child?.first_name || 'Unknown'} ${booking.child?.last_name || ''}</h4>
-                    <p>${booking.camp?.name || 'Unknown Camp'}</p>
+                    <h4>
+                        ${booking.child_profiles?.first_name || 'Unknown'} 
+                        ${booking.child_profiles?.last_name || ''}
+                    </h4>
+                    <p>${booking.camps?.name || 'Unknown Camp'}</p>
                     <small>Booked: ${new Date(booking.created_at).toLocaleDateString()}</small>
                 </div>
                 <div class="booking-amount">
@@ -290,105 +390,23 @@ class CampDashboard {
         bookingsContainer.innerHTML = bookingsHTML;
     }
 
-    // Also enhance the profile loading to see what's causing the 406 error
-    async loadUserProfile() {
-        try {
-            console.log('👤 Loading user profile...');
-            console.log('🔑 User ID for profile:', this.currentUser.id);
+    setupEventListeners() {
+        console.log('🔧 Setting up event listeners...');
 
-            // Test profiles table access first
-            const { data: testData, error: testError } = await this.supabase
-                .from('profiles')
-                .select('count', { count: 'exact', head: true });
-
-            if (testError) {
-                console.error('❌ Profiles table access test failed:', testError);
-                return;
-            }
-
-            console.log('✅ Profiles table accessible');
-
-            const { data, error } = await this.supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', this.currentUser.id)
-                .maybeSingle();
-
-            if (error) {
-                console.error('❌ Profile loading error:', error);
-                console.error('❌ Profile error code:', error.code);
-                console.error('❌ Profile error message:', error.message);
-
-                if (error.code === 'PGRST116') {
-                    console.log('ℹ️ No profile found, will create basic display');
-                }
-                return;
-            }
-
-            const profile = data || {};
-            console.log('✅ Profile loaded:', profile);
-            this.populateProfileDisplay(profile);
-
-        } catch (error) {
-            console.error('❌ Exception loading profile:', error);
+        // Profile form
+        const profileForm = document.getElementById('profileForm');
+        if (profileForm) {
+            profileForm.addEventListener('submit', (e) => this.handleProfileUpdate(e));
         }
-    }
 
-    populateProfileDisplay(profile) {
-        const fields = {
-            'displayName': profile.full_name || 'Not provided',
-            'displayEmail': this.currentUser.email,
-            'displayPhone': profile.phone || 'Not provided',
-            'displayAddress': profile.business_address || 'Not provided',
-            'displayCity': profile.city || 'Not provided',
-            'displayState': profile.state || 'Not provided',
-            'displayZip': profile.zip_code || 'Not provided',
-            'displayWebsite': profile.website || 'Not provided'
-        };
-
-        for (const [elementId, value] of Object.entries(fields)) {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.textContent = value;
-            }
+        // Camp form - with correct column names
+        const campForm = document.getElementById('campForm');
+        if (campForm) {
+            campForm.addEventListener('submit', (e) => this.handleCampSubmit(e));
         }
+
+        console.log('✅ Event listeners set up');
     }
-
-    // Event Handlers
-    async handleProfileUpdate(e) {
-        e.preventDefault();
-
-        const formData = new FormData(e.target);
-        const profileData = Object.fromEntries(formData.entries());
-
-        try {
-            const { error } = await this.supabase
-                .from('profiles')
-                .upsert({
-                    id: this.currentUser.id,
-                    ...profileData,
-                    updated_at: new Date().toISOString()
-                });
-
-            if (error) {
-                console.error('❌ Error updating profile:', error);
-                this.showError('Failed to update profile');
-                return;
-            }
-
-            this.showSuccess('Profile updated successfully!');
-            this.loadUserProfile();
-            this.toggleProfileEdit();
-        } catch (error) {
-            console.error('❌ Exception updating profile:', error);
-            this.showError('Failed to update profile');
-        }
-    }
-
-    // Simplified fix for camp form submission
-    // Replace the handleCampSubmit method in js/camp-dashboard.js
-
-    // Replace in js/camp-dashboard.js to get better error details
 
     async handleCampSubmit(e) {
         e.preventDefault();
@@ -398,7 +416,7 @@ class CampDashboard {
         try {
             const form = e.target;
 
-            // Get form values with correct column names from your database
+            // Get form values with CORRECT column names from database schema
             const campData = {
                 owner_id: this.currentUser.id,
                 name: form.querySelector('#campName').value,
@@ -408,18 +426,18 @@ class CampDashboard {
                 max_age: parseInt(form.querySelector('#maxAge').value) || 18
             };
 
-            // Handle interests (this column exists)
+            // Handle interests array
             const interestCheckboxes = form.querySelectorAll('input[name="camp-interests"]:checked');
             const interests = Array.from(interestCheckboxes).map(cb => cb.value);
             if (interests.length > 0) {
                 campData.interests = interests;
             }
 
-            // Handle accommodations - use the CORRECT column name
+            // Handle accommodations - use CORRECT column name: special_needs_accommodations
             const accommodationCheckboxes = form.querySelectorAll('input[name="camp-accommodations"]:checked');
             const accommodations = Array.from(accommodationCheckboxes).map(cb => cb.value);
             if (accommodations.length > 0) {
-                campData.special_needs_accommodations = accommodations; // CORRECT column name!
+                campData.special_needs_accommodations = accommodations;
             }
 
             console.log('📊 Camp data to submit:', JSON.stringify(campData, null, 2));
@@ -447,74 +465,123 @@ class CampDashboard {
             console.log('✅ Camp created successfully:', data);
             this.showSuccess('Camp created successfully!');
 
-            // Clean up
+            // Refresh camps list
+            await this.loadCamps();
+            await this.calculateStats();
+            this.renderDashboard();
+
+            // Close modal and reset form
             this.closeModal('addCampModal');
             form.reset();
 
-            // Reload data
-            await this.loadCamps();
-            this.renderCamps();
-            this.updateStats();
+        } catch (error) {
+            console.error('❌ Exception creating camp:', error);
+            this.showError('Failed to create camp. Please try again.');
+        }
+    }
+
+    async handleProfileUpdate(e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const profileData = {
+            id: this.currentUser.id,
+            user_type: this.currentUser.user_metadata?.user_type || 'admin',
+            updated_at: new Date().toISOString()
+        };
+
+        // Add form fields
+        for (const [key, value] of formData.entries()) {
+            profileData[key] = value;
+        }
+
+        try {
+            const { error } = await this.supabase
+                .from('profiles')
+                .upsert(profileData);
+
+            if (error) {
+                console.error('❌ Error updating profile:', error);
+                this.showError(`Failed to update profile: ${error.message}`);
+                return;
+            }
+
+            this.showSuccess('Profile updated successfully!');
+
+            // Reload profile and update display
+            await this.loadUserProfile();
+            this.toggleProfileEdit();
 
         } catch (error) {
-            console.error('❌ JavaScript exception:', error);
-            this.showError(`Unexpected error: ${error.message}`);
+            console.error('❌ Exception updating profile:', error);
+            this.showError('Failed to update profile');
         }
     }
 
-
-    async handleScheduleSubmit(e) {
-        e.preventDefault();
-        // Schedule handling implementation
-        this.showError('Schedule creation coming soon!');
-    }
-
-    // UI Helper Functions
+    // UI Helper Methods
     showError(message) {
-        // Create or update error message display
-        let errorDiv = document.getElementById('errorMessage');
-        if (!errorDiv) {
-            errorDiv = document.createElement('div');
-            errorDiv.id = 'errorMessage';
-            errorDiv.className = 'error-message';
-            document.body.appendChild(errorDiv);
-        }
-        errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
-
-        setTimeout(() => {
-            errorDiv.style.display = 'none';
-        }, 5000);
+        this.showMessage(message, 'error');
     }
 
     showSuccess(message) {
-        // Create or update success message display
-        let successDiv = document.getElementById('successMessage');
-        if (!successDiv) {
-            successDiv = document.createElement('div');
-            successDiv.id = 'successMessage';
-            successDiv.className = 'success-message';
-            document.body.appendChild(successDiv);
-        }
-        successDiv.textContent = message;
-        successDiv.style.display = 'block';
+        this.showMessage(message, 'success');
+    }
 
+    showMessage(message, type = 'info') {
+        // Create message element
+        const messageEl = document.createElement('div');
+        messageEl.className = `message message-${type}`;
+        messageEl.innerHTML = `
+            <span>${message}</span>
+            <button onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; float: right; cursor: pointer;">&times;</button>
+        `;
+
+        // Add to page
+        const container = document.querySelector('.container') || document.body;
+        container.insertBefore(messageEl, container.firstChild);
+
+        // Auto-remove after 5 seconds
         setTimeout(() => {
-            successDiv.style.display = 'none';
-        }, 3000);
+            if (messageEl.parentElement) {
+                messageEl.remove();
+            }
+        }, 5000);
     }
 
     toggleProfileEdit() {
-        const displayDiv = document.getElementById('profileDisplay');
-        const editDiv = document.getElementById('profileEdit');
+        const display = document.getElementById('profileDisplay');
+        const edit = document.getElementById('profileEdit');
 
-        if (displayDiv && editDiv) {
-            if (displayDiv.style.display === 'none') {
-                displayDiv.style.display = 'block';
-                editDiv.style.display = 'none';
-            } else {
-                displayDiv.style.display = 'none';
-                editDiv.style.display = 'block';
+        if (display && edit) {
+            const isEditing = display.style.display === 'none';
+
+            display.style.display = isEditing ? 'block' : 'none';
+            edit.style.display = isEditing ? 'none' : 'block';
+
+            // If switching to edit mode, populate form
+            if (!isEditing && this.profile) {
+                this.populateProfileForm();
+            }
+        }
+    }
+
+    populateProfileForm() {
+        const profile = this.profile || {};
+
+        const fields = {
+            'profileName': profile.full_name || profile.first_name || '',
+            'profilePhone': profile.phone || '',
+            'profileAddress': profile.business_address || profile.address || '',
+            'profileCity': profile.city || '',
+            'profileState': profile.state || '',
+            'profileZip': profile.zip_code || profile.zip || '',
+            'profileWebsite': profile.website || ''
+        };
+
+        for (const [elementId, value] of Object.entries(fields)) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.value = value;
             }
         }
     }
@@ -527,13 +594,11 @@ class CampDashboard {
     }
 }
 
-// Global functions for onclick handlers
-function showAddCamp() {
-    const modal = document.getElementById('addCampModal');
+// Global functions for HTML onclick handlers
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'block';
-    } else {
-        console.error('❌ Add camp modal not found');
     }
 }
 
@@ -552,12 +617,14 @@ function toggleProfileEdit() {
 
 function editCamp(campId) {
     console.log('Edit camp:', campId);
-    // Implementation coming soon
+    // TODO: Implement camp editing
+    alert('Camp editing coming soon!');
 }
 
 function viewCampDetails(campId) {
     console.log('View camp details:', campId);
-    // Implementation coming soon
+    // TODO: Implement camp details view
+    alert('Camp details view coming soon!');
 }
 
 function refreshStats() {
@@ -575,10 +642,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Also try to initialize immediately if DOM is already ready
-if (document.readyState === 'loading') {
-    // DOM is still loading, event listener above will handle it
-} else {
-    // DOM is already ready
+if (document.readyState !== 'loading') {
     console.log('🏕️ Camp Dashboard script loaded (DOM already ready)');
     window.campDashboard = new CampDashboard();
 }
