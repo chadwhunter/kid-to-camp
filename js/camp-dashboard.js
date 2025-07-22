@@ -60,20 +60,36 @@ class CampDashboard {
         let attempts = 0;
         const maxAttempts = 50; // 5 seconds max
 
-        while (!window.kidToCamp?.supabase && attempts < maxAttempts) {
-            console.log('⏳ Waiting for KidToCamp dependencies...');
+        console.log('⏳ Waiting for dependencies...');
+
+        while (attempts < maxAttempts) {
+            // Primary check: Look for the global Supabase client created by config.js
+            if (window.supabase && window.supabase.auth && typeof window.supabase.auth.getSession === 'function') {
+                console.log('✅ Found global Supabase client from config.js');
+                this.supabase = window.supabase;
+                return true;
+            }
+
+            // Secondary check: Look for kidToCamp instance (fallback)
+            if (window.kidToCamp?.supabase) {
+                console.log('✅ Found Supabase via kidToCamp');
+                this.supabase = window.kidToCamp.supabase;
+                return true;
+            }
+
+            console.log(`⏳ Attempt ${attempts + 1}/${maxAttempts} - waiting for Supabase...`);
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
 
-        if (window.kidToCamp?.supabase) {
-            this.supabase = window.kidToCamp.supabase;
-            console.log('✅ Dependencies loaded');
-            return true;
-        } else {
-            console.error('❌ Dependencies timeout');
-            return false;
-        }
+        console.error('❌ Dependencies timeout');
+        console.log('Available globals:', {
+            'window.supabase': !!window.supabase,
+            'window.supabase.auth': !!window.supabase?.auth,
+            'window.kidToCamp': !!window.kidToCamp,
+            'window.CONFIG': !!window.CONFIG
+        });
+        return false;
     }
 
     async checkAuth() {
