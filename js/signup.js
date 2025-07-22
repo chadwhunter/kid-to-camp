@@ -71,10 +71,21 @@ class SignupHandler {
     }
 
     setupEventListeners() {
-        // Email signup form
-        const emailForm = document.getElementById('emailSignupForm');
-        if (emailForm) {
-            emailForm.addEventListener('submit', (e) => this.handleEmailSignup(e));
+        // Email signup form - check multiple possible form IDs
+        const signupForm = document.getElementById('emailSignupForm') ||
+            document.getElementById('signupForm');
+
+        if (signupForm) {
+            console.log('📝 Found signup form:', signupForm.id);
+
+            // Remove any existing listeners to prevent conflicts
+            signupForm.removeEventListener('submit', this.handleEmailSignup);
+
+            // Add our listener
+            signupForm.addEventListener('submit', (e) => this.handleEmailSignup(e));
+            console.log('✅ Signup form listener attached');
+        } else {
+            console.warn('⚠️ No signup form found with ID emailSignupForm or signupForm');
         }
 
         // Social signup buttons
@@ -86,14 +97,35 @@ class SignupHandler {
 
     async handleEmailSignup(e) {
         e.preventDefault();
+        e.stopPropagation(); // Prevent other handlers from running
+
+        console.log('📧 Email signup form submitted');
 
         if (this.isLoading) return;
 
         const formData = new FormData(e.target);
-        const email = formData.get('email')?.trim();
-        const password = formData.get('password');
-        const confirmPassword = formData.get('confirmPassword');
-        const userType = formData.get('userType');
+
+        // Handle different form field names/IDs
+        const email = formData.get('email') ||
+            document.getElementById('signupEmail')?.value ||
+            document.getElementById('email')?.value;
+
+        const password = formData.get('password') ||
+            document.getElementById('signupPassword')?.value ||
+            document.getElementById('password')?.value;
+
+        const confirmPassword = formData.get('confirmPassword') ||
+            document.getElementById('confirmPassword')?.value;
+
+        const userType = formData.get('userType') ||
+            document.getElementById('userType')?.value;
+
+        console.log('📊 Form data collected:', {
+            email: email ? 'provided' : 'missing',
+            password: password ? 'provided' : 'missing',
+            confirmPassword: confirmPassword ? 'provided' : 'missing',
+            userType: userType || 'missing'
+        });
 
         // Validation
         if (!this.validateSignupData(email, password, confirmPassword, userType)) {
@@ -393,9 +425,17 @@ class SignupHandler {
 
     setEmailLoading(loading) {
         this.isLoading = loading;
-        const submitBtn = document.querySelector('#emailSignupForm button[type="submit"]');
-        const emailInput = document.querySelector('#emailSignupForm input[name="email"]');
-        const passwordInput = document.querySelector('#emailSignupForm input[name="password"]');
+
+        // Find the submit button - try multiple possible IDs
+        const submitBtn = document.getElementById('signupBtn') ||
+            document.querySelector('#signupForm button[type="submit"]') ||
+            document.querySelector('#emailSignupForm button[type="submit"]') ||
+            document.querySelector('.btn-primary');
+
+        // Find form inputs
+        const emailInput = document.getElementById('signupEmail') || document.getElementById('email');
+        const passwordInput = document.getElementById('signupPassword') || document.getElementById('password');
+        const userTypeSelect = document.getElementById('userType');
 
         if (submitBtn) {
             submitBtn.disabled = loading;
@@ -403,9 +443,11 @@ class SignupHandler {
         }
 
         // Disable form inputs during loading
-        [emailInput, passwordInput].forEach(input => {
+        [emailInput, passwordInput, userTypeSelect].forEach(input => {
             if (input) input.disabled = loading;
         });
+
+        console.log('🔄 Loading state set to:', loading);
     }
 
     setSocialLoading(provider, loading) {
